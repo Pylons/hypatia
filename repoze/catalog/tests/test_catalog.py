@@ -140,6 +140,10 @@ class TestCatalog(unittest.TestCase):
         result = catalog.searchResults(name1={}, name2={})
         self.assertEqual(list(result), [3])
 
+    def test_searchResults_noindex(self):
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.searchResults, name1={})
+
     def test_apply(self):
         catalog = self._makeOne()
         from BTrees.IFBTree import IFSet

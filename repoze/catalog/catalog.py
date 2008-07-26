@@ -125,7 +125,9 @@ class Catalog(PersistentMapping):
     def searchResults(self, **query):
         results = []
         for index_name, index_query in query.items():
-            index = self[index_name]
+            index = self.get(index_name)
+            if index is None:
+                raise ValueError('No such index %s' % index)
             r = index.apply(index_query)
             if r is None:
                 continue
@@ -171,6 +173,9 @@ class FileStorageCatalogFactory(CatalogFactory):
         f = FileStorage(filename)
         self.db = DB(f)
         self.appname = appname
+
+    def __del__(self):
+        self.db.close()
         
 class ConnectionManager(object):
     def __call__(self, conn):

@@ -60,13 +60,14 @@ our index and a value we'd like to find a document for.
 .. code-block:: python
    :linenos:
 
-   factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
+   from repoze.catalog.catalog import FileStorageCatalogFactory
+   from repoze.catalog.catalog import ConnectionManager
 
-   if __name__ == '__main__':
-       manager = ConnectionManager()
-       catalog = factory(manager)
-       results = catalog.searchResults(flavor='peach')
-       print results
+   factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
+   manager = ConnectionManager()
+   catalog = factory(manager)
+   results = catalog.searchResults(flavors=(0, 'peach'))
+   print [ x for x in results ]
 
 The results of the above search will search the corpus for documents
 which have a result in the ``flavor`` index that matches the value
@@ -76,8 +77,9 @@ result::
   [1]
 
 This is the document id for the content we indexed in the above step
-as 'peach'.  Your application is responsible for resolving this unique
-identifier back to its constituent content.
+with ``peach`` as a ``flavors`` value.  Your application is
+responsible for resolving this unique identifier back to its
+constituent content.
 
 You can also pass compound search parameters for multiple indexes.
 The results are intersected to provide a result:
@@ -85,20 +87,21 @@ The results are intersected to provide a result:
 .. code-block:: python
    :linenos:
 
-   factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
+   from repoze.catalog.catalog import FileStorageCatalogFactory
+   from repoze.catalog.catalog import ConnectionManager
 
-   if __name__ == '__main__':
-       manager = ConnectionManager()
-       catalog = factory(manager)
-       results = catalog.searchResults(flavor='peach', text='pistachio')
-       print results
+   factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
+   manager = ConnectionManager()
+   catalog = factory(manager)
+   results = catalog.searchResults(flavors=(0, 'peach'), texts='nutty')
+   print [ x for x in results ]
 
 The results of the above search will return the empty sequence,
 because no results in our index match a document which has both a
-flavor of 'peach' and text which contains the word 'pistachio'.
+flavor of ``peach`` and text which contains the word ``nutty``.
 
 See the :term:`zope.index` documentation and implementation for more
-information about special query parameters to indexes.
+information about what indexes expect for query parameters.
 
 Restrictions
 ------------
