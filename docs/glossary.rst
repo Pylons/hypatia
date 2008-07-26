@@ -32,12 +32,12 @@ Glossary
     "stopwords" the text might have.
   zope.index
     The `<underlying indexing machinery
-    http://pypi.python.org/pypi/zope.index>` that
-    :mod:``repoze.catalog`` uses.
+    http://pypi.python.org/pypi/zope.index>`_ that
+    :mod:`repoze.catalog` uses.
   zope.app.catalog
     The `<cataloging implementation
-    http://pypi.python.org/pypi/zope.app.catalog>` on which
-    :mod:``repoze.catalog`` is based (although it doesn't use any of
+    http://pypi.python.org/pypi/zope.app.catalog>`_ on which
+    :mod:`repoze.catalog` is based (although it doesn't use any of
     its code).
   Virtualenv
     An isolated Python environment.  Allows you to control which
