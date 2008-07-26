@@ -39,4 +39,9 @@ Glossary
     http://pypi.python.org/pypi/zope.app.catalog>` on which
     :mod:``repoze.catalog`` is based (although it doesn't use any of
     its code).
+  Virtualenv
+    An isolated Python environment.  Allows you to control which
+    packages are used on a particular project by cloning your main
+    Python.  `virtualenv <http://pypi.python.org/pypi/virtualenv>`_
+    was created by Ian Bicking.
 

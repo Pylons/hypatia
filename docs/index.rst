@@ -13,25 +13,14 @@ arbitrary Python applications.
 Narrative documentation
 -----------------------
 
-Narrative documentation in chapter form explaining how to use
-:mod:`repoze.catalog`.
+Narrative documentation explaining how to use :mod:`repoze.catalog`.
 
 .. toctree::
    :maxdepth: 2
 
    install
-   using
+   usage
    glossary
-
-API documentation
------------------
-
-Per-module :mod:`repoze.catalog` API documentation.
-
-.. toctree::
-   :maxdepth: 2
-
-   api
 
 Indices and tables
 ==================

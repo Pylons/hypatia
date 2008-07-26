@@ -45,7 +45,7 @@ exmaining the object for an attribute directly.  This is useful in the
 case that your content objects don't have attributes that match
 exactly what you want to index:
 
-.. literalinclude:: code/index_interfaces.py
+.. literalinclude:: code/index_callbacks.py
    :linenos:
    :language: python
   
