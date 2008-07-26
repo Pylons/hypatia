@@ -45,7 +45,7 @@ class CatalogIndex(object):
     def __init__(self, discriminator, *args, **kwargs):
         super(CatalogIndex, self).__init__(*args, **kwargs)
         if not callable(discriminator):
-            if not isinstance(interface, basestring):
+            if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
@@ -54,7 +54,7 @@ class CatalogIndex(object):
         if callable(self.discriminator):
             value = self.discriminator(object, _marker)
         else:
-            value = getattr(object, self.interface, _marker)
+            value = getattr(object, self.discriminator, _marker)
 
         if value is _marker:
             # unindex the previous value
