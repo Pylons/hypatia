@@ -106,7 +106,7 @@ information about what indexes expect for query parameters.
 Restrictions
 ------------
 
-Values indexed by a :mod:`repoze.bfg` catalog cannot subclass from the
+Values indexed by a :mod:`repoze.catalog` catalog cannot subclass from the
 ZODB ``Persistent`` class.  This is a safeguard to ensure that
 irresolveable cross-database references aren't put into the catalog's
 (separate) database.

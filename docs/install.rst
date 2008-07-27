@@ -7,8 +7,8 @@ How To Install
 You will need `Python <http://python.org>`_ version 2.4 or better to
 run :mod:`repoze.catalog`.  Development of :mod:`repoze.catalog` is
 done primarily under Python 2.4, so that version is recommended.
-:mod:`repoze.bfg` does *not* run under any version of Python before
-2.4, and does *not* run under Python 3.X.
+:mod:`repoze.catalog` does *not* run under any version of Python
+before 2.4, and does *not* run under Python 3.X.
 
 .. warning:: To succesfully install :mod:`repoze.catalog`, you will an
    environment capable of compiling Python C code.  See the
