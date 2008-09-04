@@ -45,11 +45,9 @@ setup(name='repoze.catalog',
       namespace_packages=['repoze'],
       zip_safe=False,
       tests_require = [
-        'repoze.bfg',
         'zope.index',
         ],
       install_requires = [
-        'repoze.bfg',
         'zope.index',
         ],
       test_suite="repoze.catalog.tests",
