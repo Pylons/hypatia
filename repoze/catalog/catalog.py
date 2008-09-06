@@ -75,6 +75,12 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     implements(ICatalogIndex)
+    def apply(self, query):
+        operator = 'and'
+        if isinstance(query, dict):
+            operator = query['operator']
+            query = query['query']
+        return self.search(query, operator=operator)
 
 class Catalog(PersistentMapping):
 
