@@ -77,6 +77,35 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         s = sorted([(rev_index.get(docid), docid) for docid in docids])
         return [ x[1] for x in s ]
 
+    def index_doc(self, docid, value):
+        """See interface IInjection"""
+        rev_index = self._rev_index
+        if docid in rev_index:
+            if docid in self._fwd_index.get(value, ()):
+                # no need to index the doc, its already up to date
+                return
+            # unindex doc if present
+            self.unindex_doc(docid)
+
+        # Insert into forward index.
+        set = self._fwd_index.get(value)
+        if set is None:
+            set = self.family.II.TreeSet()
+            self._fwd_index[value] = set
+        set.insert(docid)
+
+        # increment doc count
+        self._num_docs.change(1)
+
+        # Insert into reverse index.
+        rev_index[docid] = value
+
+    def apply(self, query):
+        if len(query) != 2 or not isinstance(query, tuple):
+            raise TypeError("two-length tuple expected", query)
+        return self.family.II.multiunion(
+            self._fwd_index.values(*query))
+
 class KeywordIndexBase(CatalogIndex):
     def apply(self, query):
         operator = 'and'
