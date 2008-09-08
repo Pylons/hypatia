@@ -66,20 +66,28 @@ our index and a value we'd like to find a document for.
    factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
    manager = ConnectionManager()
    catalog = factory(manager)
-   results = catalog.searchResults(flavors=(0, 'peach'))
-   print [ x for x in results ]
+   numdocs, results = catalog.searchResults(flavors=('peach', 'peach'))
+   print (numdocs, [ x for x in results ])
 
 The results of the above search will search the corpus for documents
 which have a result in the ``flavor`` index that matches the value
-``peach``.  This particular query will return a sequence, with one
-result::
+``peach``.  Since the index is a "field" index, its query arguments
+are a "range" search: you can read ``('peach', 'peach')`` as "from
+peach to peach".  You could say ``('peach', 'pistachio')`` to find all
+documents that are in the "range" from peach to pistachio.
 
-  [1]
+This particular query will return a two-tuple, with the first element
+in the sequence being the length of the result set, and the second
+element being the result set itself, which is only guaranteed to be an
+interable (not any particular type, and *not* always sliceable; it may
+be a generator).  Our above example would print.
 
-This is the document id for the content we indexed in the above step
-with ``peach`` as a ``flavors`` value.  Your application is
-responsible for resolving this unique identifier back to its
-constituent content.
+  (1, [1])
+
+The second element is the result set.  It has one item.  This item is
+the document id for the content we indexed in the above step with
+``peach`` as a ``flavors`` value.  Your application is responsible for
+resolving this unique identifier back to its constituent content.
 
 You can also pass compound search parameters for multiple indexes.
 The results are intersected to provide a result:
@@ -93,15 +101,37 @@ The results are intersected to provide a result:
    factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
    manager = ConnectionManager()
    catalog = factory(manager)
-   results = catalog.searchResults(flavors=(0, 'peach'), texts='nutty')
-   print [ x for x in results ]
+   numdocs, results = catalog.searchResults(flavors=('peach', 'peach'), texts='nutty')
+   print (numdocs, [ x for x in results ])
 
-The results of the above search will return the empty sequence,
-because no results in our index match a document which has both a
-flavor of ``peach`` and text which contains the word ``nutty``.
+The results of the above search will return the following:
+
+   (0, [])
+
+This is because no results in our index match a document which
+has both a flavor of ``peach`` and text which contains the word
+``nutty``.
 
 See the :term:`zope.index` documentation and implementation for more
-information about what indexes expect for query parameters.
+information about what specific index types expect for query
+parameters.
+
+You can also use a field index as a ``sort_index``, which sorts the
+document ids based on the values for that docid present in that index:
+
+   numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
+                                            sort_index='flavors')
+   print (numdocs, [ x for x in results ])
+   (2, [1, 2])
+
+The default sort order is ascending.  You can reverse the sort using
+``sort_descending``:
+
+   numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
+                                            sort_index='flavors', 
+                                            sort_descending=True)
+   print (numdocs, [ x for x in results ])
+   (2, [2, 1])
 
 Restrictions
 ------------

@@ -63,7 +63,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         klass = self._getTargetClass()
         return klass(lambda x, default: x)
 
-    def test_sort(self):
+    def test_sort_lazy(self):
         index = self._makeOne()
         index.index_doc(5, 1)
         index.index_doc(2, 2)
@@ -73,7 +73,43 @@ class TestCatalogFieldIndex(unittest.TestCase):
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         result = index.sort(c1)
-        self.assertEqual(result, [5, 2, 1, 3, 4])
+        self.assertEqual(list(result), [5, 2, 1, 3, 4])
+
+    def test_sort_nonlazy(self):
+        index = self._makeOne()
+        index.index_doc(5, 1)
+        index.index_doc(2, 2)
+        index.index_doc(1, 3)
+        index.index_doc(3, 4) 
+        index.index_doc(4, 5)
+        index.index_doc(8, 6)
+        index.index_doc(9, 7)
+        index.index_doc(7, 8)
+        index.index_doc(6, 9)
+        index.index_doc(11, 10)
+        index.index_doc(10, 11)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2])
+        result = index.sort(c1)
+        self.assertEqual(list(result), [2, 1])
+
+    def test_sort_reverse(self):
+        index = self._makeOne()
+        index.index_doc(5, 1)
+        index.index_doc(2, 2)
+        index.index_doc(1, 3)
+        index.index_doc(3, 4) 
+        index.index_doc(4, 5)
+        index.index_doc(8, 6)
+        index.index_doc(9, 7)
+        index.index_doc(7, 8)
+        index.index_doc(6, 9)
+        index.index_doc(11, 10)
+        index.index_doc(10, 11)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2])
+        result = index.sort(c1, reverse=True)
+        self.assertEqual(list(result), [1, 2])
 
 class TestCatalogKeywordIndex(unittest.TestCase):
     def _getTargetClass(self):
@@ -84,7 +120,7 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         klass = self._getTargetClass()
         return klass(lambda x, default: x)
 
-    def test_sort(self):
+    def dont_test_sort(self):
         index = self._makeOne()
         index.index_doc(5, [1])
         index.index_doc(2, [2])
@@ -179,7 +215,8 @@ class TestCatalog(unittest.TestCase):
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        result = catalog.searchResults(name1={}, name2={})
+        numdocs, result = catalog.searchResults(name1={}, name2={})
+        self.assertEqual(numdocs, 1)
         self.assertEqual(list(result), [3])
 
     def test_searchResults_noindex(self):
@@ -195,7 +232,8 @@ class TestCatalog(unittest.TestCase):
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        result = catalog.apply({'name1':{}, 'name2':{}})
+        numdocs, result = catalog.apply({'name1':{}, 'name2':{}})
+        self.assertEqual(numdocs, 1)
         self.assertEqual(list(result), [3])
 
     def test_searchResults_with_sortindex_ascending(self):
@@ -207,8 +245,10 @@ class TestCatalog(unittest.TestCase):
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        result = catalog.searchResults(name1={}, name2={}, sort_index='name1')
-        self.assertEqual(result, ['sorted1', 'sorted2'])
+        numdocs, result = catalog.searchResults(
+            name1={}, name2={}, sort_index='name1')
+        self.assertEqual(numdocs, 3)
+        self.assertEqual(list(result), ['sorted1', 'sorted2', 'sorted3'])
 
     def test_searchResults_with_sortindex_descending(self):
         catalog = self._makeOne()
@@ -219,9 +259,11 @@ class TestCatalog(unittest.TestCase):
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        result = catalog.searchResults(name1={}, name2={}, sort_index='name1',
-                                       sort_descending=True)
-        self.assertEqual(result, ['sorted2', 'sorted1'])
+        numdocs, result = catalog.searchResults(
+            name1={}, name2={}, sort_index='name1',
+            sort_descending=True)
+        self.assertEqual(numdocs, 3)
+        self.assertEqual(list(result), ['sorted3', 'sorted2', 'sorted1'])
         
 class TestFileStorageCatalogFactory(unittest.TestCase):
     def _getTargetClass(self):
@@ -330,5 +372,7 @@ class DummyIndex(object):
     def apply(self, query):
         return self.arg[0]
 
-    def sort(self, results):
-        return ['sorted1', 'sorted2']
+    def sort(self, results, reverse=False):
+        if reverse:
+            return ['sorted3', 'sorted2', 'sorted1']
+        return ['sorted1', 'sorted2', 'sorted3']

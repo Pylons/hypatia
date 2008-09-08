@@ -1,3 +1,5 @@
+import itertools
+
 import BTrees
 from persistent.mapping import PersistentMapping
 from persistent import Persistent
@@ -72,40 +74,28 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
-    def sort(self, docids):
-        rev_index = self._rev_index
-        s = sorted([(rev_index.get(docid), docid) for docid in docids])
-        return [ x[1] for x in s ]
 
-    def index_doc(self, docid, value):
-        """See interface IInjection"""
-        rev_index = self._rev_index
-        if docid in rev_index:
-            if docid in self._fwd_index.get(value, ()):
-                # no need to index the doc, its already up to date
-                return
-            # unindex doc if present
-            self.unindex_doc(docid)
+    def sort(self, docids, reverse=False):
+        numdocs = self._num_docs.value
+        if not numdocs:
+            yield None
 
-        # Insert into forward index.
-        set = self._fwd_index.get(value)
-        if set is None:
-            set = self.family.II.TreeSet()
-            self._fwd_index[value] = set
-        set.insert(docid)
-
-        # increment doc count
-        self._num_docs.change(1)
-
-        # Insert into reverse index.
-        rev_index[docid] = value
-
-    def apply(self, query):
-        if len(query) != 2 or not isinstance(query, tuple):
-            raise TypeError("two-length tuple expected", query)
-        return self.family.II.multiunion(
-            self._fwd_index.values(*query))
-
+        if (reverse) or ( len(docids) / float(numdocs) ) < .20:
+            # If fewer than ~ 20% of the index's documents will be
+            # returned, use a non-lazy sort.  XXX the reverse case is
+            # handled here because there's no way to iterate over a
+            # btree's keys in reverse order.  This needs to be
+            # changed.
+            rev_index = self._rev_index
+            for docid in sorted(docids, key=rev_index.get, reverse=reverse):
+                yield docid
+        else:
+            # Otherwise, use a lazy sort
+            for value, stored_docids in self._fwd_index.items():
+                isect = self.family.IF.intersection(docids, stored_docids)
+                for docid in isect:
+                    yield docid
+                
 class KeywordIndexBase(CatalogIndex):
     def apply(self, query):
         operator = 'and'
@@ -114,11 +104,6 @@ class KeywordIndexBase(CatalogIndex):
                 operator = query.pop('operator')
             query = query['query']
         return self.search(query, operator=operator)
-
-    def sort(self, docids):
-        rev_index = self._rev_index
-        s = [(sorted(list(rev_index.get(docid))), docid) for docid in docids]
-        return [ x[1] for x in sorted(s) ]
 
 class CatalogKeywordIndex(KeywordIndexBase, KeywordIndex):
     normalize = False
@@ -197,7 +182,7 @@ class Catalog(PersistentMapping):
 
         if not results:
             # no applicable indexes, so catalog was not applicable
-            return None
+            return 0, ()
 
         results.sort() # order from smallest to largest
 
@@ -205,13 +190,13 @@ class Catalog(PersistentMapping):
         for _, r in results:
             _, result = self.family.IF.weightedIntersection(result, r)
 
+        numdocs = len(result)
+
         if sort_index:
             index = self[sort_index]
-            result = index.sort(result)
-            if sort_descending:
-                result.reverse()
+            result = index.sort(result, reverse=sort_descending)
 
-        return result
+        return numdocs, result
 
     def apply(self, query):
         return self.searchResults(**query)

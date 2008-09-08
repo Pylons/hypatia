@@ -15,15 +15,21 @@
 __version__ = '0.1'
 
 import os
+import sys
 
 from ez_setup import use_setuptools
 use_setuptools()
 
 from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.txt')).read()
-CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+try:
+    here = os.path.abspath(os.path.dirname(__file__))
+    README = open(os.path.join(here, 'README.txt')).read()
+    CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+except IOError:
+    here = os.path.abspath(os.path.dirname(sys.argv[0]))
+    README = open(os.path.join(here, 'README.txt')).read()
+    CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 setup(name='repoze.catalog',
       version=__version__,
