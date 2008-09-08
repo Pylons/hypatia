@@ -54,6 +54,48 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.value, 'abc')
         self.assertEqual(index.docid, 1)
 
+class TestCatalogFieldIndex(unittest.TestCase):
+    def _getTargetClass(self):
+        from repoze.catalog.catalog import CatalogFieldIndex
+        return CatalogFieldIndex
+
+    def _makeOne(self):
+        klass = self._getTargetClass()
+        return klass(lambda x, default: x)
+
+    def test_sort(self):
+        index = self._makeOne()
+        index.index_doc(5, 1)
+        index.index_doc(2, 2)
+        index.index_doc(1, 3)
+        index.index_doc(3, 4) 
+        index.index_doc(4, 5)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1)
+        self.assertEqual(result, [5, 2, 1, 3, 4])
+
+class TestCatalogKeywordIndex(unittest.TestCase):
+    def _getTargetClass(self):
+        from repoze.catalog.catalog import CatalogKeywordIndex
+        return CatalogKeywordIndex
+
+    def _makeOne(self):
+        klass = self._getTargetClass()
+        return klass(lambda x, default: x)
+
+    def test_sort(self):
+        index = self._makeOne()
+        index.index_doc(5, [1])
+        index.index_doc(2, [2])
+        index.index_doc(1, [3])
+        index.index_doc(3, [4]) 
+        index.index_doc(4, [5])
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1)
+        self.assertEqual(result, [5, 2, 1, 3, 4])
+
 class TestCatalog(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.catalog import Catalog
@@ -156,6 +198,31 @@ class TestCatalog(unittest.TestCase):
         result = catalog.apply({'name1':{}, 'name2':{}})
         self.assertEqual(list(result), [3])
 
+    def test_searchResults_with_sortindex_ascending(self):
+        catalog = self._makeOne()
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        c2 = IFSet([3, 4, 5])
+        idx2 = DummyIndex(c2)
+        catalog['name2'] = idx2
+        result = catalog.searchResults(name1={}, name2={}, sort_index='name1')
+        self.assertEqual(result, ['sorted1', 'sorted2'])
+
+    def test_searchResults_with_sortindex_descending(self):
+        catalog = self._makeOne()
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        c2 = IFSet([3, 4, 5])
+        idx2 = DummyIndex(c2)
+        catalog['name2'] = idx2
+        result = catalog.searchResults(name1={}, name2={}, sort_index='name1',
+                                       sort_descending=True)
+        self.assertEqual(result, ['sorted2', 'sorted1'])
+        
 class TestFileStorageCatalogFactory(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.catalog import FileStorageCatalogFactory
@@ -262,5 +329,6 @@ class DummyIndex(object):
 
     def apply(self, query):
         return self.arg[0]
-        
 
+    def sort(self, results):
+        return ['sorted1', 'sorted2']

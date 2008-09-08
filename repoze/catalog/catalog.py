@@ -72,15 +72,32 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
+    def sort(self, docids):
+        rev_index = self._rev_index
+        s = sorted([(rev_index.get(docid), docid) for docid in docids])
+        return [ x[1] for x in s ]
 
-class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
-    implements(ICatalogIndex)
+class KeywordIndexBase(CatalogIndex):
     def apply(self, query):
         operator = 'and'
         if isinstance(query, dict):
-            operator = query['operator']
+            if 'operator' in query:
+                operator = query.pop('operator')
             query = query['query']
         return self.search(query, operator=operator)
+
+    def sort(self, docids):
+        rev_index = self._rev_index
+        s = [(sorted(list(rev_index.get(docid))), docid) for docid in docids]
+        return [ x[1] for x in sorted(s) ]
+
+class CatalogKeywordIndex(KeywordIndexBase, KeywordIndex):
+    normalize = False
+    implements(ICatalogIndex)
+
+class CatalogCaseInsensitiveKeywordIndex(KeywordIndexBase, KeywordIndex):
+    normalize = True
+    implements(ICatalogIndex)
 
 class Catalog(PersistentMapping):
 
@@ -129,6 +146,13 @@ class Catalog(PersistentMapping):
                 index.index_doc(docid, obj)
 
     def searchResults(self, **query):
+        sort_index = None
+        sort_descending = False # ascending
+        if 'sort_index' in query:
+            sort_index = query.pop('sort_index')
+        if 'sort_descending' in query:
+            sort_descending = query.pop('sort_descending')
+
         results = []
         for index_name, index_query in query.items():
             index = self.get(index_name)
@@ -151,6 +175,12 @@ class Catalog(PersistentMapping):
         _, result = results.pop(0)
         for _, r in results:
             _, result = self.family.IF.weightedIntersection(result, r)
+
+        if sort_index:
+            index = self[sort_index]
+            result = index.sort(result)
+            if sort_descending:
+                result.reverse()
 
         return result
 
