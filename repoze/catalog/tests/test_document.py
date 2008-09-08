@@ -58,10 +58,12 @@ class TestDocumentMap(unittest.TestCase):
 
     def test_new_docid(self):
         map = self._makeOne()
+        times = [0]
         def randrange(frm, to):
-            yield frm
-            yield to
+            val = times[0]
+            times[0] = times[0] + 1
+            return val
         map._randrange = randrange
         map.add(0, '/whatever')
-        self.assertEqual(map.new_docid(), map.family.maxint)
+        self.assertEqual(map.new_docid(), 1)
         

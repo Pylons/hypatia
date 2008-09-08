@@ -7,6 +7,7 @@ from BTrees.OIBTree import OIBTree
 import BTrees
 
 class DocumentMap(Persistent):
+    _v_nextid = None
     family = BTrees.family32
     _randrange = random.randrange
 
