@@ -116,14 +116,14 @@ class Catalog(PersistentMapping):
 
     def index_doc(self, docid, obj):
         """Register the data in indexes of this catalog."""
+        assertint(docid)
         for index in self.values():
-            assertint(docid)
             index.index_doc(docid, obj)
 
     def unindex_doc(self, docid):
         """Unregister the data from indexes of this catalog."""
+        assertint(docid)
         for index in self.values():
-            assertint(docid)
             index.unindex_doc(docid)
 
     def __setitem__(self, name, index):

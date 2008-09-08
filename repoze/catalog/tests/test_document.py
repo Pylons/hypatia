@@ -55,3 +55,13 @@ class TestDocumentMap(unittest.TestCase):
         map.add(1, '/path1')
         self.assertEqual(map.path_for_docid(1), '/path1')
         self.assertEqual(map.path_for_docid(2), None)
+
+    def test_new_docid(self):
+        map = self._makeOne()
+        def randrange(frm, to):
+            yield frm
+            yield to
+        map._randrange = randrange
+        map.add(0, '/whatever')
+        self.assertEqual(map.new_docid(), map.family.maxint)
+        
