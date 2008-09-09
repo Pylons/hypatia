@@ -117,7 +117,7 @@ information about what specific index types expect for query
 parameters.
 
 You can also use a field index as a ``sort_index``, which sorts the
-document ids based on the values for that docid present in that index:
+document ids based on the values for that docid present in that index::
 
    numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
                                             sort_index='flavors')
@@ -125,7 +125,7 @@ document ids based on the values for that docid present in that index:
    (2, [1, 2])
 
 The default sort order is ascending.  You can reverse the sort using
-``sort_descending``:
+``sort_descending``::
 
    numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
                                             sort_index='flavors', 
