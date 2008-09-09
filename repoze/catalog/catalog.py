@@ -16,6 +16,8 @@ from zope.index.text import TextIndex
 from zope.index.field import FieldIndex
 from zope.index.keyword import KeywordIndex
 
+_marker = ()
+
 class ICatalog(IIndexSearch, IInjection):
     def searchResults(**query):
         """Search on the given indexes."""
@@ -95,8 +97,36 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 isect = self.family.IF.intersection(docids, stored_docids)
                 for docid in isect:
                     yield docid
+
+    def unindex_doc(self, docid):
+        """See interface IInjection; base class overridden to be able
+        to index None values """
+        rev_index = self._rev_index
+        value = rev_index.get(docid, _marker)
+        if value is _marker:
+            return # not in index
+
+        del rev_index[docid]
+
+        try:
+            set = self._fwd_index[value]
+            set.remove(docid)
+        except KeyError:
+            # This is fishy, but we don't want to raise an error.
+            # We should probably log something.
+            # but keep it from throwing a dirty exception
+            set = 1
+
+        if not set:
+            del self._fwd_index[value]
+
+        self._num_docs.change(-1)
+
                 
-class KeywordIndexBase(CatalogIndex):
+class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
+    normalize = False
+    implements(ICatalogIndex)
+
     def apply(self, query):
         operator = 'and'
         if isinstance(query, dict):
@@ -105,13 +135,34 @@ class KeywordIndexBase(CatalogIndex):
             query = query['query']
         return self.search(query, operator=operator)
 
-class CatalogKeywordIndex(KeywordIndexBase, KeywordIndex):
-    normalize = False
-    implements(ICatalogIndex)
+    def _insert_forward(self, docid, words):
+        """insert a sequence of words into the forward index """
 
-class CatalogCaseInsensitiveKeywordIndex(KeywordIndexBase, KeywordIndex):
-    normalize = True
-    implements(ICatalogIndex)
+        idx = self._fwd_index
+        has_key = idx.has_key
+        for word in words:
+            if not has_key(word):
+                idx[word] = self.family.IF.Set()
+            idx[word].insert(docid)
+
+    def search(self, query, operator='and'):
+        """Execute a search given by 'query'."""
+        if isinstance(query, basestring):
+            query = [query]
+
+        f = {'and' : self.family.IF.intersection,
+             'or' : self.family.IF.union,
+             }[operator]
+    
+        rs = None
+        for word in query:
+            docids = self._fwd_index.get(word, self.family.IF.Set())
+            rs = f(rs, docids)
+            
+        if rs:
+            return rs
+        else:
+            return self.family.IF.Set()
 
 class Catalog(PersistentMapping):
 
@@ -177,7 +228,7 @@ class Catalog(PersistentMapping):
                 continue
             if not r:
                 # empty results
-                return r
+                return 0, r
             results.append((len(r), r))
 
         if not results:
