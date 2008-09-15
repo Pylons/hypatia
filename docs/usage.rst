@@ -125,13 +125,26 @@ document ids based on the values for that docid present in that index::
    (2, [1, 2])
 
 The default sort order is ascending.  You can reverse the sort using
-``sort_descending``::
+``reverse``::
 
    numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
                                             sort_index='flavors', 
-                                            sort_descending=True)
+                                            reverse=True)
    print (numdocs, [ x for x in results ])
    (2, [2, 1])
+
+If you use a sort index, you may choose to limit the number of results
+returned.  Do this by passing ``limit`` with an integer value of the
+number of results you want.  Note that this parameter has no effect if
+you do not supply a ``sort_index``::
+
+   numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
+                                            sort_index='flavors', 
+                                            limit=1)
+   print (numdocs, [ x for x in results ])
+   (1, [1])
+
+You may combine ``reverse`` and ``limit`` as necessary.
 
 Restrictions
 ------------
