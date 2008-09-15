@@ -1,4 +1,6 @@
-import itertools
+import bisect
+import heapq
+from itertools import islice
 
 import BTrees
 from persistent.mapping import PersistentMapping
@@ -76,27 +78,108 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
+    use_lazy = False # for unit testing
+    use_nbest = False # for unit testing
 
-    def sort(self, docids, reverse=False):
+    def sort(self, docids, reverse=False, limit=None):
+        if limit is not None:
+            limit = int(limit)
+            if limit < 1:
+                raise ValueError('limit must be 1 or greater')
+
+        if not docids:
+            raise StopIteration
+            
         numdocs = self._num_docs.value
         if not numdocs:
-            yield None
+            raise StopIteration
 
-        if (reverse) or ( len(docids) / float(numdocs) ) < .20:
-            # If fewer than ~ 20% of the index's documents will be
-            # returned, use a non-lazy sort.  XXX the reverse case is
-            # handled here because there's no way to iterate over a
-            # btree's keys in reverse order.  This needs to be
-            # changed.
-            rev_index = self._rev_index
-            for docid in sorted(docids, key=rev_index.get, reverse=reverse):
-                yield docid
+        rev_index = self._rev_index
+        fwd_index = self._fwd_index
+
+        rlen = len(docids)
+
+        # use_lazy and use_nbest computations lifted wholesale from
+        # Zope2 catalog without questioning reasoning
+        use_lazy = (rlen > (numdocs * (rlen / 100 + 1)))
+        use_nbest = limit and limit * 4 < rlen
+
+        # overrides for unit tests
+        if self.use_lazy:
+            use_lazy = True
+        if self.use_nbest:
+            use_nbest = True
+
+        marker = _marker
+
+        if use_nbest:
+            # this is a sort with a limit that appears useful, try to
+            # take advantage of the fact that we can keep a smaller
+            # set of simultaneous values in memory; use generators
+            # and heapq functions to do so.
+            def nsort():
+                for docid in docids:
+                    val = rev_index.get(docid, marker)
+                    if val is not marker:
+                        yield (val, docid)
+            iterable = nsort()
+            if reverse:
+                # we use a generator as an iterable in the reverse
+                # sort case because the nlargest implementation does
+                # not manifest the whole thing into memory at once if
+                # we do so.
+                for val in heapq.nlargest(limit, iterable):
+                    yield val[1]
+
+            else:
+                # lifted from heapq.nsmallest
+                it = iter(iterable)
+                result = sorted(islice(it, 0, limit))
+                if not result:
+                    yield StopIteration
+                insort = bisect.insort
+                pop = result.pop
+                los = result[-1]    # los --> Largest of the nsmallest
+                for elem in it:
+                    if los <= elem:
+                        continue
+                    insort(result, elem)
+                    pop()
+                    los = result[-1]
+                for val in result:
+                    yield val[1]
+
         else:
-            # Otherwise, use a lazy sort
-            for value, stored_docids in self._fwd_index.items():
-                isect = self.family.IF.intersection(docids, stored_docids)
-                for docid in isect:
-                    yield docid
+            if use_lazy and not reverse:
+                # Since this the sort is not reversed, and the number
+                # of results in the search result set is much larger
+                # than the number of items in this index, we assume it
+                # will be fastest to iterate over all of our forward
+                # BTree's items instead of using a full sort, as our
+                # forward index is already sorted in ascending order
+                # by value. The Zope 2 catalog implementation claims
+                # that this case is rarely exercised in practice.
+                n = 0
+                for stored_docids in fwd_index.values():
+                    isect = self.family.IF.intersection(docids, stored_docids)
+                    for docid in isect:
+                        if limit and n >= limit:
+                            raise StopIteration
+                        n += 1
+                        yield docid
+            else:
+                # If the result set is not much larger than the number
+                # of documents in this index, or if we need to sort in
+                # reverse order, use a non-lazy sort.
+                n = 0
+                for docid in sorted(docids, key=rev_index.get, reverse=reverse):
+                    if rev_index.get(docid, marker) is not marker:
+                        # we skip docids that are not in this index (as
+                        # per Z2 catalog implementation)
+                        if limit and n >= limit:
+                            raise StopIteration
+                        n += 1
+                        yield docid
 
     def unindex_doc(self, docid):
         """See interface IInjection; base class overridden to be able
@@ -212,17 +295,20 @@ class Catalog(PersistentMapping):
 
     def searchResults(self, **query):
         sort_index = None
-        sort_descending = False # ascending
+        reverse = False
+        limit = None
         if 'sort_index' in query:
             sort_index = query.pop('sort_index')
-        if 'sort_descending' in query:
-            sort_descending = query.pop('sort_descending')
+        if 'reverse' in query:
+            reverse = query.pop('reverse')
+        if 'limit' in query:
+            limit = query.pop('limit')
 
         results = []
         for index_name, index_query in query.items():
             index = self.get(index_name)
             if index is None:
-                raise ValueError('No such index %s' % index)
+                raise ValueError('No such index %s' % index_name)
             r = index.apply(index_query)
             if r is None:
                 continue
@@ -245,9 +331,12 @@ class Catalog(PersistentMapping):
 
         if sort_index:
             index = self[sort_index]
-            result = index.sort(result, reverse=sort_descending)
+            result = index.sort(result, reverse=reverse, limit=limit)
 
-        return numdocs, result
+        if limit is None:
+            return numdocs, result
+        else:
+            return min(numdocs, limit), result
 
     def apply(self, query):
         return self.searchResults(**query)
