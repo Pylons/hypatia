@@ -146,6 +146,12 @@ you do not supply a ``sort_index``::
 
 You may combine ``reverse`` and ``limit`` as necessary.
 
+If a sort_index is used, and the sort index you're using does not
+contain all the documents returned by the search, the ``numdocs``
+value returned by ``searchResults`` may be incorrect.  There will be
+fewer results than those indicated by ``numdocs`` in this
+circumstance.
+
 Restrictions
 ------------
 
