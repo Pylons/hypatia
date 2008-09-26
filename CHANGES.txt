@@ -1,3 +1,7 @@
+0.2
+
+  Provide ``sort_index`` capability.
+
 0.1
 
   Initial release.
