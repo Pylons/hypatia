@@ -54,8 +54,8 @@ Searching
 
 Searching for values from a previously indexed corpus of content is
 significantly easier than indexing.  We pass a query into our
-catalog's ``searchResults`` method, which is composed of the name of
-our index and a value we'd like to find a document for.
+catalog's ``search`` method, which is composed of the name of our
+index and a value we'd like to find a document for.
 
 .. code-block:: python
    :linenos:
@@ -66,7 +66,7 @@ our index and a value we'd like to find a document for.
    factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
    manager = ConnectionManager()
    catalog = factory(manager)
-   numdocs, results = catalog.searchResults(flavors=('peach', 'peach'))
+   numdocs, results = catalog.search(flavors=('peach', 'peach'))
    print (numdocs, [ x for x in results ])
 
 The results of the above search will search the corpus for documents
@@ -101,7 +101,7 @@ The results are intersected to provide a result:
    factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
    manager = ConnectionManager()
    catalog = factory(manager)
-   numdocs, results = catalog.searchResults(flavors=('peach', 'peach'), texts='nutty')
+   numdocs, results = catalog.search(flavors=('peach', 'peach'), texts='nutty')
    print (numdocs, [ x for x in results ])
 
 The results of the above search will return the following:
@@ -119,7 +119,7 @@ parameters.
 You can also use a field index as a ``sort_index``, which sorts the
 document ids based on the values for that docid present in that index::
 
-   numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
+   numdocs, results = catalog.search(flavors=('peach', 'pistachio'),
                                             sort_index='flavors')
    print (numdocs, [ x for x in results ])
    (2, [1, 2])
@@ -127,9 +127,9 @@ document ids based on the values for that docid present in that index::
 The default sort order is ascending.  You can reverse the sort using
 ``reverse``::
 
-   numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
-                                            sort_index='flavors', 
-                                            reverse=True)
+   numdocs, results = catalog.search(flavors=('peach', 'pistachio'),
+                                     sort_index='flavors', 
+                                     reverse=True)
    print (numdocs, [ x for x in results ])
    (2, [2, 1])
 
@@ -138,9 +138,9 @@ returned.  Do this by passing ``limit`` with an integer value of the
 number of results you want.  Note that this parameter has no effect if
 you do not supply a ``sort_index``::
 
-   numdocs, results = catalog.searchResults(flavors=('peach', 'pistachio'),
-                                            sort_index='flavors', 
-                                            limit=1)
+   numdocs, results = catalog.search(flavors=('peach', 'pistachio'),
+                                     sort_index='flavors', 
+                                     limit=1)
    print (numdocs, [ x for x in results ])
    (1, [1])
 
@@ -148,9 +148,17 @@ You may combine ``reverse`` and ``limit`` as necessary.
 
 If a sort_index is used, and the sort index you're using does not
 contain all the documents returned by the search, the ``numdocs``
-value returned by ``searchResults`` may be incorrect.  There will be
-fewer results than those indicated by ``numdocs`` in this
-circumstance.
+value returned by ``search`` may be incorrect.  There will be fewer
+results than those indicated by ``numdocs`` in this circumstance.
+
+Document Map
+------------
+
+An implementation of a "document map" suitable for ZODB applications
+exists within the ``repoze.bfg.document.DocumentMap`` class.  A
+document map allows you to map document ids to "addresses" (e.g. paths
+or unique identifiers).  See :ref:`api_document_section` in the API
+documentation chapter for more information.
 
 Restrictions
 ------------

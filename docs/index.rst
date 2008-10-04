@@ -22,6 +22,16 @@ Narrative documentation explaining how to use :mod:`repoze.catalog`.
    usage
    glossary
 
+API documentation
+-----------------
+
+API documentation for :mod:`repoze.catalog`.
+
+.. toctree::
+   :maxdepth: 2
+
+   api
+
 Indices and tables
 ==================
 

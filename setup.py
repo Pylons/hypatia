@@ -56,7 +56,7 @@ setup(name='repoze.catalog',
       install_requires = [
         'zope.index',
         ],
-      test_suite="repoze.catalog.tests",
+      test_suite="repoze.catalog",
       entry_points = """\
       """
       )

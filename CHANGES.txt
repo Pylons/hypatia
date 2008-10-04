@@ -1,3 +1,24 @@
+0.3
+
+  Features
+
+    Add ``repoze.catalog.document.DocumentMap`` class, which provides
+    a mechanism to map "addresses" (paths) to document ids.
+
+  Documentation
+
+    Add API documentation for catalog and document map.
+
+  Backwards incompatibilities
+
+    Rename ``searchResults`` method to ``search``.
+
+    Removed ``updateIndex`` and ``updateIndexes`` methods of catalog.
+
+    All index implementations moved into ``repoze.catalog.indexes``.
+
+    All interfaces moved to ``repoze.catalog.interfaces``.
+
 0.2
 
   Provide ``sort_index`` capability.

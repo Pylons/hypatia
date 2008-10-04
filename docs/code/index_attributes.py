@@ -1,8 +1,8 @@
 from repoze.catalog.catalog import FileStorageCatalogFactory
 from repoze.catalog.catalog import ConnectionManager
 
-from repoze.catalog.catalog import CatalogFieldIndex
-from repoze.catalog.catalog import CatalogTextIndex
+from repoze.catalog.indexes.field import CatalogFieldIndex
+from repoze.catalog.indexes.text import CatalogTextIndex
 
 factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
 
