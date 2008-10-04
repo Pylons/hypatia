@@ -21,6 +21,7 @@ Narrative documentation explaining how to use :mod:`repoze.catalog`.
    install
    usage
    glossary
+   changes
 
 API documentation
 -----------------

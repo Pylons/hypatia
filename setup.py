@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 import os
 import sys
@@ -51,9 +51,11 @@ setup(name='repoze.catalog',
       namespace_packages=['repoze'],
       zip_safe=False,
       tests_require = [
+        'setuptools',
         'zope.index',
         ],
       install_requires = [
+        'setuptools',
         'zope.index',
         ],
       test_suite="repoze.catalog",
