@@ -1,3 +1,16 @@
+0.4 (10/6/2008)
+
+  Features
+
+    Speed up keyword index 'or' (union) queries by using a single
+    IFBTree.multiunion instead of multiple calls to IFBTree.union;
+    this is most helpful for speeding up 'or' queries where there are
+    lots of terms in the query sequence.
+
+  Documentation
+
+    Add ``overview`` page.
+
 0.3 (10/4/2008)
 
   Features
