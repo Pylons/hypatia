@@ -18,6 +18,7 @@ Narrative documentation explaining how to use :mod:`repoze.catalog`.
 .. toctree::
    :maxdepth: 2
 
+   overview
    install
    usage
    glossary
