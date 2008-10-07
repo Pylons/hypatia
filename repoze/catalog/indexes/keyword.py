@@ -32,14 +32,21 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         if isinstance(query, basestring):
             query = [query]
 
-        f = {'and' : self.family.IF.intersection,
-             'or' : self.family.IF.union,
-             }[operator]
-    
         rs = None
-        for word in query:
-            docids = self._fwd_index.get(word, self.family.IF.Set())
-            rs = f(rs, docids)
+
+        if operator == 'or':
+            sets = []
+            for word in query:
+                docids = self._fwd_index.get(word, self.family.IF.Set())
+                sets.append(docids)
+            rs = self.family.IF.multiunion(sets)
+
+        else:
+            for word in query:
+                docids = self._fwd_index.get(word, self.family.IF.Set())
+                rs = self.family.IF.intersection(rs, docids)
+                if not rs:
+                    break
             
         if rs:
             return rs
