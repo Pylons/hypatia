@@ -42,10 +42,8 @@ class Catalog(PersistentMapping):
         No other type of object may be added to a catalog."""
         if not ICatalogIndex.providedBy(index):
             raise ValueError('%s does not provide ICatalogIndex')
-        index.__parent__ = self
-        index.__name__ = name
         return PersistentMapping.__setitem__(self, name, index)
-            
+
     def search(self, **query):
         """ Use the query terms to perform a query.  Return a tuple of
         (num, resultseq) based on the merging of results from
