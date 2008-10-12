@@ -85,6 +85,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                     yield val[1]
 
         else:
+            print "use_lazy=%s\treverse=%s" % ( use_lazy, reverse )
             if use_lazy and not reverse:
                 # Since this the sort is not reversed, and the number
                 # of results in the search result set is much larger
