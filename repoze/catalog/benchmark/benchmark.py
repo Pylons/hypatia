@@ -14,12 +14,14 @@ from HTMLParser import HTMLParser
 from urlparse import urljoin
 
 class Profiler(object):
-    """This is a 'profiler' of sorts intended to let us find out how long particular actions,
-       of programmer interest, take to run, total.  Actions can be arbitrarily nested.  This
-       doesn't do anything like the actual python profiler, which tells how much time you end up
-       spending in particular function calls aggregated across all calls to particular functions.
-       Both kinds of data are useful and recommended for getting a handle on where performance
-       bottlenecks might be.
+    """This is a 'profiler' of sorts intended to let us find out how
+       long particular actions, of programmer interest, take to run,
+       total.  Actions can be arbitrarily nested.  This doesn't do
+       anything like the actual python profiler, which tells how much
+       time you end up spending in particular function calls
+       aggregated across all calls to particular functions.  Both
+       kinds of data are useful and recommended for getting a handle
+       on where performance bottlenecks might be.
     """
     def __init__(self):
         self.action_root = TimedAction('Total')
@@ -38,7 +40,8 @@ class Profiler(object):
         
         action = self.action_stack.pop()
         if action.name != name:
-            raise Exception( "Profiler action stopped out of sequence.  Expecting: %s" % action.name )
+            raise Exception( "Profiler action stopped out of sequence.  "
+                             "Expecting: %s" % action.name )
         action.stop()
         
     def print_stack(self):
@@ -57,7 +60,8 @@ class TimedAction(object):
     def print_action(self,level=0):
         indent = "  ".join( [ "" for i in xrange(level+1) ] ) # Hacky, sorry
         if self.end_time:
-            print "%s%s: %0.3f" % ( indent, self.name, self.end_time - self.start_time )
+            print "%s%s: %0.3f" % ( indent, self.name,
+                                    self.end_time - self.start_time )
         else:
             print "%s%s:" % ( indent, self.name )
 
@@ -83,7 +87,9 @@ def prep_catalog():
     if not os.path.exists(zodb_file):
         # Create a catalog
         manager = ConnectionManager()
-        factory = FileStorageCatalogFactory( os.path.join(BENCHMARK_DATA_DIR,'test.zodb'), 'benchmark' )
+        factory = FileStorageCatalogFactory(
+            os.path.join(BENCHMARK_DATA_DIR,
+                         'test.zodb'), 'benchmark' )
         c = factory(manager)
         
         # Create some indices
@@ -112,7 +118,8 @@ def prep_catalog():
         print "Indexed %d messages" % id
     
 def get_mailbox_filenames():
-    return [ dir for dir in os.listdir(BENCHMARK_DATA_DIR) if dir[-7:] == '.txt.gz' ]
+    return [ dir for dir in
+             os.listdir(BENCHMARK_DATA_DIR) if dir[-7:] == '.txt.gz' ]
 
 # Adapter methods for indexing messages
 def get_subject(msg,default):
@@ -151,7 +158,8 @@ class MailListSucker(HTMLParser):
                     print "Downloading %s..." % href
                     fname = href[href.rindex('/')+1:]
                     down = urlopen(href)
-                    out = open( os.path.join( BENCHMARK_DATA_DIR, fname ), "wb" )
+                    out = open( os.path.join( BENCHMARK_DATA_DIR,
+                                              fname ), "wb" )
                     buf = down.read(self.BUFFER_SIZE)
                     while len(buf):
                         out.write(buf)
@@ -176,7 +184,8 @@ class MessageIterator(object):
             # Read whole thing into memory and manipulate it.
             # Not the most efficient but good enough for testing
             print "load %s" % fname
-            self.messages = gzip.open(os.path.join(BENCHMARK_DATA_DIR,fname)).read().split('\nFrom ')
+            self.messages = gzip.open(
+                os.path.join(BENCHMARK_DATA_DIR,fname)).read().split('\nFrom ')
         
         else:    
             raise StopIteration
@@ -191,12 +200,14 @@ class MessageIterator(object):
         return self
 
 def run():
-    # Download mailbox archive of python mailing list and build catalog if needed
+    # Download mailbox archive of python mailing list and build
+    # catalog if needed
     prep_catalog()
 
     # Open a catalog
     manager = ConnectionManager()
-    factory = FileStorageCatalogFactory( os.path.join(BENCHMARK_DATA_DIR,'test.zodb'), 'benchmark' )
+    factory = FileStorageCatalogFactory(
+        os.path.join(BENCHMARK_DATA_DIR,'test.zodb'), 'benchmark' )
     c = factory(manager)
 
     # Do some searches
