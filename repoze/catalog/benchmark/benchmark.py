@@ -1,14 +1,6 @@
 BENCHMARK_DATA_DIR='benchmark_data'
 MAILLIST_INDEX='http://mail.python.org/pipermail/python-list/'
 
-# Load local eggs
-# FIXME: We should be able to get easy install to do this for us?
-import os,sys
-for fname in os.listdir('.'):
-    if fname[-4:] == '.egg':
-        sys.path.append(fname)
-
-from setuptools import Command
 from repoze.catalog.catalog import FileStorageCatalogFactory
 from repoze.catalog.catalog import ConnectionManager
 from repoze.catalog.indexes.field import CatalogFieldIndex
@@ -72,60 +64,6 @@ class TimedAction(object):
             
 # Start profiling
 profiler = Profiler()
-
-class Benchmark(Command):
-    user_options=[]
-    
-    def initialize_options(self):
-        pass
-    
-    def finalize_options(self):
-        pass
-    
-    def run(self):
-        # Download mailbox archive of python mailing list and build catalog if needed
-        prep_catalog()
-
-        # Open a catalog
-        manager = ConnectionManager()
-        factory = FileStorageCatalogFactory( os.path.join(BENCHMARK_DATA_DIR,'test.zodb'), 'benchmark' )
-        c = factory(manager)
-        
-        # Do some searches
-        
-        profiler.start( "unsorted retrieval" )
-        n, results = c.search(date=('0', 'Z'))
-        print '%d results ' % n
-        # Force generator to marshall brains
-        for result in results:
-            pass
-        profiler.stop( "unsorted retrieval" )
-
-        profiler.start( "repeat unsorted retrieval" )
-        n, results = c.search(date=('0', 'Z'))
-        print '%d results ' % n
-        # Force generator to marshall brains
-        for result in results:
-            pass
-        profiler.stop( "repeat unsorted retrieval" )
-        
-        profiler.start( "sorted retrieval" )
-        n, results = c.search( date=('0', 'Z'), sort_index='subject' )
-        print '%d results ' % n
-        for result in results:
-            pass
-        profiler.stop( "sorted retrieval" )
-        
-        profiler.start( "reverse sorted retrieval" )
-        n, results = c.search( date=('0', 'Z'), sort_index='subject', reverse=True )
-        print '%d results ' % n
-        for result in results:
-            pass
-        profiler.stop( "reverse sorted retrieval" )
-
-        
-        profiler.stop()
-        profiler.print_stack()
 
 def prep_catalog():
     """Download python mailing list, create new catalog and catalog 
@@ -249,3 +187,49 @@ class MessageIterator(object):
         
     def __iter__(self):
         return self
+
+def run():
+    # Download mailbox archive of python mailing list and build catalog if needed
+    prep_catalog()
+
+    # Open a catalog
+    manager = ConnectionManager()
+    factory = FileStorageCatalogFactory( os.path.join(BENCHMARK_DATA_DIR,'test.zodb'), 'benchmark' )
+    c = factory(manager)
+
+    # Do some searches
+
+    profiler.start( "unsorted retrieval" )
+    n, results = c.search(date=('0', 'Z'))
+    print '%d results ' % n
+    # Force generator to marshall brains
+    for result in results:
+        pass
+    profiler.stop( "unsorted retrieval" )
+
+    profiler.start( "repeat unsorted retrieval" )
+    n, results = c.search(date=('0', 'Z'))
+    print '%d results ' % n
+    # Force generator to marshall brains
+    for result in results:
+        pass
+    profiler.stop( "repeat unsorted retrieval" )
+
+    profiler.start( "sorted retrieval" )
+    n, results = c.search( date=('0', 'Z'), sort_index='subject' )
+    print '%d results ' % n
+    for result in results:
+        pass
+    profiler.stop( "sorted retrieval" )
+
+    profiler.start( "reverse sorted retrieval" )
+    n, results = c.search( date=('0', 'Z'), sort_index='subject', reverse=True )
+    print '%d results ' % n
+    for result in results:
+        pass
+    profiler.stop( "reverse sorted retrieval" )
+
+
+    profiler.stop()
+    profiler.print_stack()
+

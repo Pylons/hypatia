@@ -22,15 +22,6 @@ use_setuptools()
 
 from setuptools import setup, find_packages
 
-cmdclass = {}
-try:
-    # Won't load if we haven't gotten our dependencies yet
-    # Need to run 'test' command before benchmark command.
-    from repoze.catalog.benchmark import benchmark
-    cmdclass['benchmark'] = benchmark.Benchmark
-except ImportError, e:
-    print "WARNING: %s" % e
-    
 try:
     here = os.path.abspath(os.path.dirname(__file__))
     README = open(os.path.join(here, 'README.txt')).read()
@@ -69,7 +60,8 @@ setup(name='repoze.catalog',
         ],
       test_suite="repoze.catalog",
       entry_points = """\
+      [console_scripts]
+      catalog_benchmark = repoze.catalog.benchmark.benchmark:run
       """,
-      cmdclass = cmdclass,
       )
 
