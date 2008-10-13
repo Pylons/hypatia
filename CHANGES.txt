@@ -5,6 +5,8 @@ Next release
     Speed up keyword index 'and' (intersection) queries nominally by
     sorting intersected sets from smallest-to-largest first.
 
+    Benchmarking suite provided by Chris Rossi.
+
 0.4 (10/6/2008)
 
   Features
