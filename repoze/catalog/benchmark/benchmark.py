@@ -1,3 +1,5 @@
+import os
+
 BENCHMARK_DATA_DIR='benchmark_data'
 MAILLIST_INDEX='http://mail.python.org/pipermail/python-list/'
 
