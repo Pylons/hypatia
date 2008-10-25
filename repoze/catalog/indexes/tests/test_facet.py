@@ -18,10 +18,10 @@ taxonomy = [
     'style:gucci:dress',
     ]
 
-class TestFacetIndex(unittest.TestCase):
+class TestCatalogFacetIndex(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.indexes.facet import FacetIndex
-        return FacetIndex
+        from repoze.catalog.indexes.facet import CatalogFacetIndex
+        return CatalogFacetIndex
 
     def _makeOne(self, taxonomy):
         klass = self._getTargetClass()

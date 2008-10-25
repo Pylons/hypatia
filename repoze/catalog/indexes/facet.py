@@ -7,7 +7,7 @@ from repoze.catalog.indexes.common import CatalogIndex
 
 _marker = ()
 
-class FacetIndex(CatalogIndex, KeywordIndex):
+class CatalogFacetIndex(CatalogIndex, KeywordIndex):
     implements(ICatalogIndex)
 
     def __init__(self, discriminator, taxonomy, family=None):
