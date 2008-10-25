@@ -1,13 +1,12 @@
 from persistent import Persistent
 from zope.interface import implements
 
-from repoze.catalog.indexes.keyword import KeywordIndex
+from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 from repoze.catalog.interfaces import ICatalogIndex
-from repoze.catalog.indexes.common import CatalogIndex
 
 _marker = ()
 
-class CatalogFacetIndex(CatalogIndex, KeywordIndex):
+class CatalogFacetIndex(CatalogKeywordIndex):
     implements(ICatalogIndex)
 
     def __init__(self, discriminator, taxonomy, family=None):
@@ -57,7 +56,7 @@ class CatalogFacetIndex(CatalogIndex, KeywordIndex):
                         changed = True
                         fwset = self._fwd_index.get(facet_candidate)
                         if fwset is None:
-                            fwset = self.family.II.Set()
+                            fwset = self.family.IF.Set()
                             self._fwd_index[fac] = fwset
                         fwset.insert(docid)
                         revset = self._rev_index.get(docid)
@@ -88,14 +87,24 @@ class CatalogFacetIndex(CatalogIndex, KeywordIndex):
                                                    effective_omits)
 
         counts = {}
+        isect_cache = {}
         
         for docid in docids:
             available_facets = self._rev_index.get(docid)
-            appropriate_facets = self.family.OO.intersection(
-                include_facets, available_facets)
+            ck = cachekey(available_facets)
+            appropriate_facets = isect_cache.get(ck)
+            if appropriate_facets is None:
+                appropriate_facets = self.family.OO.intersection(
+                    include_facets, available_facets)
+                isect_cache[ck] = appropriate_facets
             for facet in appropriate_facets:
                 count = counts.get(facet, 0)
                 count += 1
                 counts[facet] = count
 
         return counts
+
+def cachekey(set):
+    L = sorted(list(set))
+    return '/'.join(L)
+

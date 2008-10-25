@@ -1,3 +1,6 @@
+# 4933 sec to catalog 511421 documents with 3 field indexes, a facet index
+# and a text index.
+
 import os
 import datetime
 
@@ -278,6 +281,17 @@ def run():
         pass
     profiler.stop( "reverse sorted retrieval" )
 
+    profiler.start('limit to topic=year:2000')
+    n, results = c.search( topics=['year:2000'] )
+    print '%d results' % n
+    L = []
+    for result in results:
+        L.append(result)
+    profiler.stop( "limit to topic=year:2000" )
+
+    profiler.start('count limited to topic=year:2000')
+    print c['topics'].counts(L, ['year:2000'])
+    profiler.stop('count limited to topic=year:2000')
 
     profiler.stop()
     profiler.print_stack()
