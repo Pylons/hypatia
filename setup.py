@@ -53,12 +53,13 @@ setup(name='repoze.catalog',
       tests_require = [
         'setuptools',
         'zope.index',
+        'nose',
         ],
       install_requires = [
         'setuptools',
         'zope.index',
         ],
-      test_suite="repoze.catalog",
+      test_suite="nose.collector",
       entry_points = """\
       [console_scripts]
       catalog_benchmark = repoze.catalog.benchmark.benchmark:run
