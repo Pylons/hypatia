@@ -1,4 +1,5 @@
 import os
+import datetime
 
 BENCHMARK_DATA_DIR='benchmark_data'
 MAILLIST_INDEX='http://mail.python.org/pipermail/python-list/'
@@ -6,8 +7,11 @@ MAILLIST_INDEX='http://mail.python.org/pipermail/python-list/'
 from repoze.catalog.catalog import FileStorageCatalogFactory
 from repoze.catalog.catalog import ConnectionManager
 from repoze.catalog.indexes.field import CatalogFieldIndex
+from repoze.catalog.indexes.facet import CatalogFacetIndex
+from repoze.catalog.indexes.text import CatalogTextIndex
         
 from email.Parser import Parser
+from rfc822 import parsedate_tz
 import gzip,time
 from urllib2 import urlopen
 from HTMLParser import HTMLParser
@@ -96,6 +100,8 @@ def prep_catalog():
         c['subject'] = CatalogFieldIndex(get_subject)
         c['date'] = CatalogFieldIndex(get_date)
         c['sender_email'] = CatalogFieldIndex(get_sender_email)
+        c['topics'] = CatalogFacetIndex(get_topics, topic_taxonomy)
+        c['text'] = CatalogTextIndex(get_text)
         manager.commit()
                 
         # Loop over messages to get base line
@@ -133,6 +139,36 @@ def get_date(msg,default):
 def get_sender_email(msg,default):
     sender_email = msg.get('From', default)
     return sender_email
+
+topic_taxonomy = set(['year'])
+for year in (2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009):
+    topic_taxonomy.add('year:%s' % year)
+    for num in range(1, 13):
+        monthname = datetime.date(year, num, 1).strftime('%B')
+        topic_taxonomy.add('year:%s:%s' % (year, monthname))
+
+def get_topics(msg, default):
+    date = msg.get('Date', default)
+    if date is default:
+        return default
+    try:
+        tt = parsedate_tz(date)
+    except:
+        return default
+    if not tt:
+        return default
+    year, mon, _, _, _, _, _, _, _, _ = tt
+    try:
+        year = int(year)
+    except:
+        return default
+    if year < 1900:
+        year = year + 1900
+    monthname = datetime.date(year, mon, 1).strftime('%B')
+    return ['year:%s:%s' % (year, monthname)]
+
+def get_text(msg, default):
+    return msg.as_string()
 
 class MailListSucker(HTMLParser):
     BUFFER_SIZE = 64 * 1024
