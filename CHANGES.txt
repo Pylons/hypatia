@@ -7,6 +7,25 @@ Next release
 
     Benchmarking suite provided by Chris Rossi.
 
+    Add a "facet" index
+    (``repoze.catalog.indexes.facet.CatalogFacetIndex``).  This index
+    is much like a keyword index, but unlike a keyword index it
+    contains a taxonomy (a sequence of known colon-separated values)
+    and accepts values that are sequences of colon-separated terms.
+    Each term is split on its colons, forming a sequence of
+    categories, then each concatenation of the categories is indexed.
+    For example, if you indexed a document as
+    ``['style:gucci:handbag']``, and the taxonomy contained
+    ``'style'``, ``'style:gucci'`` and ``'style:gucci:handbag'``, the
+    document would be indexed three times: as ``style``, as
+    ``style:gucci`` and as ``style:gucci:handbag``.  Querying a facet
+    index returns a set of document ids that match the facets passed
+    in.  A facet index also has a ``counts`` method which provided a
+    set of document ids, returns a dictionary containing "further
+    constraint information" for use in a narrowing UI.  This count
+    implementation is not meant for very large-scale sites; it is
+    naive.
+
 0.4 (10/6/2008)
 
   Features

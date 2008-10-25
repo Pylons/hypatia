@@ -140,16 +140,24 @@ within the catalog with the flavor of peach and a description of nuts.
 Index Types
 -----------
 
-Out of the box, ``repoze.catalog`` supports three index types: field
-indexes, keyword indexes and text indexes.  Field indexes are meant to
-index single discrete values, and queries to a field index will only
-match if the value which was indexed matches the query exactly.
-Keyword indexes are essentially field indexes which index sequences of
-values, and which can be queried for any of the values in each
-sequence indexed.  Text indexes index text using the
+Out of the box, ``repoze.catalog`` supports four index types: field
+indexes, keyword indexes, text indexes, and facet indexes.  Field
+indexes are meant to index single discrete values, and queries to a
+field index will only match if the value which was indexed matches the
+query exactly.  Keyword indexes are essentially field indexes which
+index sequences of values, and which can be queried for any of the
+values in each sequence indexed.  Text indexes index text using the
 ``zope.index.text`` index type, and can be queried with arbitrary
 textual terms.  Text indexes can use various splitting and normalizing
-strategies to collapse indexed texts for better querying.
+strategies to collapse indexed texts for better querying.  Facet
+indexes are much like keyword indexes, but also allow for "faceted"
+indexing and searching, useful for performing narrowing searches when
+there is a well-known taxonomy of allowable values.
+
+.. note:: The existing facet index implementation narrowing support is
+   naive.  It is not meant to be used in catalogs that must use it to
+   get count information for over, say, 30K documents, for performance
+   reasons.
 
 Helper Facilities
 -----------------
@@ -162,4 +170,12 @@ application.  Using this facility, you don't have to know anything
 about ZODB to use :mod:`repoze.catalog`.  If you have an existing ZOB
 application, however, you can ignore this facility entirely and use
 the Catalog implementation directly.
+
+:mod:`repoze.catalog` provides a ``DocumentMap`` object which can be
+used to map document ids to "addresses".  An address is any value that
+can be used to resolve the document id back into to a Python object.
+In Zope, an address is typically a traversal path.  This facility
+exists in :mod:`repoze.catalog.document.DocumentMap`.
+
+
 
