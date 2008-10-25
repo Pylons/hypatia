@@ -30,6 +30,8 @@ Glossary
     searched, it returns results for values that match based on
     various properties of the text indexed, such as omitting
     "stopwords" the text might have.
+  Facet index
+    A type of index which can be used for faceted search.
   zope.index
     The `<underlying indexing machinery
     http://pypi.python.org/pypi/zope.index>`_ that

@@ -152,7 +152,7 @@ textual terms.  Text indexes can use various splitting and normalizing
 strategies to collapse indexed texts for better querying.  Facet
 indexes are much like keyword indexes, but also allow for "faceted"
 indexing and searching, useful for performing narrowing searches when
-there is a well-known taxonomy of allowable values.
+there is a well-known set of allowable values (the "facets").
 
 .. note:: The existing facet index implementation narrowing support is
    naive.  It is not meant to be used in catalogs that must use it to
