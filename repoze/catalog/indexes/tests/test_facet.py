@@ -1,6 +1,6 @@
 import unittest
 
-taxonomy = [
+facets = [
     'price',
     'price:0-100',
     'price:100-500',
@@ -23,9 +23,9 @@ class TestCatalogFacetIndex(unittest.TestCase):
         from repoze.catalog.indexes.facet import CatalogFacetIndex
         return CatalogFacetIndex
 
-    def _makeOne(self, taxonomy):
+    def _makeOne(self, facets):
         klass = self._getTargetClass()
-        return klass(lambda x, default: x, taxonomy)
+        return klass(lambda x, default: x, facets)
     
 
     def _populateIndex(self, idx):
@@ -36,7 +36,7 @@ class TestCatalogFacetIndex(unittest.TestCase):
         idx.index_doc(4, ['size:large'])
 
     def test_search(self):
-        index = self._makeOne(taxonomy)
+        index = self._makeOne(facets)
         self._populateIndex(index)
 
         result = index.search(['color:blue', 'color:red'])
@@ -87,13 +87,13 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(sorted(list(result)), [])
 
     def test_counts(self):
-        index = self._makeOne(taxonomy)
+        index = self._makeOne(facets)
         self._populateIndex(index)
 
-        facets = ['price:0-100']
-        result = index.search(facets)
+        search = ['price:0-100']
+        result = index.search(search)
         self.assertEqual(sorted(list(result)), [1,2,3])
-        counts = index.counts(result, facets)
+        counts = index.counts(result, search)
         self.assertEqual(counts['style'], 3)
         self.assertEqual(counts['style:gucci'], 3)
         self.assertEqual(counts['style:gucci:handbag'], 1)
@@ -103,23 +103,23 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(counts['color:red'], 1)
         self.assertEqual(len(counts), 7)
 
-        facets = ['price:0-100', 'color:red']
-        result = index.search(facets)
+        search = ['price:0-100', 'color:red']
+        result = index.search(search)
         self.assertEqual(sorted(list(result)), [3])
-        counts = index.counts(result, facets)
+        counts = index.counts(result, search)
         self.assertEqual(counts['style'], 1)
         self.assertEqual(counts['style:gucci'], 1)
         self.assertEqual(counts['color:blue'], 1)
         self.assertEqual(len(counts), 3)
 
-        facets = ['size:large']
-        result = index.search(facets)
+        search = ['size:large']
+        result = index.search(search)
         self.assertEqual(sorted(list(result)), [4])
-        counts = index.counts(result, facets)
+        counts = index.counts(result, search)
         self.assertEqual(counts, {})
 
-        facets = ['size']
-        result = index.search(facets)
+        search = ['size']
+        result = index.search(search)
         self.assertEqual(sorted(list(result)), [4])
-        counts = index.counts(result, facets)
+        counts = index.counts(result, search)
         self.assertEqual(counts, {'size:large':1})

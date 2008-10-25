@@ -1,3 +1,5 @@
+import md5
+
 from persistent import Persistent
 from zope.interface import implements
 
@@ -9,7 +11,7 @@ _marker = ()
 class CatalogFacetIndex(CatalogKeywordIndex):
     implements(ICatalogIndex)
 
-    def __init__(self, discriminator, taxonomy, family=None):
+    def __init__(self, discriminator, facets, family=None):
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '
@@ -17,7 +19,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
         self.discriminator = discriminator
         if family is not None:
             self.family = family
-        self.taxonomy = self.family.OO.Set(taxonomy)
+        self.facets = self.family.OO.Set(facets)
         self.clear()
 
     def index_doc(self, docid, object):
@@ -51,10 +53,10 @@ class CatalogFacetIndex(CatalogKeywordIndex):
             for category in categories:
                 L.append(category)
                 facet_candidate = ':'.join(L)
-                for fac in self.taxonomy:
-                    if facet_candidate == fac:
+                for fac in self.facets:
+                    if fac == facet_candidate:
                         changed = True
-                        fwset = self._fwd_index.get(facet_candidate)
+                        fwset = self._fwd_index.get(fac)
                         if fwset is None:
                             fwset = self.family.IF.Set()
                             self._fwd_index[fac] = fwset
@@ -83,7 +85,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
                 L.append(category)
                 effective_omits.insert(':'.join(L))
 
-        include_facets = self.family.OO.difference(self.taxonomy,
+        include_facets = self.family.OO.difference(self.facets,
                                                    effective_omits)
 
         counts = {}
@@ -105,6 +107,8 @@ class CatalogFacetIndex(CatalogKeywordIndex):
         return counts
 
 def cachekey(set):
-    L = sorted(list(set))
-    return '/'.join(L)
+    h = md5.new()
+    for item in sorted(list(set)):
+        h.update(item)
+    return h.hexdigest()
 
