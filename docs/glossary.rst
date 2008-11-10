@@ -32,6 +32,9 @@ Glossary
     "stopwords" the text might have.
   Facet index
     A type of index which can be used for faceted search.
+  Path index
+    A type of index that keeps track of documents within a graph;
+    documents can be searched for by their position in the graph.
   zope.index
     The `<underlying indexing machinery
     http://pypi.python.org/pypi/zope.index>`_ that

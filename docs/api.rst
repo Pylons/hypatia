@@ -48,6 +48,15 @@
    .. autoclass:: CatalogFacetIndex
       :members:
 
+:mod:`repoze.catalog.indexes.path`
+----------------------------------
+
+.. automodule:: repoze.catalog.indexes.path
+
+   .. autoclass:: CatalogPathIndex
+      :members:
+
+
 .. _api_document_section:
 
 :mod:`repoze.catalog.document`

@@ -1,6 +1,8 @@
-Next release
+0.5 (11/10/2008)
 
   Features
+
+    Add path index.
 
     Speed up keyword index 'and' (intersection) queries nominally by
     sorting intersected sets from smallest-to-largest first.
