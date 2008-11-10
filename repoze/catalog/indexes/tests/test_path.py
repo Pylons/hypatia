@@ -327,11 +327,6 @@ class Dummy:
     def __init__( self, path):
         self.path = path
 
-    def __str__( self ):
-        return '<Dummy: %s>' % self.path
-
-    __repr__ = __str__
-
 VALUES = {
     1 : Dummy("/aa/aa/aa/1.html"),
     2 : Dummy("/aa/aa/bb/2.html"),
