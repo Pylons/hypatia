@@ -73,7 +73,8 @@ class DocumentMap(Persistent):
         """
         while True:
             if self._v_nextid is None:
-                self._v_nextid = self._randrange(0, self.family.maxint)
+                self._v_nextid = self._randrange(self.family.minint,
+                                                 self.family.maxint)
             uid = self._v_nextid
             self._v_nextid += 1
             if uid not in self.docid_to_address:
