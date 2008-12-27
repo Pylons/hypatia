@@ -117,8 +117,9 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                         yield docid
 
     def unindex_doc(self, docid):
-        """See interface IInjection; base class overridden to be able
-        to index None values """
+        """See interface IInjection.
+
+        Base class overridden to be able to unindex None values. """
         rev_index = self._rev_index
         value = rev_index.get(docid, _marker)
         if value is _marker:

@@ -6,7 +6,7 @@ from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
-    normalize = False
+    normalize = False # override base index: dont try to normalize case
     implements(ICatalogIndex)
 
     def apply(self, query):
@@ -18,7 +18,11 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         return self.search(query, operator=operator)
 
     def _insert_forward(self, docid, words):
-        """insert a sequence of words into the forward index """
+        """insert a sequence of words into the forward index.
+
+        Base class overridden to use IF.Set rather than IISet so we
+        can merge results with other indexes.
+        """
 
         idx = self._fwd_index
         has_key = idx.has_key
@@ -28,7 +32,17 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
             idx[word].insert(docid)
 
     def search(self, query, operator='and'):
-        """Execute a search given by 'query'."""
+        """Execute a search given by 'query'.
+
+        Base class overridden to use multiunion rather than calling
+        union repeatedly (much, much faster); also if it's an
+        intersection, sort from smallest to largest before
+        intersecting.  Also, use an IF.Set rather than an II.Set so we
+        can merge results with other indexes.  We also pay no
+        attention to the ``normalize`` attribute, unlike the base
+        index (it's useless to try to normalize here; it's the app's
+        job, and values might not even be strings).
+        """
         if isinstance(query, basestring):
             query = [query]
 
