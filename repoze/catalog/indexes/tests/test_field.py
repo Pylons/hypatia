@@ -22,58 +22,81 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index.index_doc(11, 10)
         index.index_doc(10, 11)
 
-    def test_sort_lazy_nolimit(self):
+    def test_sort_scan_nolimit(self):
         index = self._makeOne()
-        index.use_lazy = True
+        index.force_scan = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         result = index.sort(c1)
         self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
-    def test_sort_lazy_withlimit(self):
+    def test_sort_scan_withlimit(self):
         index = self._makeOne()
-        index.use_lazy = True
+        index.force_scan = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         result = index.sort(c1, limit=3)
         self.assertEqual(list(result), [5, 2, 1])
 
-    def test_sort_nonlazy_nolimit(self):
+    def test_sort_scan_reverse_nolimit(self):
         index = self._makeOne()
-        self._populateIndex(index)
-        from BTrees.IFBTree import IFSet
-        c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1)
-        self.assertEqual(list(result), [5, 2, 1, 3, 4])
-
-    def test_sort_nonlazy_missingdocid(self):
-        index = self._makeOne()
-        self._populateIndex(index)
-        from BTrees.IFBTree import IFSet
-        c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1)
-        self.assertEqual(list(result), [5, 2, 1, 3, 4]) # 99 not present
-
-    def test_sort_nonlazy_withlimit(self):
-        index = self._makeOne()
-        self._populateIndex(index)
-        from BTrees.IFBTree import IFSet
-        c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, limit=3)
-        self.assertEqual(list(result), [5, 2, 1])
-
-    def test_sort_nonlazy_reverse_nolimit(self):
-        index = self._makeOne()
+        index.force_scan = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         result = index.sort(c1, reverse=True)
         self.assertEqual(list(result), [4, 3, 1, 2, 5])
 
-    def test_sort_nonlazy_reverse_withlimit(self):
+    def test_sort_scan_reverse_withlimit(self):
         index = self._makeOne()
+        index.force_scan = True
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1, limit=3, reverse=True)
+        self.assertEqual(list(result), [4, 3, 1])
+
+    def test_sort_brute_nolimit(self):
+        index = self._makeOne()
+        index.force_brute = True
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1)
+        self.assertEqual(list(result), [5, 2, 1, 3, 4])
+
+    def test_sort_brute_missingdocid(self):
+        index = self._makeOne()
+        index.force_brute = True
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1)
+        self.assertEqual(list(result), [5, 2, 1, 3, 4]) # 99 not present
+
+    def test_sort_brute_withlimit(self):
+        index = self._makeOne()
+        index.force_brute = True
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1, limit=3)
+        self.assertEqual(list(result), [5, 2, 1])
+
+    def test_sort_brute_reverse_nolimit(self):
+        index = self._makeOne()
+        index.force_brute = True
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1, reverse=True)
+        self.assertEqual(list(result), [4, 3, 1, 2, 5])
+
+    def test_sort_brute_reverse_withlimit(self):
+        index = self._makeOne()
+        index.force_brute = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -82,7 +105,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_nbest(self):
         index = self._makeOne()
-        index.use_nbest = True
+        index.force_nbest = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -91,7 +114,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_nbest_reverse(self):
         index = self._makeOne()
-        index.use_nbest = True
+        index.force_nbest = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -100,7 +123,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_nbest_missing(self):
         index = self._makeOne()
-        index.use_nbest = True
+        index.force_nbest = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -109,7 +132,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_nbest_missing_reverse(self):
         index = self._makeOne()
-        index.use_nbest = True
+        index.force_nbest = True
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -136,6 +159,5 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self._populateIndex(index)
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, limit=0)
-        self.assertRaises(ValueError, list, result)
+        self.assertRaises(ValueError, index.sort, c1, limit=0)
 

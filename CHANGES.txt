@@ -1,5 +1,15 @@
 Next release
 
+  Features
+
+    Optimize the choice of fieldindex sort strategy.
+
+    Speed up keyword index merges slightly.
+
+    Fix a bug in the return value of the catalog: it would try to
+    return the minimum of the number of docs or the limit event
+    if there was no limit.
+
   Bug Fixes
 
     Sean Upton pointed out that the document map code artificially

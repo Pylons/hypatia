@@ -86,11 +86,11 @@ class Catalog(PersistentMapping):
         if sort_index:
             index = self[sort_index]
             result = index.sort(result, reverse=reverse, limit=limit)
-
-        if limit is None:
+            if limit:
+                numdocs = min(numdocs, limit)
             return numdocs, result
         else:
-            return min(numdocs, limit), result
+            return numdocs, result
 
     def apply(self, query):
         return self.search(**query)
