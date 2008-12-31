@@ -139,6 +139,22 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = index.sort(c1, reverse=True, limit=3)
         self.assertEqual(list(result), [4, 3, 1])
 
+    def test_sort_noforce(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1, limit=3)
+        self.assertEqual(list(result), [5, 2, 1])
+
+    def test_sort_noforce_reverse(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        result = index.sort(c1, reverse=True, limit=3)
+        self.assertEqual(list(result), [4, 3, 1])
+
     def test_sort_nodocs(self):
         index = self._makeOne()
         from BTrees.IFBTree import IFSet

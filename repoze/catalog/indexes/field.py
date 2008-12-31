@@ -54,28 +54,39 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             return self.bruteforce_ascending(docids, limit)
 
         if limit:
-            # Forward scan "wins" when the supplied limit is below a
-            # point on a linear scale.  If limit < scanlimit, it means
-            # that the limit is below the line on a graph represented
-            # by y=mx+b where m=scan_slope and b=scan_intercept, using
-            # (float(rlen)/numdocs) as "x", solving for the maximum
-            # limit as y.  The default line slope and intercept was
-            # computed using these two points: point1 = (.01372, 4),
-            # point2 = (.562, 140), based on emprical testing using an
-            # index that had about 67000 total documentids in it
-            # against a ZEO server with a zodb cache size=300000 and
-            # zeo cache size of 1GB on Mac OS X.  Forward-scan has a
-            # very limited set of uses; its only used when the limit
-            # is very small and the ratio of numdocs/rlen is very
-            # high; it's also probably very punitive when the ZODB
-            # cache size is too small for the application being used,
-            # as disk activity will dwarf any presumed savings.
+
+            # Forward scan will always lose to n-best or brute force
+            # when the supplied limit is above a point on a linear
+            # scale.  If limit < scanlimit, it means that the limit is
+            # below the line on a graph represented by y=mx+b where
+            # m=scan_slope and b=scan_intercept, using
+            # (float(rlen)/numdocs) as "x", solving for the scanlimit
+            # as y.  The default line slope and intercept was computed
+            # using these two points: point1 = (.01372, 4), point2 =
+            # (.562, 140), based on emprical testing using an index
+            # that had about 67000 total documentids in it against a
+            # ZEO server with a zodb cache size=300000 and zeo cache
+            # size of 1GB on Mac OS X.
+            #
+            # Forward-scan has a very limited set of uses; its only
+            # used when the limit is very small and the ratio of
+            # numdocs/rlen is very high; it's also probably very
+            # punitive when the ZODB cache size is too small for the
+            # application being used, as disk activity will dwarf any
+            # presumed savings.
+
             scanlimit = self.scan_slope*(float(rlen)/numdocs) + self.scan_icept
             if limit < scanlimit:
                 return self.scan_forward(docids, limit)
-            elif limit / float(rlen) > self.nbest_percent:
-                # the nbest_percent constant compared against limit /
-                # float(rlen) above is an educated guess (see
+            elif (limit < 300) or (limit / float(rlen) > self.nbest_percent):
+                # via empirical testing: it's a good bet that n-best
+                # will beat brute force (or come very close) at very
+                # small limits (e.g. 300), no matter what the rlen, so
+                # we choose it there.  if it's not such a small set,
+                # we use the nbest_percent constant compared against
+                # limit / float(rlen) above is an educated guess about
+                # whether we should try n-best; if it fails we use
+                # brute force (see
                 # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
                 # for overall explanation of n-best)
                 return self.nbest_ascending(docids, limit)
@@ -91,13 +102,19 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             return self.bruteforce_descending(docids, limit)
 
         rlen = len(docids)
-            
-        if limit and ( (limit/float(rlen)) > self.nbest_percent):
-            # the nbest_percent constant compared against limit /
-            # float(rlen) above is an educated guess (see
-            # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
-            # for overall explanation of n-best)
-            return self.nbest_descending(docids, limit)
+        if limit:
+            if (limit < 300) or (limit/float(rlen)) > self.nbest_percent:
+                # via empirical testing: it's a good bet that n-best
+                # will beat brute force (or come very close) at very
+                # small limits (e.g. 300), no matter what the rlen, so
+                # we choose it there.  if it's not such a small set,
+                # we use the nbest_percent constant compared against
+                # limit / float(rlen) above is an educated guess about
+                # whether we should try n-best; if it fails we use
+                # brute force (see
+                # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
+                # for overall explanation of n-best)
+                return self.nbest_descending(docids, limit)
 
         return self.bruteforce_descending(docids, limit)
 
