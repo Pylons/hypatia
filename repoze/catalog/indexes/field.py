@@ -240,8 +240,10 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         self._num_docs.change(-1)
                 
-def nsort(docids, rev_index, marker=_marker):
+def nsort(docids, rev_index):
     for docid in docids:
-        val = rev_index.get(docid, marker)
-        if val is not marker:
-            yield (val, docid)
+        try:
+            yield (rev_index[docid], docid)
+        except KeyError:
+            continue
+
