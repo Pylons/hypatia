@@ -13,8 +13,8 @@ _marker = []
 
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
-    scan_slope = 247.95
-    scan_icept = .596
+    scan_slope = 180.4775
+    scan_icept = 1.5225
     nbest_percent = .09
     force_scan = False
     force_nbest = False
@@ -54,7 +54,14 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             return self.bruteforce_ascending(docids, limit)
 
         if limit:
-
+            # Figure out the best sort algorithm to use.  We use three
+            # strategies: forward-scan (using the forward index, which
+            # is already in value sorted order), n-best (aka
+            # heapq.nsmallest), or bruteforce (timsort).  See
+            # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
+            # for an overview of why we bother doing all this work to
+            # choose the right sort algorithm.
+            #
             # Forward scan will always lose to n-best or brute force
             # when the supplied limit is above a point on a linear
             # scale.  If limit < scanlimit, it means that the limit is
@@ -63,32 +70,52 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             # (float(rlen)/numdocs) as "x", solving for the scanlimit
             # as y.  The default line slope and intercept was computed
             # using these two points: point1 = (.01372, 4), point2 =
-            # (.562, 140), based on emprical testing using an index
+            # (1.0, 182), based on emprical testing using an index
             # that had about 67000 total documentids in it against a
             # ZEO server with a zodb cache size=300000 and zeo cache
             # size of 1GB on Mac OS X.
             #
+            # Forward scan is only chosen in the cases where it's
+            # clearly a big win because the losing case is
+            # exponentially punitive.  This computation conservatively
+            # favors avoiding forward scan because forward scan
+            # worst-case is much worse than the n-best or brute force
+            # worst-case.  In my personal empirical testing,
+            # forward-scan "beats" n-best at limit 140 (68.0ms for
+            # forward-scan vs 68.4ms for n-best) for
+            # rlen=46143,numdocs=65708, but to choose forward scan,
+            # the scanlimit computation wants it to be below limit
+            # 128, so n-best is chosen anyway.  On the other hand, at
+            # limit 200, n-best beats forward scan by 7% and at limit
+            # 260 by 38%.  The beating continues linearly from there:
+            # at limit 500 for the above rlen and numdocs, n-best
+            # beats forward scan by more than a factor of three.
             # Forward-scan has a very limited set of uses; its only
             # used when the limit is very small and the ratio of
             # numdocs/rlen is very high; it's also probably very
             # punitive when the ZODB cache size is too small for the
-            # application being used, as disk activity will dwarf any
-            # presumed savings.
+            # application being used, as disk/network I/O will dwarf
+            # any presumed savings.
 
             scanlimit = self.scan_slope*(float(rlen)/numdocs) + self.scan_icept
             if limit < scanlimit:
                 return self.scan_forward(docids, limit)
+
+            # If we've gotten here, it means we've thrown out
+            # forward-scan as a viable sort option.  We now need to
+            # choose between n-best or brute-force.  XXX much less
+            # thought put into the decision between nbest and
+            # brute-force than was put into fwdscan vs all.
+
             elif (limit < 300) or (limit / float(rlen) > self.nbest_percent):
-                # via empirical testing: it's a good bet that n-best
+                # Via empirical testing: it's a good bet that n-best
                 # will beat brute force (or come very close) at very
                 # small limits (e.g. 300), no matter what the rlen, so
-                # we choose it there.  if it's not such a small set,
+                # we choose it there.  If it's not such a small set,
                 # we use the nbest_percent constant compared against
-                # limit / float(rlen) above is an educated guess about
-                # whether we should try n-best; if it fails we use
-                # brute force (see
-                # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
-                # for overall explanation of n-best)
+                # limit / float(rlen) above is an educated guess (XXX
+                # needs better validation) about whether we should try
+                # n-best; if it fails we use brute force
                 return self.nbest_ascending(docids, limit)
 
         return self.bruteforce_ascending(docids, limit)
@@ -100,6 +127,9 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             return self.nbest_descending(docids, limit)
         elif self.force_brute:
             return self.bruteforce_descending(docids, limit)
+
+        # XXX much less thought put into the decision between nbest
+        # and brute-force than was put into fwdscan vs all.
 
         rlen = len(docids)
         if limit:
@@ -137,6 +167,8 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def nbest_ascending(self, docids, limit):
         if limit is None:
             raise RuntimeError, 'n-best used without limit'
+
+        # lifted from heapq.nsmallest
 
         h = nsort(docids, self._rev_index)
         it = iter(h)
