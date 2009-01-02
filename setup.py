@@ -52,12 +52,12 @@ setup(name='repoze.catalog',
       zip_safe=False,
       tests_require = [
         'setuptools',
-        'zope.index',
+        'zope.index >= 3.5.0',
         'nose',
         ],
       install_requires = [
         'setuptools',
-        'zope.index',
+        'zope.index >= 3.5.0',
         ],
       test_suite="nose.collector",
       entry_points = """\

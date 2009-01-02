@@ -7,6 +7,9 @@ Next release
 
     Better tests (no force).
 
+    Depend on zope.index 3.5.0 rather than any earlier version
+    (repoze.catalog fixes migrated upstream in zope.index 3.5.0).
+
 0.5.1 (12/31/2008)
 
   Features

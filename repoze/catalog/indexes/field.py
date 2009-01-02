@@ -153,12 +153,9 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         sets = []
         n = 0
-        isect = self.family.IF.intersection
         for set in fwd_index.values():
-            if set:
-                set = isect(docids, set)
-            if set:
-                for docid in set:
+            for docid in set:
+                if docid in docids:
                     n+=1
                     yield docid
                     if limit and n >= limit:
@@ -191,8 +188,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def nbest_descending(self, docids, limit):
         if limit is None:
             raise RuntimeError, 'N-Best used without limit'
-        rev_index = self._rev_index
-        iterable = nsort(docids, rev_index)
+        iterable = nsort(docids, self._rev_index)
         for value, docid in heapq.nlargest(limit, iterable):
             yield docid
     
@@ -202,18 +198,25 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def bruteforce_descending(self, docids, limit):
         return self._bruteforce(docids, limit, reverse=True)
 
-    def _bruteforce(self, docids, limit, reverse):
-        rev_index = self._rev_index
-        marker = _marker
+    def _bruteforce(self, docids, limit=None, reverse=False):
         n = 0
-        for docid in sorted(docids, key=rev_index.get, reverse=reverse):
-            if rev_index.get(docid, marker) is not marker:
-                # we skip docids that are not in this index (as
-                # per Z2 catalog implementation)
-                n += 1
-                yield docid
-                if limit and n >= limit:
-                    raise StopIteration
+        marker = _marker
+        _missing = []
+
+        def get(k, rev_index=self._rev_index, marker=marker):
+            v = rev_index.get(k, marker)
+            if v is marker:
+                _missing.append(k)
+            return v
+        
+        for docid in sorted(docids, key=get, reverse=reverse):
+            if docid in _missing:
+                # skip docids not in this index
+                continue
+            n += 1
+            yield docid
+            if limit and n >= limit:
+                raise StopIteration
 
     def unindex_doc(self, docid):
         """See interface IInjection.

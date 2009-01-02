@@ -74,7 +74,8 @@ class TestCatalogFieldIndex(unittest.TestCase):
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1)
-        self.assertEqual(list(result), [5, 2, 1, 3, 4]) # 99 not present
+        r = list(result)
+        self.assertEqual(r, [5, 2, 1, 3, 4]) # 99 not present
 
     def test_sort_brute_withlimit(self):
         index = self._makeOne()
