@@ -2,10 +2,15 @@ Next release
 
   Features
 
-    Optimization: always choose n-best field index sort at very small limit 
-    sizes.
+    Allow a new catalog search method keyword: ``sort_type``.  For
+    ascending sorts, this can be one of ``nbest``, ``fwscan``, or
+    ``timsort``.  For descending sorts, only ``nbest`` and ``timsort``
+    are supported.  This argument allows fine-grained control of what
+    algorithm should be chosen to perform sorting within FieldIndex
+    code.
 
-    Better tests (no force).
+    Better detection of which sort algorithm to use when it's not
+    supplied via ``sort_type`` based on empirical testing.
 
     Depend on zope.index 3.5.0 rather than any earlier version
     (repoze.catalog fixes migrated upstream in zope.index 3.5.0).
