@@ -59,10 +59,14 @@ setup(name='repoze.catalog',
         'setuptools',
         'zope.index >= 3.5.0',
         ],
+      extras_require = {
+        'benchmark': ['PyChart']
+        },
       test_suite="nose.collector",
       entry_points = """\
       [console_scripts]
       catalog_benchmark = repoze.catalog.benchmark.benchmark:run
+      sortbench = repoze.catalog.benchmark.sortbench:main
       """,
       )
 

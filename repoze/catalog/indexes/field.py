@@ -11,16 +11,40 @@ from repoze.catalog.indexes.common import CatalogIndex
 
 _marker = []
 
+AUTO = 'auto'
+FWSCAN = 'fwscan'
+NBEST = 'nbest'
+TIMSORT = 'timsort'
+
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
-    scan_slope = 180.4775
-    scan_icept = 1.5225
-    nbest_percent = .09
-    force_scan = False
-    force_nbest = False
-    force_brute = False
 
-    def sort(self, docids, reverse=False, limit=None):
+    def unindex_doc(self, docid):
+        """See interface IInjection.
+
+        Base class overridden to be able to unindex None values. """
+        rev_index = self._rev_index
+        value = rev_index.get(docid, _marker)
+        if value is _marker:
+            return # not in index
+
+        del rev_index[docid]
+
+        try:
+            set = self._fwd_index[value]
+            set.remove(docid)
+        except KeyError:
+            # This is fishy, but we don't want to raise an error.
+            # We should probably log something.
+            # but keep it from throwing a dirty exception
+            set = 1
+
+        if not set:
+            del self._fwd_index[value]
+
+        self._num_docs.change(-1)
+                
+    def sort(self, docids, reverse=False, limit=None, sort_type=AUTO):
         if limit is not None:
             limit = int(limit)
             if limit < 1:
@@ -34,120 +58,71 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             return []
 
         if reverse:
-            return self.sort_reverse(docids, limit, numdocs)
+            return self.sort_reverse(docids, limit, numdocs, sort_type)
         else:
-            return self.sort_forward(docids, limit, numdocs)
+            return self.sort_forward(docids, limit, numdocs, sort_type)
 
-    def sort_forward(self, docids, limit, numdocs):
+    def sort_forward(self, docids, limit, numdocs, sort_type=AUTO):
 
         rev_index = self._rev_index
         fwd_index = self._fwd_index
 
         rlen = len(docids)
 
-        # for unit testing
-        if self.force_scan:
-            return self.scan_forward(docids, limit)
-        elif self.force_nbest:
-            return self.nbest_ascending(docids, limit)
-        elif self.force_brute:
-            return self.bruteforce_ascending(docids, limit)
-
-        if limit:
-            # Figure out the best sort algorithm to use.  We use three
-            # strategies: forward-scan (using the forward index, which
-            # is already in value sorted order), n-best (aka
-            # heapq.nsmallest), or bruteforce (timsort).  See
+        if sort_type == AUTO:
+            # XXX this needs work.  See
             # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
             # for an overview of why we bother doing all this work to
             # choose the right sort algorithm.
-            #
-            # Forward scan will always lose to n-best or brute force
-            # when the supplied limit is above a point on a linear
-            # scale.  If limit < scanlimit, it means that the limit is
-            # below the line on a graph represented by y=mx+b where
-            # m=scan_slope and b=scan_intercept, using
-            # (float(rlen)/numdocs) as "x", solving for the scanlimit
-            # as y.  The default line slope and intercept was computed
-            # using these two points: point1 = (.01372, 4), point2 =
-            # (1.0, 182), based on emprical testing using an index
-            # that had about 67000 total documentids in it against a
-            # ZEO server with a zodb cache size=300000 and zeo cache
-            # size of 1GB on Mac OS X.
-            #
-            # Forward scan is only chosen in the cases where it's
-            # clearly a big win because the losing case is
-            # exponentially punitive.  This computation conservatively
-            # favors avoiding forward scan because forward scan
-            # worst-case is much worse than the n-best or brute force
-            # worst-case.  In my personal empirical testing,
-            # forward-scan "beats" n-best at limit 140 (68.0ms for
-            # forward-scan vs 68.4ms for n-best) for
-            # rlen=46143,numdocs=65708, but to choose forward scan,
-            # the scanlimit computation wants it to be below limit
-            # 128, so n-best is chosen anyway.  On the other hand, at
-            # limit 200, n-best beats forward scan by 7% and at limit
-            # 260 by 38%.  The beating continues linearly from there:
-            # at limit 500 for the above rlen and numdocs, n-best
-            # beats forward scan by more than a factor of three.
-            # Forward-scan has a very limited set of uses; its only
-            # used when the limit is very small and the ratio of
-            # numdocs/rlen is very high; it's also probably very
-            # punitive when the ZODB cache size is too small for the
-            # application being used, as disk/network I/O will dwarf
-            # any presumed savings.
+            doc_ratio = rlen / float(numdocs)
 
-            scanlimit = self.scan_slope*(float(rlen)/numdocs) + self.scan_icept
-            if limit < scanlimit:
-                return self.scan_forward(docids, limit)
+            if limit < 300:
+                # at very low limits, nbest tends to beat either fwscan
+                # or timsort
+                sort_type = NBEST
 
-            # If we've gotten here, it means we've thrown out
-            # forward-scan as a viable sort option.  We now need to
-            # choose between n-best or brute-force.  XXX much less
-            # thought put into the decision between nbest and
-            # brute-force than was put into fwdscan vs all.
+            elif not limit or doc_ratio > .25:
+                # forward scan tends to beat nbest or timsort reliably
+                # when there's no limit or when the rlen is greater
+                # than a quarter of the number of documents in the
+                # index
+                sort_type = FWSCAN
 
-            elif (limit < 300) or (limit / float(rlen) > self.nbest_percent):
-                # Via empirical testing: it's a good bet that n-best
-                # will beat brute force (or come very close) at very
-                # small limits (e.g. 300), no matter what the rlen, so
-                # we choose it there.  If it's not such a small set,
-                # we use the nbest_percent constant compared against
-                # limit / float(rlen) above is an educated guess (XXX
-                # needs better validation) about whether we should try
-                # n-best; if it fails we use brute force
-                return self.nbest_ascending(docids, limit)
+            else:
+                sort_type = TIMSORT
 
-        return self.bruteforce_ascending(docids, limit)
+        if sort_type == FWSCAN:
+            return self.scan_forward(docids, limit)
+        elif sort_type == NBEST:
+            return self.nbest_ascending(docids, limit)
+        elif sort_type == TIMSORT:
+            return self.timsort_ascending(docids, limit)
+        else:
+            raise ValueError('Unknown sort type %s' % sort_type)
 
-    def sort_reverse(self, docids, limit, numdocs):
+    def sort_reverse(self, docids, limit, numdocs, sort_type=AUTO):
+        if sort_type == AUTO:
+            # XXX this needs work.  See
+            # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
+            # for an overview of why we bother doing all this work to
+            # choose the right sort algorithm.
 
-        # for unit testing
-        if self.force_nbest:
+            rlen = len(docids)
+            if limit:
+                if (limit < 300) or (limit/float(rlen)) > 0.09:
+                    sort_type = NBEST
+                else:
+                    sort_type = TIMSORT
+            else:
+                sort_type = TIMSORT
+
+        if sort_type == NBEST:
             return self.nbest_descending(docids, limit)
-        elif self.force_brute:
-            return self.bruteforce_descending(docids, limit)
-
-        # XXX much less thought put into the decision between nbest
-        # and brute-force than was put into fwdscan vs all.
-
-        rlen = len(docids)
-        if limit:
-            if (limit < 300) or (limit/float(rlen)) > self.nbest_percent:
-                # via empirical testing: it's a good bet that n-best
-                # will beat brute force (or come very close) at very
-                # small limits (e.g. 300), no matter what the rlen, so
-                # we choose it there.  if it's not such a small set,
-                # we use the nbest_percent constant compared against
-                # limit / float(rlen) above is an educated guess about
-                # whether we should try n-best; if it fails we use
-                # brute force (see
-                # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
-                # for overall explanation of n-best)
-                return self.nbest_descending(docids, limit)
-
-        return self.bruteforce_descending(docids, limit)
-
+        elif sort_type == TIMSORT:
+            return self.timsort_descending(docids, limit)
+        else:
+            raise ValueError('Unknown sort type %s' % sort_type)
+ 
     def scan_forward(self, docids, limit=None):
         fwd_index = self._fwd_index
 
@@ -192,13 +167,13 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         for value, docid in heapq.nlargest(limit, iterable):
             yield docid
     
-    def bruteforce_ascending(self, docids, limit):
-        return self._bruteforce(docids, limit, reverse=False)
+    def timsort_ascending(self, docids, limit):
+        return self._timsort(docids, limit, reverse=False)
 
-    def bruteforce_descending(self, docids, limit):
-        return self._bruteforce(docids, limit, reverse=True)
+    def timsort_descending(self, docids, limit):
+        return self._timsort(docids, limit, reverse=True)
 
-    def _bruteforce(self, docids, limit=None, reverse=False):
+    def _timsort(self, docids, limit=None, reverse=False):
         n = 0
         marker = _marker
         _missing = []
@@ -218,31 +193,6 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             if limit and n >= limit:
                 raise StopIteration
 
-    def unindex_doc(self, docid):
-        """See interface IInjection.
-
-        Base class overridden to be able to unindex None values. """
-        rev_index = self._rev_index
-        value = rev_index.get(docid, _marker)
-        if value is _marker:
-            return # not in index
-
-        del rev_index[docid]
-
-        try:
-            set = self._fwd_index[value]
-            set.remove(docid)
-        except KeyError:
-            # This is fishy, but we don't want to raise an error.
-            # We should probably log something.
-            # but keep it from throwing a dirty exception
-            set = 1
-
-        if not set:
-            del self._fwd_index[value]
-
-        self._num_docs.change(-1)
-                
 def nsort(docids, rev_index):
     for docid in docids:
         try:
