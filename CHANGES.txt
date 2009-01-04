@@ -9,14 +9,14 @@ Next release
     algorithm should be chosen to perform sorting within FieldIndex
     code.
 
-    Better detection of which sort algorithm to use when it's not
-    supplied via ``sort_type`` based on empirical testing.
+    Better automatic detection of which sort algorithm to use (when
+    it's not supplied via ``sort_type``) based on empirical testing.
 
     Depend on zope.index 3.5.0 rather than any earlier version
     (repoze.catalog fixes migrated upstream in zope.index 3.5.0).
 
     Add 'sortbench' script to test various field index sort strategies
-    (requires 'benchmark' extra).
+    (requires 'benchmark' extra to create charts).
 
   Bug Fixes
 
