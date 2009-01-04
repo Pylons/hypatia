@@ -220,7 +220,7 @@ def get_index(fn):
     from ZODB.FileStorage.FileStorage import FileStorage
     from ZODB.DB import DB
     s = FileStorage(fn)
-    db = DB(s)
+    db = DB(s, cache_size=300000)
     c = db.open()
     root = c.root()
     return root['index']
