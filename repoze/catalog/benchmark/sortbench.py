@@ -14,6 +14,7 @@ from pychart import legend
 from pychart import text_box
 
 from BTrees.IFBTree import IFSet
+from repoze.catalog.indexes.field import fwscan_wins
 
 theme.get_options()
 theme.use_color = True
@@ -158,22 +159,31 @@ class FieldIndexForwardSort:
             values2 = capture[sortname2]
             doc_ratio = rlen / float(self.numdocs)
             cutoff = None
+            wins = []
+
+            fwtest = sortname1 == 'fwscan' and sortname2 in ('nbest', 'timsort')
+
             for x in xrange(0, min(len(values1), len(values2))):
-                if values1[x] < values2[x]:
-                    val = values1[x]
-                    limit = self.limits[x]
-                    cutoff = limit / float(self.numdocs)
-                    break
-            if cutoff:
-                linedata.append((doc_ratio, cutoff))
+                t1 = values1[x]
+                t2 = values2[x]
+                limit = self.limits[x]
+                limitratio = limit / float(self.numdocs)
+                won = t1 < t2
+                if won:
+                    wins.append(limit)
+
+                if fwtest:
+                    curvewin = fwscan_wins(limit, rlen, self.numdocs)
+                    if won and (not curvewin):
+                        print "wrong curvelose?", rlen, limit, t1, t2
+                    if (not won) and curvewin:
+                        print "wrong curvewin?", rlen, limit, t1, t2
+
+            for limit in wins:
+                limitratio = limit / float(self.numdocs)
+                linedata.append((doc_ratio, limitratio))
 
         comparename = 'compare-%s-beats-%s' % (sortname1, sortname2)
-
-        import pprint
-        print
-        print comparename
-        print 'linedata '
-        pprint.pprint(linedata)
 
         xaxis=axis.X(label='Doc Ratio (rlen//numdocs)',
                      tic_interval=.1,

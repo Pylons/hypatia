@@ -44,17 +44,17 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         self._num_docs.change(-1)
                 
     def sort(self, docids, reverse=False, limit=None, sort_type=None):
-        if limit is not None:
-            limit = int(limit)
-            if limit < 1:
-                raise ValueError('limit must be 1 or greater')
-
         if not docids:
             return []
             
         numdocs = self._num_docs.value
         if not numdocs:
             return []
+
+        if limit is not None:
+            limit = int(limit)
+            if limit < 1:
+                raise ValueError('limit must be 1 or greater')
 
         if reverse:
             return self.sort_reverse(docids, limit, numdocs, sort_type)
@@ -63,47 +63,21 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     def sort_forward(self, docids, limit, numdocs, sort_type=None):
 
-        rev_index = self._rev_index
-        fwd_index = self._fwd_index
-
         rlen = len(docids)
 
-        if sort_type is None:
-            # XXX this needs work.  See
-            # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
-            # for an overview of why we bother doing all this work to
-            # choose the right sort algorithm.
-            docratio = rlen / float(numdocs)
-            limitratio = limit / float(numdocs)
+        # See http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
+        # for an overview of why we bother doing all this work to
+        # choose the right sort algorithm.
 
-            if limit < 300:
-                # at very low limits, nbest tends to beat either fwscan
-                # or timsort
+        if sort_type is None:
+
+            if limit and limit < 300:
+                # nbest tends to win at very small limit sizes
                 sort_type = NBEST
 
-            elif not limit or docratio > .25:
-                # forward scan tends to beat nbest or timsort reliably
-                # when there's no limit or when the rlen is greater
-                # than a quarter of the number of documents in the
-                # index
+            elif fwscan_wins(limit, rlen, numdocs):
                 sort_type = FWSCAN
-
-            elif docratio > .015625:
-                # depending on the limit ratio, forward scan still has
-                # a chance to win over nbest or timsort even if the
-                # rlen is smaller than a quarter of the number of
-                # documents in the index, beginning at a docratio of
-                # 1024/65536.0 (.015625).  XXX It'd be nice to figure
-                # out a more concise way to express this.
-                if .03125 >= docratio > .015625 and limitratio < .0025:
-                    sort_type = FWSCAN
-                elif .0625 >= docratio > .03125 and limitratio < .001:
-                    sort_type = FWSCAN
-                elif .125 >= docratio > .0625 and limitratio < .008:
-                    sort_type = FWSCAN
-                elif .25 >= docratio > .125 and limitratio < .0625:
-                    sort_type = FWSCAN
-
+                
             else:
                 sort_type = TIMSORT
 
@@ -216,3 +190,37 @@ def nsort(docids, rev_index):
         except KeyError:
             continue
 
+def fwscan_wins(limit, rlen, numdocs):
+    docratio = rlen / float(numdocs)
+
+    if limit:
+        limitratio = limit / float(numdocs)
+    else:
+        limitratio = 1
+
+    div = 65536.0
+    
+    if docratio >= 16384/div:
+        # forward scan tends to beat nbest or timsort reliably when
+        # the rlen is greater than a quarter of the number of
+        # documents in the index
+        return True
+
+    if docratio >= 256/div:
+        # depending on the limit ratio, forward scan still has a
+        # chance to win over nbest or timsort even if the rlen is
+        # smaller than a quarter of the number of documents in the
+        # index, beginning at a docratio of 256/65536.0.  XXX It'd be
+        # nice to figure out a more concise way to express this.
+        if 512/div <= docratio < 1204/div and limitratio <= 4/div:
+            return True
+        elif  1024/div <= docratio < 2048/div and limitratio <= 32/div:
+            return True
+        elif 2048/div <= docratio < 4096/div and limitratio <= 128/div:
+            return True
+        elif 4096/div <= docratio < 8192/div and limitratio <= 512/div:
+            return True
+        elif 8192/div <= docratio < 16384/div and limitratio <= 4096/div:
+            return True
+
+    return False
