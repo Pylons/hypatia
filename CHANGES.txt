@@ -1,4 +1,4 @@
-Next release
+0.5.2 (1/4/2008)
 
   Features
 
