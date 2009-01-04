@@ -113,6 +113,17 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(numdocs, 3)
         self.assertEqual(list(result), ['sorted3', 'sorted2', 'sorted1'])
 
+    def test_search_with_sort_type(self):
+        catalog = self._makeOne()
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        from repoze.catalog.indexes.field import FWSCAN
+        numdocs, result = catalog.search(name1={}, sort_index='name1',
+                                         limit=1, sort_type=FWSCAN)
+        self.assertEqual(idx1.sort_type, FWSCAN)
+
     def test_limited(self):
         catalog = self._makeOne()
         from BTrees.IFBTree import IFSet
@@ -121,7 +132,7 @@ class TestCatalog(unittest.TestCase):
         catalog['name1'] = idx1
         numdocs, result = catalog.search(name1={}, sort_index='name1', limit=1)
         self.assertEqual(numdocs, 1)
-        self.assertEqual(idx1.limited, True)
+        self.assertEqual(idx1.limit, 1)
 
     def test_functional_index_merge(self):
         catalog = self._makeOne()
@@ -252,6 +263,8 @@ class DummyIndex(object):
 
     value = None
     docid = None
+    limit = None
+    sort_type = None
 
     def __init__(self, *arg, **kw):
         self.arg = arg
@@ -271,8 +284,9 @@ class DummyIndex(object):
     def apply(self, query):
         return self.arg[0]
 
-    def sort(self, results, reverse=False, limit=None):
-        self.limited = True
+    def sort(self, results, reverse=False, limit=None, sort_type=None):
+        self.limit = limit
+        self.sort_type = sort_type
         if reverse:
             return ['sorted3', 'sorted2', 'sorted1']
         return ['sorted1', 'sorted2', 'sorted3']

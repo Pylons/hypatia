@@ -51,12 +51,15 @@ class Catalog(PersistentMapping):
         sort_index = None
         reverse = False
         limit = None
+        sort_type = None
         if 'sort_index' in query:
             sort_index = query.pop('sort_index')
         if 'reverse' in query:
             reverse = query.pop('reverse')
         if 'limit' in query:
             limit = query.pop('limit')
+        if 'sort_type' in query:
+            sort_type = query.pop('sort_type')
 
         results = []
         for index_name, index_query in query.items():
@@ -85,7 +88,8 @@ class Catalog(PersistentMapping):
 
         if sort_index:
             index = self[sort_index]
-            result = index.sort(result, reverse=reverse, limit=limit)
+            result = index.sort(result, reverse=reverse, limit=limit,
+                                sort_type=sort_type)
             if limit:
                 numdocs = min(numdocs, limit)
             return numdocs, result
