@@ -73,6 +73,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
             if limit and limit < 300:
                 # nbest tends to win at very small limit sizes
+                # XXX compare nbest to timsort
                 sort_type = NBEST
 
             elif fwscan_wins(limit, rlen, numdocs):
