@@ -125,7 +125,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
             rlen = len(docids)
             if limit:
-                if (limit < 300) or (limit/float(rlen)) > 0.09:
+                if (limit < 300) or (limit/float(rlen) > 0.09):
                     sort_type = NBEST
                 else:
                     sort_type = TIMSORT
