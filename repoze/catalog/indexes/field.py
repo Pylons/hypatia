@@ -11,7 +11,6 @@ from repoze.catalog.indexes.common import CatalogIndex
 
 _marker = []
 
-AUTO = 'auto'
 FWSCAN = 'fwscan'
 NBEST = 'nbest'
 TIMSORT = 'timsort'
@@ -44,7 +43,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         self._num_docs.change(-1)
                 
-    def sort(self, docids, reverse=False, limit=None, sort_type=AUTO):
+    def sort(self, docids, reverse=False, limit=None, sort_type=None):
         if limit is not None:
             limit = int(limit)
             if limit < 1:
@@ -62,31 +61,48 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         else:
             return self.sort_forward(docids, limit, numdocs, sort_type)
 
-    def sort_forward(self, docids, limit, numdocs, sort_type=AUTO):
+    def sort_forward(self, docids, limit, numdocs, sort_type=None):
 
         rev_index = self._rev_index
         fwd_index = self._fwd_index
 
         rlen = len(docids)
 
-        if sort_type == AUTO:
+        if sort_type is None:
             # XXX this needs work.  See
             # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
             # for an overview of why we bother doing all this work to
             # choose the right sort algorithm.
-            doc_ratio = rlen / float(numdocs)
+            docratio = rlen / float(numdocs)
+            limitratio = rlen / float(limit)
 
             if limit < 300:
                 # at very low limits, nbest tends to beat either fwscan
                 # or timsort
                 sort_type = NBEST
 
-            elif not limit or doc_ratio > .25:
+            elif not limit or docratio > .25:
                 # forward scan tends to beat nbest or timsort reliably
                 # when there's no limit or when the rlen is greater
                 # than a quarter of the number of documents in the
                 # index
                 sort_type = FWSCAN
+
+            elif docratio > .015625:
+                # depending on the limit ratio, forward scan still has
+                # a chance to win over nbest or timsort even if the
+                # rlen is smaller than a quarter of the number of
+                # documents in the index, beginning at a docratio of
+                # 1024/65536.0 (.015625).  XXX It'd be nice to figure
+                # out a more concise way to express this.
+                if .0313 >= docratio > .051625 and limitratio < .0025:
+                    sort_type = FWSCAN
+                elif .0625 >= docratio > .0313 and limitratio < .001:
+                    sort_type = FWSCAN
+                elif .125 >= docratio > .0625 and limitratio < .008:
+                    sort_type = FWSCAN
+                elif .25 >= docratio > .125 and limitratio < .0625:
+                    sort_type = FWSCAN
 
             else:
                 sort_type = TIMSORT
@@ -100,8 +116,8 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         else:
             raise ValueError('Unknown sort type %s' % sort_type)
 
-    def sort_reverse(self, docids, limit, numdocs, sort_type=AUTO):
-        if sort_type == AUTO:
+    def sort_reverse(self, docids, limit, numdocs, sort_type=None):
+        if sort_type is None:
             # XXX this needs work.  See
             # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
             # for an overview of why we bother doing all this work to
