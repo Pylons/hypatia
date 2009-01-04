@@ -74,7 +74,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             # for an overview of why we bother doing all this work to
             # choose the right sort algorithm.
             docratio = rlen / float(numdocs)
-            limitratio = rlen / float(limit)
+            limitratio = limit / float(numdocs)
 
             if limit < 300:
                 # at very low limits, nbest tends to beat either fwscan
@@ -95,9 +95,9 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 # documents in the index, beginning at a docratio of
                 # 1024/65536.0 (.015625).  XXX It'd be nice to figure
                 # out a more concise way to express this.
-                if .0313 >= docratio > .051625 and limitratio < .0025:
+                if .03125 >= docratio > .015625 and limitratio < .0025:
                     sort_type = FWSCAN
-                elif .0625 >= docratio > .0313 and limitratio < .001:
+                elif .0625 >= docratio > .03125 and limitratio < .001:
                     sort_type = FWSCAN
                 elif .125 >= docratio > .0625 and limitratio < .008:
                     sort_type = FWSCAN
