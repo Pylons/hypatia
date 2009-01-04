@@ -84,6 +84,9 @@ class Catalog(PersistentMapping):
         for _, r in results:
             _, result = self.family.IF.weightedIntersection(result, r)
 
+        if not result:
+            return 0, ()
+
         numdocs = len(result)
 
         if sort_index:

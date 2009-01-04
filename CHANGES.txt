@@ -18,6 +18,11 @@ Next release
     Add 'sortbench' script to test various field index sort strategies
     (requires 'benchmark' extra).
 
+  Bug Fixes
+
+    Prevent the potential for a zero division error when attempting to
+    sort an empty set of results.
+
 0.5.1 (12/31/2008)
 
   Features
