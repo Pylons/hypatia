@@ -1,3 +1,13 @@
+Next release
+
+  Features
+
+    Better detection of when to use fwdscan on ascending sorts in
+    field indexes.
+
+    Better detection of when to use nbest vs. timsort on ascending
+    sorts in field indexes.
+
 0.5.2 (1/4/2009)
 
   Features

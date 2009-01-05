@@ -71,14 +71,15 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         if sort_type is None:
 
-            if limit and limit < 300:
-                # nbest tends to win at very small limit sizes
-                # XXX compare nbest to timsort
-                sort_type = NBEST
-
-            elif fwscan_wins(limit, rlen, numdocs):
+            if fwscan_wins(limit, rlen, numdocs):
+                # forward scan beats both n-best and timsort reliably
+                # if this is true
                 sort_type = FWSCAN
                 
+            elif nbest_ascending_wins(limit, rlen, numdocs):
+                # nbest beats timsort reliably if this is true
+                sort_type = NBEST
+
             else:
                 sort_type = TIMSORT
 
@@ -93,11 +94,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     def sort_reverse(self, docids, limit, numdocs, sort_type=None):
         if sort_type is None:
-            # XXX this needs work.  See
-            # http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
-            # for an overview of why we bother doing all this work to
-            # choose the right sort algorithm.
-
+            # XXX this needs work.
             rlen = len(docids)
             if limit:
                 if (limit < 300) or (limit/float(rlen) > 0.09):
@@ -192,6 +189,15 @@ def nsort(docids, rev_index):
             continue
 
 def fwscan_wins(limit, rlen, numdocs):
+    """
+    Primitive curve-fitting to see if forward scan will beat both
+    nbest and timsort for a particular limit/rlen/numdocs tuple.  In
+    sortbench tests up to 'numdocs' sizes of 65536, this curve fit had
+    a 95%+ accuracy rate, except when 'numdocs' is < 64, then its
+    lowest accuracy percentage was 83%.  Thus, it could still use some
+    work, but accuracy at very small index sizes is not terribly
+    important for the author.
+    """
     docratio = rlen / float(numdocs)
 
     if limit:
@@ -211,8 +217,9 @@ def fwscan_wins(limit, rlen, numdocs):
         # depending on the limit ratio, forward scan still has a
         # chance to win over nbest or timsort even if the rlen is
         # smaller than a quarter of the number of documents in the
-        # index, beginning at a docratio of 256/65536.0.  XXX It'd be
-        # nice to figure out a more concise way to express this.
+        # index, beginning reliably at a docratio of 512/65536.0.  XXX
+        # It'd be nice to figure out a more concise way to express
+        # this.
         if 512/div <= docratio < 1204/div and limitratio <= 4/div:
             return True
         elif  1024/div <= docratio < 2048/div and limitratio <= 32/div:
@@ -222,6 +229,39 @@ def fwscan_wins(limit, rlen, numdocs):
         elif 4096/div <= docratio < 8192/div and limitratio <= 512/div:
             return True
         elif 8192/div <= docratio < 16384/div and limitratio <= 4096/div:
+            return True
+
+    return False
+
+def nbest_ascending_wins(limit, rlen, numdocs):
+    """
+    Primitive curve-fitting to see if nbest ascending will beat
+    timsort for a particular limit/rlen/numdocs tuple.  XXX This needs
+    work, particularly at small index sizes.  It is currently
+    optimized for an index size of about 32768 (98% accuracy); it gets
+    about 93% accuracy at index size 65536.
+    """
+    if numdocs <= 768:
+        return True
+
+    docratio = rlen / float(numdocs)
+    div = 65536.0
+    if limit:
+        limitratio = limit / float(numdocs)
+    else:
+        limitratio = 1
+
+    if docratio < 4096/div:
+        # nbest tends to win when the rlen is less than about 6% of the
+        # numdocs
+        return True
+
+    if 1:
+        if docratio == 1 and limitratio <= 8192/div:
+            return True
+        elif 1 > docratio >= 32768/div and limitratio <= 4096/div:
+            return True
+        elif 32768/div > docratio >= 4096/div and limitratio <= 2048/div:
             return True
 
     return False
