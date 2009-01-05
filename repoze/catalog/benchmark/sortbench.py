@@ -210,14 +210,14 @@ class FieldIndexForwardSort:
                     curvewin = test_fn(limit, rlen, self.numdocs)
                     if won and (not curvewin):
                         extra = ''
-                        if (t1 /  t2) < .80: # more than 20% difference
+                        if (t1 /  t2) < .90: # more than 10% difference
                             extra = " * (%0.2f)" % (t1/t2)
                         print wrongmsg % ('curvelose', rlen, limit, t2, t1,
                                           extra)
                         test_wrong +=1
                     elif (not won) and curvewin:
                         extra = ''
-                        if (t2 /  t1) < .80: # more than 20% difference
+                        if (t2 /  t1) < .90: # more than 10% difference
                             extra = " * (%0.2f)" % (t2/t1)
                         print wrongmsg % ('curvewin', rlen, limit, t1, t2,
                                           extra)
