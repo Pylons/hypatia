@@ -1,3 +1,15 @@
+Next Release
+
+  Features
+
+    Catalog indexes must supply an ``apply_intersect`` method; it
+    receives a query and a set of docids (the result intersection "so
+    far").  It should have the same sort of return value as the
+    ``apply`` method.
+
+    It is now possible to specify index query/merge order within a
+    catalog query.  See ``Index Query/Merge Order`` in the docs.
+
 0.5.3 (1/5/2009)
 
   Features

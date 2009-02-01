@@ -1,9 +1,12 @@
 from persistent import Persistent
+import BTrees
 
 _marker = ()
 
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
+
+    family = BTrees.family32
 
     def __init__(self, discriminator, *args, **kwargs):
         super(CatalogIndex, self).__init__(*args, **kwargs)
@@ -29,3 +32,10 @@ class CatalogIndex(object):
                              value)
 
         return super(CatalogIndex, self).index_doc(docid, value)
+
+    def apply_intersect(self, query, docids):
+        """ Default apply_intersect implementation """
+        result = self.apply(query)
+        if docids is None:
+            return result
+        return self.family.IF.weightedIntersection(result, docids)[1]

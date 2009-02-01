@@ -16,6 +16,11 @@ class ICatalogIndex(IIndexSearch, IInjection):
     interface = Attribute('The interface that object to be indexed will '
                           'be adapted against to provide its catalog value')
 
+    def apply_intersect(query, docids):
+        """ Run the query implied by query, and return query results
+        intersected with the ``docids`` set that is supplied.  If
+        ``docids`` is None, return the bare query results. """
+
 class ICatalogAdapter(Interface):
     def __call__(default):
         """ Return the value or the default if the object no longer

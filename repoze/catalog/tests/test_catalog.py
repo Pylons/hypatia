@@ -71,6 +71,11 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne()
         self.assertRaises(ValueError, catalog.search, name1={})
 
+    def test_search_noindex_ordered(self):
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.search, name1={},
+                          index_query_order=['name1'])
+
     def test_apply(self):
         catalog = self._makeOne()
         from BTrees.IFBTree import IFSet
@@ -134,7 +139,7 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(numdocs, 1)
         self.assertEqual(idx1.limit, 1)
 
-    def test_functional_index_merge(self):
+    def _test_functional_merge(self, **extra):
         catalog = self._makeOne()
         from repoze.catalog.indexes.field import CatalogFieldIndex
         from repoze.catalog.indexes.keyword import CatalogKeywordIndex
@@ -157,23 +162,30 @@ class TestCatalog(unittest.TestCase):
             }
         for num, doc in map.items():
             catalog.index_doc(num, doc)
-        num, result = catalog.search(field=('field1', 'field1'))
+        num, result = catalog.search(field=('field1', 'field1'), **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [1])
-        num, result = catalog.search(field=('field2', 'field2'))
+        num, result = catalog.search(field=('field2', 'field2'), **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
         num, result = catalog.search(field=('field2', 'field2'),
-                                     keyword='keyword2')
+                                     keyword='keyword2', **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = catalog.search(field=('field2', 'field2'), text='two')
+        num, result = catalog.search(field=('field2', 'field2'), text='two',
+                                     **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = catalog.search(text='text', keyword='same')
+        num, result = catalog.search(text='text', keyword='same', **extra)
         self.assertEqual(num, 3)
         self.assertEqual(list(result), [1,2,3])
-            
+
+    def test_functional_index_merge_unordered(self):
+        return self._test_functional_merge()
+
+    def test_functional_index_merge_ordered(self):
+        return self._test_functional_merge(
+            index_query_order=['field', 'keyword', 'text'])
 
 class TestFileStorageCatalogFactory(unittest.TestCase):
     def _getTargetClass(self):
@@ -283,6 +295,15 @@ class DummyIndex(object):
 
     def apply(self, query):
         return self.arg[0]
+
+    def apply_intersect(self, query, docids):
+        if docids is None:
+            return self.arg[0]
+        L = []
+        for docid in self.arg[0]:
+            if docid in docids:
+                L.append(docid)
+        return L
 
     def sort(self, results, reverse=False, limit=None, sort_type=None):
         self.limit = limit

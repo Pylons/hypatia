@@ -52,6 +52,8 @@ class Catalog(PersistentMapping):
         reverse = False
         limit = None
         sort_type = None
+        index_query_order = None
+
         if 'sort_index' in query:
             sort_index = query.pop('sort_index')
         if 'reverse' in query:
@@ -60,32 +62,50 @@ class Catalog(PersistentMapping):
             limit = query.pop('limit')
         if 'sort_type' in query:
             sort_type = query.pop('sort_type')
+        if 'index_query_order' in query:
+            index_query_order = query.pop('index_query_order')
+            
+        if index_query_order is None:
+            # unordered query (use apply)
+            results = []
+            for index_name, index_query in query.items():
+                index_query = query[index_name]
+                index = self.get(index_name)
+                if index is None:
+                    raise ValueError('No such index %s' % index_name)
+                r = index.apply(index_query)
+                if not r:
+                    # empty results
+                    return 0, r
 
-        results = []
-        for index_name, index_query in query.items():
-            index = self.get(index_name)
-            if index is None:
-                raise ValueError('No such index %s' % index_name)
-            r = index.apply(index_query)
-            if r is None:
-                continue
-            if not r:
-                # empty results
-                return 0, r
-            results.append((len(r), r))
+                results.append((len(r), r))
 
-        if not results:
-            # no applicable indexes, so catalog was not applicable
-            return 0, ()
+            if not results:
+                return 0, ()
 
-        results.sort() # order from smallest to largest
+            results.sort() # order from smallest to largest
+            _, result = results.pop(0)
+            for _, r in results:
+                _, result = self.family.IF.weightedIntersection(result, r)
 
-        _, result = results.pop(0)
-        for _, r in results:
-            _, result = self.family.IF.weightedIntersection(result, r)
+            if not result:
+                return 0, ()
 
-        if not result:
-            return 0, ()
+        else:
+            # ordered query (use apply_intersect)
+            result = None
+            _marker = object()
+            for index_name in index_query_order:
+                index_query = query.get(index_name, _marker)
+                if index_query is _marker:
+                    continue
+                index = self.get(index_name)
+                if index is None:
+                    raise ValueError('No such index %s' % index_name)
+                result = index.apply_intersect(index_query, result)
+                if not result:
+                    # empty results
+                    return 0, result
 
         numdocs = len(result)
 

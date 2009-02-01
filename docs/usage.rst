@@ -160,6 +160,32 @@ document map allows you to map document ids to "addresses" (e.g. paths
 or unique identifiers).  See :ref:`api_document_section` in the API
 documentation chapter for more information.
 
+Index Query/Merge Order
+-----------------------
+
+You may specify the order in which individual indexes in the catalog
+are queried by using the ``index_query_order`` parameter to the
+``search`` method.  If this parameter is specified, the indexes will
+be queried and search results will be merged in this order.  This
+argument should be a sequence of index names, e.g. ``['mytextindex',
+'myfieldindex']``.  If any index name supplied in
+``index_query_order`` is not also supplied in the query arguments
+supplied to ``search``, no error is raised; instead the index will be
+silently omitted from the search.
+
+Using this feature can provide an opportunity for better performance
+when you know, for instance, that searching a particular index may
+return no results; you should put this index first in the query order;
+if this index returns no results, processing will stop and the empty
+set will be returned; no further indexes will be queried.
+
+A specialized index may also take advantage of this feature by acting
+as a "filter index": these sorts of indexes can make use of the set of
+docids passed to it (the intersection of querying all "prior" indexes)
+during normal operation to perform an optimization which prevents the
+index from doing "too much" work.  Usually, these sorts of indexes are
+specified last in the ordering.
+
 Restrictions
 ------------
 
