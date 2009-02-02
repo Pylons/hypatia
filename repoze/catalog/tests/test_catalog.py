@@ -144,21 +144,27 @@ class TestCatalog(unittest.TestCase):
         from repoze.catalog.indexes.field import CatalogFieldIndex
         from repoze.catalog.indexes.keyword import CatalogKeywordIndex
         from repoze.catalog.indexes.text import CatalogTextIndex
+        from repoze.catalog.indexes.path2 import CatalogPathIndex2
         class Content(object):
-            def __init__(self, field, keyword, text):
+            def __init__(self, field, keyword, text, path):
                 self.field = field
                 self.keyword = keyword
                 self.text = text
+                self.path = path
         field = CatalogFieldIndex('field')
         keyword = CatalogKeywordIndex('keyword')
         text = CatalogTextIndex('text')
+        path = CatalogPathIndex2('path')
         catalog['field'] = field
         catalog['keyword'] = keyword
         catalog['text'] = text
+        catalog['path'] = path
         map = {
-            1:Content('field1', ['keyword1', 'same'], 'text one'),
-            2:Content('field2', ['keyword2', 'same'], 'text two'),
-            3:Content('field3', ['keyword3', 'same'], 'text three'),
+            1:Content('field1', ['keyword1', 'same'], 'text one', '/path1'),
+            2:Content('field2', ['keyword2', 'same'], 'text two',
+                      '/path1/path2'),
+            3:Content('field3', ['keyword3', 'same'], 'text three',
+                      '/path1/path2/path3'),
             }
         for num, doc in map.items():
             catalog.index_doc(num, doc)
@@ -180,12 +186,16 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(num, 3)
         self.assertEqual(list(result), [1,2,3])
 
+        num, result = catalog.search(text='text', path='/path1', **extra)
+        self.assertEqual(num, 2)
+        self.assertEqual(list(result), [2,3])
+
     def test_functional_index_merge_unordered(self):
         return self._test_functional_merge()
 
     def test_functional_index_merge_ordered(self):
         return self._test_functional_merge(
-            index_query_order=['field', 'keyword', 'text'])
+            index_query_order=['field', 'keyword', 'text', 'path'])
 
 class TestFileStorageCatalogFactory(unittest.TestCase):
     def _getTargetClass(self):

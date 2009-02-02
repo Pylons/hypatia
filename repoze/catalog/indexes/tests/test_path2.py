@@ -121,6 +121,8 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index.index_doc(22, Dummy('/disjoint'))
         result = index.search('/disjoint')
         self.assertEqual(sorted(result), [21])
+        result = index.search('/')
+        self.failUnless(22 in result)
 
     def test_apply_path_string(self):
         index = self._makeOne(VALUES)
