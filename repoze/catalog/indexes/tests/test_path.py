@@ -36,6 +36,11 @@ class PathIndexTests(unittest.TestCase):
         from repoze.catalog.interfaces import ICatalogIndex
         verifyClass(ICatalogIndex, self._getTargetClass())
 
+    def test_instance_conforms_to_ICatalogIndex(self):
+        from zope.interface.verify import verifyObject
+        from repoze.catalog.interfaces import ICatalogIndex
+        verifyObject(ICatalogIndex, self._makeOne())
+
     def test_empty_index(self):
         index = self._makeOne({})
         self.assertEqual(index.numObjects() ,0)

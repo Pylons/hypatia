@@ -9,6 +9,16 @@ class TestCatalogFieldIndex(unittest.TestCase):
         klass = self._getTargetClass()
         return klass(lambda x, default: x)
 
+    def test_class_conforms_to_ICatalogIndex(self):
+        from zope.interface.verify import verifyClass
+        from repoze.catalog.interfaces import ICatalogIndex
+        verifyClass(ICatalogIndex, self._getTargetClass())
+
+    def test_instance_conforms_to_ICatalogIndex(self):
+        from zope.interface.verify import verifyObject
+        from repoze.catalog.interfaces import ICatalogIndex
+        verifyObject(ICatalogIndex, self._makeOne())
+
     def _populateIndex(self, index):
         index.index_doc(5, 1) # docid, obj
         index.index_doc(2, 2)

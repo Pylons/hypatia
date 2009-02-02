@@ -26,7 +26,16 @@ class TestCatalogFacetIndex(unittest.TestCase):
     def _makeOne(self, facets):
         klass = self._getTargetClass()
         return klass(lambda x, default: x, facets)
-    
+
+    def test_class_conforms_to_ICatalogIndex(self):
+        from zope.interface.verify import verifyClass
+        from repoze.catalog.interfaces import ICatalogIndex
+        verifyClass(ICatalogIndex, self._getTargetClass())
+
+    def test_instance_conforms_to_ICatalogIndex(self):
+        from zope.interface.verify import verifyObject
+        from repoze.catalog.interfaces import ICatalogIndex
+        verifyObject(ICatalogIndex, self._makeOne(facets))
 
     def _populateIndex(self, idx):
         idx.index_doc(1, ['price:0-100', 'color:blue', 'style:gucci:handbag'])
