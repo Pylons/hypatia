@@ -1,5 +1,4 @@
 from zope.interface import Interface
-from zope.interface import Attribute
 
 from zope.index.interfaces import IInjection
 from zope.index.interfaces import IIndexSearch
@@ -13,9 +12,6 @@ class ICatalog(IIndexSearch, IInjection):
 class ICatalogIndex(IIndexSearch, IInjection):
     """ An index that adapts objects to an attribute or callable value
     on an object """
-    interface = Attribute('The interface that object to be indexed will '
-                          'be adapted against to provide its catalog value')
-
     def apply_intersect(query, docids):
         """ Run the query implied by query, and return query results
         intersected with the ``docids`` set that is supplied.  If
