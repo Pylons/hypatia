@@ -29,7 +29,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
 
     def test_empty_index(self):
         index = self._makeOne({})
-        self.assertEqual(index.numObjects() ,0)
+        self.assertEqual(len(index) ,0)
 
     def test_unindex_works_if_nonexisting(self):
         index = self._makeOne({})
@@ -37,7 +37,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
 
     def test_nonempty_index(self):
         index = self._makeOne(VALUES)
-        self.assertEqual(index.numObjects(), 22)
+        self.assertEqual(len(index), 22)
 
     def test_unindex_doc(self):
         index = self._makeOne(VALUES)
@@ -45,7 +45,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         for doc_id in VALUES.keys():
             index.unindex_doc(doc_id)
 
-        self.assertEqual(index.numObjects(), 0)
+        self.assertEqual(len(index), 0)
         self.assertEqual(list(index.adjacency.keys()), [])
         self.assertEqual(list(index.disjoint.keys()), [])
         self.assertEqual(list(index.path_to_docid.keys()), [])
@@ -55,9 +55,9 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index = self._makeOne()
         o = Dummy('/foo/bar')
         index.index_doc(1, o)
-        self.assertEqual(index.numObjects(), 1)
+        self.assertEqual(len(index), 1)
         index.index_doc(1, o)
-        self.assertEqual(index.numObjects(), 1)
+        self.assertEqual(len(index), 1)
 
     def test_unindex_nomatch_doesnt_raise(self):
         index = self._makeOne()
@@ -78,6 +78,16 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index = self._makeOne(VALUES)
         result = index.search('/', depth=1)
         self.assertEqual(sorted(result), [1,5])
+
+    def test_search_root_depth_2(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', depth=2)
+        self.assertEqual(sorted(result), [1, 2, 3, 4, 5, 6, 7, 8])
+
+    def test_search_root_depth_3(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', depth=3)
+        self.assertEqual(sorted(result), range(1, 21))
 
     def test_search_aa_nodepth(self):
         index = self._makeOne(VALUES)
@@ -104,7 +114,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         result = index.search('/bb', depth=0)
         self.assertEqual(sorted(result), [])
 
-    def test_search_b_depth_1(self):
+    def test_search_bb_depth_1(self):
         index = self._makeOne(VALUES)
         result = index.search('/bb', depth=1)
         self.assertEqual(sorted(result), [6,7,8])
@@ -124,6 +134,35 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         result = index.search('/')
         self.failUnless(22 in result)
 
+    def test_disjoint_resolved_random_order(self):
+        index = self._makeOne({})
+
+        index.index_doc(0, Dummy('/disjoint/path/element/1'))
+        index.index_doc(1, Dummy('/disjoint/path/element/2'))
+
+        result = index.search('/')
+        self.assertEqual(sorted(result), [])
+
+        index.index_doc(2, Dummy('/disjoint'))
+
+        result = index.search('/')
+        self.assertEqual(sorted(result), [])
+
+        index.index_doc(3, Dummy('/disjoint/path'))
+
+        result = index.search('/')
+        self.assertEqual(sorted(result), [])
+
+        index.index_doc(4, Dummy('/'))
+
+        result = index.search('/')
+        self.assertEqual(sorted(result), [2, 3])
+
+        index.index_doc(5, Dummy('/disjoint/path/element'))
+
+        result = index.search('/')
+        self.assertEqual(sorted(result), [0, 1, 2, 3, 5])
+
     def test_apply_path_string(self):
         index = self._makeOne(VALUES)
         result = index.apply('/aa')
@@ -131,7 +170,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         
     def test_apply_path_dict(self):
         index = self._makeOne(VALUES)
-        result = index.apply({'query':'/aa', 'level':1})
+        result = index.apply({'query':'/aa', 'depth':1})
         self.assertEqual(sorted(result), [2, 3, 4])
         
         

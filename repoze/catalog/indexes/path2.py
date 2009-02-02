@@ -26,8 +26,11 @@ class CatalogPathIndex2(CatalogIndex):
         self.adjacency = self.family.IO.BTree()
         self.disjoint = self.family.OO.BTree()
 
-    def numObjects(self):
+    def __len__(self):
         return len(self.docid_to_path)
+
+    def __nonzero__(self):
+        return True
 
     def _getPathTuple(self, path):
         if not path:
@@ -138,11 +141,11 @@ class CatalogPathIndex2(CatalogIndex):
     def apply(self, query):
         if isinstance(query, basestring):
             path = query
-            level = None
+            depth = None
         else:
             path = query['query']
-            level = query.get('level', None)
+            depth = query.get('depth', None)
 
-        return self.search(path, level)
+        return self.search(path, depth)
         
 
