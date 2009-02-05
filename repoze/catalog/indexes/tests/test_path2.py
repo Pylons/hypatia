@@ -167,12 +167,43 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index = self._makeOne(VALUES)
         result = index.apply('/aa')
         self.assertEqual(sorted(result), [2, 3, 4, 9, 10, 11, 12, 13, 14])
-        
-    def test_apply_path_dict(self):
+
+    def test_apply_path_string_relative_raises(self):
+        index = self._makeOne(VALUES)
+        result = self.assertRaises(ValueError, index.apply, 'aa')
+
+    def test_apply_path_tuple_absolute(self):
+        index = self._makeOne(VALUES)
+        result = index.apply(('', 'aa'))
+        self.assertEqual(sorted(result), [2, 3, 4, 9, 10, 11, 12, 13, 14])
+
+    def test_apply_path_tuple_relative_raises(self):
+        index = self._makeOne(VALUES)
+        result = self.assertRaises(ValueError, index.apply, ('aa',))
+
+    def test_apply_path_list_absolute(self):
+        index = self._makeOne(VALUES)
+        result = index.apply(['', 'aa'])
+        self.assertEqual(sorted(result), [2, 3, 4, 9, 10, 11, 12, 13, 14])
+
+    def test_apply_path_list_relative_raises(self):
+        index = self._makeOne(VALUES)
+        result = self.assertRaises(ValueError, index.apply, ['aa'])
+
+    def test_apply_path_dict_with_string_query(self):
         index = self._makeOne(VALUES)
         result = index.apply({'query':'/aa', 'depth':1})
         self.assertEqual(sorted(result), [2, 3, 4])
         
+    def test_apply_path_dict_with_tuple_query(self):
+        index = self._makeOne(VALUES)
+        result = index.apply({'query':('', 'aa'), 'depth':1})
+        self.assertEqual(sorted(result), [2, 3, 4])
+
+    def test_apply_path_dict_with_list_query(self):
+        index = self._makeOne(VALUES)
+        result = index.apply({'query':['', 'aa'], 'depth':1})
+        self.assertEqual(sorted(result), [2, 3, 4])
         
 class Dummy:
 

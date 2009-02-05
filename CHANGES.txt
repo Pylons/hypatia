@@ -1,137 +1,166 @@
 Next Release
+============
 
-  Features
+Features
+--------
 
-    Catalog indexes must supply an ``apply_intersect`` method; it
-    receives a query and a set of docids (the result intersection "so
-    far").  It should have the same sort of return value as the
-    ``apply`` method.
+- A newer path index implementation importable as
+  ``repoze.catalog.path2.CatalogPathIndex2`` has been added as another
+  index type.  The path2 index type is an improvement inasmuch as it
+  actually uses a graph to represent structure instead of the "levels"
+  scheme pioneered within Zope2 (and used by
+  ``repoze.catalog.path.CatalogPathIndex``). By eye, the "levels"
+  scheme looks like it can return the wrong results for any given path
+  for a sufficiently dense tree.
 
-    It is now possible to specify index query/merge order within a
-    catalog query.  See ``Index Query/Merge Order`` in the docs.
+- Catalog indexes must now supply an ``apply_intersect`` method; it
+  receives a query and a set of docids (the result intersection "so
+  far").  It should have the same sort of return value as the
+  ``apply`` method.  Indexes which inherit from
+  ``common.CatalogIndex`` will inherit a default implementation.
+
+- It is now possible to specify index query/merge order within a
+  catalog query.  See ``Index Query/Merge Order`` in the docs.
 
 0.5.3 (1/5/2009)
+================
 
-  Features
+Features
+--------
 
-    Better detection of when to use fwdscan on ascending sorts in
-    field indexes.
+- Better detection of when to use fwdscan on ascending sorts in field
+  indexes.
 
-    Better detection of when to use nbest vs. timsort on ascending
-    sorts in field indexes.
+- Better detection of when to use nbest vs. timsort on ascending sorts
+  in field indexes.
 
 0.5.2 (1/4/2009)
+================
 
-  Features
+Features
+--------
 
-    Allow a new catalog search method keyword: ``sort_type``.  For
-    ascending sorts, this can be one of ``nbest``, ``fwscan``, or
-    ``timsort``.  For descending sorts, only ``nbest`` and ``timsort``
-    are supported.  This argument allows fine-grained control of what
-    algorithm should be chosen to perform sorting within FieldIndex
-    code.
+- Allow a new catalog search method keyword: ``sort_type``.  For
+  ascending sorts, this can be one of ``nbest``, ``fwscan``, or
+  ``timsort``.  For descending sorts, only ``nbest`` and ``timsort``
+  are supported.  This argument allows fine-grained control of what
+  algorithm should be chosen to perform sorting within FieldIndex
+  code.
 
-    Better automatic detection of which sort algorithm to use (when
-    it's not supplied via ``sort_type``) based on empirical testing.
+- Better automatic detection of which sort algorithm to use (when it's
+  not supplied via ``sort_type``) based on empirical testing.
 
-    Depend on zope.index 3.5.0 rather than any earlier version
-    (repoze.catalog fixes migrated upstream in zope.index 3.5.0).
+- Depend on zope.index 3.5.0 rather than any earlier version
+  (repoze.catalog fixes migrated upstream in zope.index 3.5.0).
 
-    Add 'sortbench' script to test various field index sort strategies
-    (requires 'benchmark' extra to create charts).
+ - Add 'sortbench' script to test various field index sort strategies
+   (requires 'benchmark' extra to create charts).
 
-  Bug Fixes
+Bug Fixes
+---------
 
-    Prevent the potential for a zero division error when attempting to
-    sort an empty set of results.
+- Prevent the potential for a zero division error when attempting to
+  sort an empty set of results.
 
 0.5.1 (12/31/2008)
+==================
 
-  Features
+Features
+--------
 
-    Optimize the choice of fieldindex sort strategy.
+- Optimize the choice of fieldindex sort strategy.
 
-    Speed up keyword index merges slightly.
+- Speed up keyword index merges slightly.
 
-    Fix a bug in the return value of the catalog: it would try to
-    return the minimum of the number of docs or the limit event
-    if there was no limit.
+- Fix a bug in the return value of the catalog: it would try to return
+  the minimum of the number of docs or the limit event if there was no
+  limit.
 
-  Bug Fixes
+Bug Fixes
+---------
 
-    Sean Upton pointed out that the document map code artificially
-    limited the number of documents to half the number that it could
-    actually handle.
+- Sean Upton pointed out that the document map code artificially
+  limited the number of documents to half the number that it could
+  actually handle.
 
 0.5 (11/10/2008)
+================
 
-  Features
+Features
+--------
 
-    Add path index.
+- Add path index.
 
-    Speed up keyword index 'and' (intersection) queries nominally by
-    sorting intersected sets from smallest-to-largest first.
+- Speed up keyword index 'and' (intersection) queries nominally by
+  sorting intersected sets from smallest-to-largest first.
 
-    Benchmarking suite provided by Chris Rossi.
+- Benchmarking suite provided by Chris Rossi.
 
-    Add a "facet" index
-    (``repoze.catalog.indexes.facet.CatalogFacetIndex``).  This index
-    is much like a keyword index, but unlike a keyword index it
-    contains a facet list (a sequence of known colon-separated values)
-    and accepts values that are sequences of colon-separated terms.
-    Each term is split on its colons, forming a sequence of
-    categories, then each concatenation of the categories is indexed.
-    For example, if you indexed a document as
-    ``['style:gucci:handbag']``, and the facet list contained
-    ``'style'``, ``'style:gucci'`` and ``'style:gucci:handbag'``, the
-    document would be indexed three times: as ``style``, as
-    ``style:gucci`` and as ``style:gucci:handbag``.  Querying a facet
-    index returns a set of document ids that match the facets passed
-    in.  A facet index also has a ``counts`` method which provided a
-    set of document ids, returns a dictionary containing "further
-    constraint information" for use in a narrowing UI.  This count
-    implementation is not meant for very large-scale sites; it is
-    naive.
+- Add a "facet" index
+  (``repoze.catalog.indexes.facet.CatalogFacetIndex``).  This index is
+  much like a keyword index, but unlike a keyword index it contains a
+  facet list (a sequence of known colon-separated values) and accepts
+  values that are sequences of colon-separated terms.  Each term is
+  split on its colons, forming a sequence of categories, then each
+  concatenation of the categories is indexed.  For example, if you
+  indexed a document as ``['style:gucci:handbag']``, and the facet
+  list contained ``'style'``, ``'style:gucci'`` and
+  ``'style:gucci:handbag'``, the document would be indexed three
+  times: as ``style``, as ``style:gucci`` and as
+  ``style:gucci:handbag``.  Querying a facet index returns a set of
+  document ids that match the facets passed in.  A facet index also
+  has a ``counts`` method which provided a set of document ids,
+  returns a dictionary containing "further constraint information" for
+  use in a narrowing UI.  This count implementation is not meant for
+  very large-scale sites; it is naive.
 
 0.4 (10/6/2008)
+===============
 
-  Features
+Features
+--------
 
-    Speed up keyword index 'or' (union) queries by using a single
-    IFBTree.multiunion instead of multiple calls to IFBTree.union;
-    this is most helpful for speeding up 'or' queries where there are
-    lots of terms in the query sequence.
+- Speed up keyword index 'or' (union) queries by using a single
+  IFBTree.multiunion instead of multiple calls to IFBTree.union; this
+  is most helpful for speeding up 'or' queries where there are lots of
+  terms in the query sequence.
 
-  Documentation
+Documentation
+-------------
 
-    Add ``overview`` page.
+- Add ``overview`` page.
 
 0.3 (10/4/2008)
 
-  Features
+Features
+--------
 
-    Add ``repoze.catalog.document.DocumentMap`` class, which provides
-    a mechanism to map "addresses" (paths) to document ids.
+- Add ``repoze.catalog.document.DocumentMap`` class, which provides a
+  mechanism to map "addresses" (paths) to document ids.
 
-  Documentation
+Documentation
+-------------
 
-    Add API documentation for catalog and document map.
+- Add API documentation for catalog and document map.
 
-  Backwards incompatibilities
+Backwards incompatibilities
+---------------------------
 
-    Rename ``searchResults`` method to ``search``.
+- Rename ``searchResults`` method to ``search``.
 
-    Removed ``updateIndex`` and ``updateIndexes`` methods of catalog.
+- Removed ``updateIndex`` and ``updateIndexes`` methods of catalog.
 
-    All index implementations moved into ``repoze.catalog.indexes``.
+- All index implementations moved into ``repoze.catalog.indexes``.
 
-    All interfaces moved to ``repoze.catalog.interfaces``.
+- All interfaces moved to ``repoze.catalog.interfaces``.
 
 0.2
+===
 
-  Provide ``sort_index`` capability.
+- Provide ``sort_index`` capability.
 
 0.1
+===
 
-  Initial release.
+- Initial release.
 

@@ -8,9 +8,19 @@ from repoze.catalog.indexes.common import CatalogIndex
 _marker = ()
 
 class CatalogPathIndex2(CatalogIndex):
-    """Index for model paths (tokens separated by '/' characters)
+    """Index for model paths (tokens separated by '/' characters or
+    tuples representing a traversl path)
 
-    A path index stores all path components of the physical path of an object.
+    A path index may be queried to obtain all subobjects (optionally
+    limited by depth) of a certain path.
+
+    This index differs from the original
+    ``repoze.catalog.indexes.path.CatalogPath`` index inasmuch as it
+    actually retains a graph representation of the objects in the path
+    space instead of relying on 'level' information; query results
+    relying on this level information may or may not be correct for
+    any given tree.  Use of this index is suggested rather than the
+    ``path`` index.
     """
     implements(ICatalogIndex)
 
@@ -115,6 +125,26 @@ class CatalogPathIndex2(CatalogIndex):
                 stack.extend(next_docids)
 
     def search(self, path, depth=None):
+        """ Provided a path string (e.g. ``/path/to/object``) or a
+        path tuple (e.g. ``('', 'path', 'to', 'object'), or a path
+        list (e.g. ``['', 'path', 'to' object'])``), search the index
+        for document ids representing subelements of the path
+        specified by the path argument.  The object specified by the
+        path argument is *not* returned as part of the search results
+        (unlike the ``repoze.catalog.indexes.path.CatalogPathIndex``
+        index).
+
+        If the ``path`` argment is specified as a tuple or list, its
+        first element must be the empty string.  If the ``path``
+        argument is specified as a string, it must begin with a ``/``
+        character.  In other words, paths passed to the ``search``
+        method must be absolute.
+
+        If the ``depth`` argument is specified, return only documents
+        at this depth and below.  Depth ``0`` always returns no
+        results.  Depth ``1`` will return direct subobjects of the
+        path.  Depth ``2`` will return direct subobjects and the
+        children of those subobjects, and so on."""
         path = self._getPathTuple(path)
         sets = []
         stack = [tuple(path)]
@@ -139,7 +169,15 @@ class CatalogPathIndex2(CatalogIndex):
         return self.family.IF.multiunion(sets)
 
     def apply(self, query):
-        if isinstance(query, basestring):
+        """ Search the path index using the query.  If ``query`` is a
+        string, a tuple, or a list, it is treated as the ``path``
+        argument to use to search.  If it is any other object, it is
+        assumed to be a dictionary with at least a value for the
+        ``query`` key, which is treated as a path.  The dictionary can
+        also optionally specify the depth.  See the documentation for
+        the ``search`` method of this class to understand paths and
+        depths."""
+        if isinstance(query, (basestring, tuple, list)):
             path = query
             depth = None
         else:
