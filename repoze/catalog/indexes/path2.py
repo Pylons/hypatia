@@ -126,7 +126,7 @@ class CatalogPathIndex2(CatalogIndex):
 
     def search(self, path, depth=None):
         """ Provided a path string (e.g. ``/path/to/object``) or a
-        path tuple (e.g. ``('', 'path', 'to', 'object'), or a path
+        path tuple (e.g. ``('', 'path', 'to', 'object')``, or a path
         list (e.g. ``['', 'path', 'to' object'])``), search the index
         for document ids representing subelements of the path
         specified by the path argument.  The object specified by the

@@ -18,14 +18,6 @@
    .. autoclass:: CatalogFieldIndex
       :members:
 
-:mod:`repoze.catalog.indexes.field2`
-------------------------------------
-
-.. automodule:: repoze.catalog.indexes.field2
-
-   .. autoclass:: CatalogFieldIndex2
-      :members:
-
 .. _api_keywordindex_section:
 
 :mod:`repoze.catalog.indexes.keyword`
@@ -64,6 +56,13 @@
    .. autoclass:: CatalogPathIndex
       :members:
 
+:mod:`repoze.catalog.indexes.path2`
+-----------------------------------
+
+.. automodule:: repoze.catalog.indexes.path2
+
+   .. autoclass:: CatalogPathIndex2
+      :members:
 
 .. _api_document_section:
 
