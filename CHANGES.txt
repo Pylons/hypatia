@@ -1,3 +1,14 @@
+Next release
+============
+
+- ``repoze.catalog.indexes.path2.CatalogPathIndex2`` now takes an
+  extra argument to its search method named ``include_path``.  If this
+  is true, the docid set returned will include the docid for the path
+  specified by the path query parameter.  The ``apply`` method of the
+  index allows for the specification of the ``include_path`` as a
+  dictionary member in an ``apply`` call which specifies the query as
+  a dictionary.
+
 0.5.4 (2/5/2009)
 ================
 

@@ -53,7 +53,7 @@ class CatalogPathIndex2(CatalogIndex):
         if path[0] != '':
             raise ValueError('Path must be absolute (not %s)' % str(path))
 
-        return path
+        return tuple(path)
         
     def index_doc(self, docid, object):
         if callable(self.discriminator):
@@ -124,15 +124,12 @@ class CatalogPathIndex2(CatalogIndex):
                 del self.adjacency[docid]
                 stack.extend(next_docids)
 
-    def search(self, path, depth=None):
+    def search(self, path, depth=None, include_path=False):
         """ Provided a path string (e.g. ``/path/to/object``) or a
         path tuple (e.g. ``('', 'path', 'to', 'object')``, or a path
         list (e.g. ``['', 'path', 'to' object'])``), search the index
         for document ids representing subelements of the path
-        specified by the path argument.  The object specified by the
-        path argument is *not* returned as part of the search results
-        (unlike the ``repoze.catalog.indexes.path.CatalogPathIndex``
-        index).
+        specified by the path argument.
 
         If the ``path`` argment is specified as a tuple or list, its
         first element must be the empty string.  If the ``path``
@@ -141,12 +138,29 @@ class CatalogPathIndex2(CatalogIndex):
         method must be absolute.
 
         If the ``depth`` argument is specified, return only documents
-        at this depth and below.  Depth ``0`` always returns no
-        results.  Depth ``1`` will return direct subobjects of the
-        path.  Depth ``2`` will return direct subobjects and the
-        children of those subobjects, and so on."""
+        at this depth and below.  Depth ``0`` will returns the empty
+        set (or only the docid for the ``path`` specified if
+        ``include_path`` is also True).  Depth ``1`` will return
+        docids related to direct subobjects of the path (plus the
+        docid for the ``path`` specified if ``include_path`` is also
+        True).  Depth ``2`` will return docids related to direct
+        subobjects and the docids of the children of those subobjects,
+        and so on.
+
+        If ``include_path`` is False, the docid of the object
+        specified by the ``path`` argument is *not* returned as part
+        of the search results.  If ``include_path`` is True, the
+        object specified by the ``path`` argument *is* returned as
+        part of the search results.
+        """
         path = self._getPathTuple(path)
         sets = []
+
+        if include_path:
+            docid = self.path_to_docid.get(path)
+            if docid is not None:
+                sets.append(self.family.IF.Set([docid]))
+
         stack = [tuple(path)]
         plen = len(path)
 
@@ -180,10 +194,10 @@ class CatalogPathIndex2(CatalogIndex):
         if isinstance(query, (basestring, tuple, list)):
             path = query
             depth = None
+            include_path = False
         else:
             path = query['query']
             depth = query.get('depth', None)
+            include_path = query.get('include_path', False)
 
-        return self.search(path, depth)
-        
-
+        return self.search(path, depth, include_path)

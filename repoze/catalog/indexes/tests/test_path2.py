@@ -41,8 +41,22 @@ class CatalogPathIndex2Tests(unittest.TestCase):
 
     def test_unindex_doc(self):
         index = self._makeOne(VALUES)
+        docids = VALUES.keys()
 
-        for doc_id in VALUES.keys():
+        for doc_id in docids:
+            index.unindex_doc(doc_id)
+
+        self.assertEqual(len(index), 0)
+        self.assertEqual(list(index.adjacency.keys()), [])
+        self.assertEqual(list(index.disjoint.keys()), [])
+        self.assertEqual(list(index.path_to_docid.keys()), [])
+        self.assertEqual(list(index.docid_to_path.keys()), [])
+
+        index = self._makeOne(VALUES)
+        # randomize the order
+        import random
+        random.shuffle(docids)
+        for doc_id in docids:
             index.unindex_doc(doc_id)
 
         self.assertEqual(len(index), 0)
@@ -59,65 +73,115 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index.index_doc(1, o)
         self.assertEqual(len(index), 1)
 
-    def test_unindex_nomatch_doesnt_raise(self):
-        index = self._makeOne()
-        # this should not raise an error
-        index.unindex_doc(-1)
-
     def test_search_root_nodepth(self):
         index = self._makeOne(VALUES)
         result = index.search('/')
         self.assertEqual(sorted(result), range(1, 21))
+
+    def test_search_root_nodepth_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', include_path=True)
+        self.assertEqual(sorted(result), range(0, 21))
 
     def test_search_root_depth_0(self):
         index = self._makeOne(VALUES)
         result = index.search('/', depth=0)
         self.assertEqual(sorted(result), [])
 
+    def test_search_depth_0_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', depth=0, include_path=True)
+        self.assertEqual(sorted(result), [0])
+
     def test_search_root_depth_1(self):
         index = self._makeOne(VALUES)
         result = index.search('/', depth=1)
         self.assertEqual(sorted(result), [1,5])
+
+    def test_search_depth_1_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', depth=1, include_path=True)
+        self.assertEqual(sorted(result), [0, 1, 5])
 
     def test_search_root_depth_2(self):
         index = self._makeOne(VALUES)
         result = index.search('/', depth=2)
         self.assertEqual(sorted(result), [1, 2, 3, 4, 5, 6, 7, 8])
 
+    def test_search_depth_2_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', depth=2, include_path=True)
+        self.assertEqual(sorted(result), [0, 1, 2, 3, 4, 5, 6, 7, 8])
+
     def test_search_root_depth_3(self):
         index = self._makeOne(VALUES)
         result = index.search('/', depth=3)
         self.assertEqual(sorted(result), range(1, 21))
+
+    def test_search_root_depth_3_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/', depth=3, include_path=True)
+        self.assertEqual(sorted(result), range(0, 21))
 
     def test_search_aa_nodepth(self):
         index = self._makeOne(VALUES)
         result = index.search('/aa')
         self.assertEqual(sorted(result), [2, 3, 4, 9, 10, 11, 12, 13, 14])
 
+    def test_search_aa_nodepth_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/aa', include_path=True)
+        self.assertEqual(sorted(result), [1, 2, 3, 4, 9, 10, 11, 12, 13, 14])
+
     def test_search_aa_depth_0(self):
         index = self._makeOne(VALUES)
         result = index.search('/aa', depth=0)
         self.assertEqual(sorted(result), [])
+
+    def test_search_aa_depth_0_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/aa', depth=0, include_path=True)
+        self.assertEqual(sorted(result), [1])
 
     def test_search_aa_depth_1(self):
         index = self._makeOne(VALUES)
         result = index.search('/aa', depth=1)
         self.assertEqual(sorted(result), [2,3,4])
 
+    def test_search_aa_depth_1_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/aa', depth=1, include_path=True)
+        self.assertEqual(sorted(result), [1, 2, 3, 4])
+
     def test_search_bb_nodepth(self):
         index = self._makeOne(VALUES)
         result = index.search('/bb')
         self.assertEqual(sorted(result), [6, 7, 8, 15, 16, 17, 18, 19, 20])
+
+    def test_search_bb_nodepth_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/bb', include_path=True)
+        self.assertEqual(sorted(result), [5, 6, 7, 8, 15, 16, 17, 18, 19, 20])
 
     def test_search_bb_depth_0(self):
         index = self._makeOne(VALUES)
         result = index.search('/bb', depth=0)
         self.assertEqual(sorted(result), [])
 
+    def test_search_bb_depth_0_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/bb', depth=0, include_path=True)
+        self.assertEqual(sorted(result), [5])
+
     def test_search_bb_depth_1(self):
         index = self._makeOne(VALUES)
         result = index.search('/bb', depth=1)
-        self.assertEqual(sorted(result), [6,7,8])
+        self.assertEqual(sorted(result), [6, 7, 8])
+
+    def test_search_bb_depth_1_include_path(self):
+        index = self._makeOne(VALUES)
+        result = index.search('/bb', depth=1, include_path=True)
+        self.assertEqual(sorted(result), [5, 6, 7, 8])
 
     def test_search_with_tuple(self):
         index = self._makeOne(VALUES)
@@ -204,7 +268,19 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index = self._makeOne(VALUES)
         result = index.apply({'query':['', 'aa'], 'depth':1})
         self.assertEqual(sorted(result), [2, 3, 4])
-        
+
+    def test_apply_path_dict_with_include_path_true(self):
+        index = self._makeOne(VALUES)
+        result = index.apply({'query':('', 'aa'), 'depth':1,
+                              'include_path':True})
+        self.assertEqual(sorted(result), [1, 2, 3, 4])
+
+    def test_apply_path_dict_with_include_path_false(self):
+        index = self._makeOne(VALUES)
+        result = index.apply({'query':('', 'aa'), 'depth':1,
+                              'include_path':False})
+        self.assertEqual(sorted(result), [2, 3, 4])
+
 class Dummy:
 
     def __init__( self, path):
