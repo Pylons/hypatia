@@ -58,3 +58,16 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         index.index_doc(5, [9,10])
         result = index.apply({'operator':'and', 'query':[5,11]})
         self.assertEqual(list(result), [])
+
+    def test_apply_doesnt_mutate_query(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        index.index_doc(2, [3,4,5])
+        index.index_doc(3, [5,6,7])
+        index.index_doc(4, [7,8,9]) 
+        index.index_doc(5, [9,10])
+        query = {'operator':'or', 'query':[5]}
+        result = index.apply(query)
+        self.assertEqual(list(result), [2,3])
+        self.assertEqual(query, {'operator':'or', 'query':[5]})
+

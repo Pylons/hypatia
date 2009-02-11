@@ -8,3 +8,13 @@ from repoze.catalog.indexes.common import CatalogIndex
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     implements(ICatalogIndex)
 
+    def apply(self, query):
+        """ Work around the fact that zope.index's apply method
+        actually mutates the query if it's a dict """
+        operator = 'and'
+        if isinstance(query, dict):
+            query = query.copy() # this is the fix
+            if 'operator' in query:
+                operator = query.pop('operator')
+            query = query['query']
+        return self.search(query, operator=operator)

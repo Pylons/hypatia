@@ -19,6 +19,10 @@ Next release
 - Give ``path2.CatalogPathIndex2`` index a better ``reindex_doc``
   method than the default.
 
+- The CatalogKeywordIndex's ``apply`` method mutated the query passed
+  in if it was a dict.  To fix, we override the ``apply`` method from
+  the zope.index implementation.
+
 0.5.4 (2/5/2009)
 ================
 
