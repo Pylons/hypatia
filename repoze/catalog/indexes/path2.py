@@ -9,7 +9,7 @@ _marker = ()
 
 class CatalogPathIndex2(CatalogIndex):
     """Index for model paths (tokens separated by '/' characters or
-    tuples representing a traversl path)
+    tuples representing a model path).
 
     A path index may be queried to obtain all subobjects (optionally
     limited by depth) of a certain path.
