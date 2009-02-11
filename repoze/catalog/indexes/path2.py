@@ -188,9 +188,12 @@ class CatalogPathIndex2(CatalogIndex):
         argument to use to search.  If it is any other object, it is
         assumed to be a dictionary with at least a value for the
         ``query`` key, which is treated as a path.  The dictionary can
-        also optionally specify the depth.  See the documentation for
-        the ``search`` method of this class to understand paths and
-        depths."""
+        also optionally specify the ``depth`` and whether to include
+        the docid referenced by the path argument (the ``query`` key)
+        in the set of docids returned (``include_path``).  See the
+        documentation for the ``search`` method of this class to
+        understand paths, depths, and the ``include_path`` argument.
+        """
         if isinstance(query, (basestring, tuple, list)):
             path = query
             depth = None
