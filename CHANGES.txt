@@ -3,7 +3,7 @@ Next release
 
 - Add a ``reindex_doc`` method to the catalog and to the ``common``
   shared index base class.  The catalog's ``reindex_doc`` calls each
-  index's ``rindex_doc`` method when called.  The common shared index
+  index's ``reindex_doc`` method when called.  The common shared index
   base class implementation unindexes the docid and then subsequently
   indexes the document using the docid.  This method can be overridden
   for specific indexes to do something different on a reindex.
