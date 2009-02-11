@@ -54,13 +54,18 @@ class CatalogPathIndex2(CatalogIndex):
             raise ValueError('Path must be absolute (not %s)' % str(path))
 
         return tuple(path)
-        
-    def index_doc(self, docid, object):
+
+    def _getObjectPath(self, object):
         if callable(self.discriminator):
             path = self.discriminator(object, _marker)
         else:
             path = getattr(object, self.discriminator, _marker)
 
+        return path
+        
+    def index_doc(self, docid, object):
+
+        path = self._getObjectPath(object)
 
         if path is _marker:
             self.unindex_doc(docid)
@@ -123,6 +128,17 @@ class CatalogPathIndex2(CatalogIndex):
             else:
                 del self.adjacency[docid]
                 stack.extend(next_docids)
+
+    def reindex_doc(self, docid, object):
+        path = self._getPathTuple(self._getObjectPath(object))
+
+        if self.docid_to_path.get(docid) != path:
+            self.unindex_doc(docid)
+            self.index_doc(docid, object)
+            return True
+
+        else:
+            return False
 
     def search(self, path, depth=None, include_path=False):
         """ Provided a path string (e.g. ``/path/to/object``) or a

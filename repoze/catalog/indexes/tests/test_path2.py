@@ -281,6 +281,16 @@ class CatalogPathIndex2Tests(unittest.TestCase):
                               'include_path':False})
         self.assertEqual(sorted(result), [2, 3, 4])
 
+    def test_reindex_doc_nochange(self):
+        index = self._makeOne(VALUES)
+        result = index.reindex_doc(1, VALUES[1])
+        self.assertEqual(result, False)
+
+    def test_reindex_doc_withchange(self):
+        index = self._makeOne(VALUES)
+        result = index.reindex_doc(1, Dummy('/abcdef'))
+        self.assertEqual(result, True)
+
 class Dummy:
 
     def __init__( self, path):

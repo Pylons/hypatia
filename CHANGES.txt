@@ -16,6 +16,9 @@ Next release
   dictionary member in an ``apply`` call which specifies the query as
   a dictionary.
 
+- Give ``path2.CatalogPathIndex2`` index a better ``reindex_doc``
+  method than the default.
+
 0.5.4 (2/5/2009)
 ================
 
