@@ -1,6 +1,13 @@
 Next release
 ============
 
+- Add a ``reindex_doc`` method to the catalog and to the ``common``
+  shared index base class.  The catalog's ``reindex_doc`` calls each
+  index's ``rindex_doc`` method when called.  The common shared index
+  base class implementation unindexes the docid and then subsequently
+  indexes the document using the docid.  This method can be overridden
+  for specific indexes to do something different on a reindex.
+
 - ``repoze.catalog.indexes.path2.CatalogPathIndex2`` now takes an
   extra argument to its search method named ``include_path``.  If this
   is true, the docid set returned will include the docid for the path

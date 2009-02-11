@@ -33,6 +33,11 @@ class CatalogIndex(object):
 
         return super(CatalogIndex, self).index_doc(docid, value)
 
+    def reindex_doc(self, docid, object):
+        """ Default reindex_doc implementation """
+        self.unindex_doc(docid)
+        self.index_doc(docid, object)
+
     def apply_intersect(self, query, docids):
         """ Default apply_intersect implementation """
         result = self.apply(query)

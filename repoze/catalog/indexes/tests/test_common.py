@@ -54,6 +54,18 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.value, 'abc')
         self.assertEqual(index.docid, 1)
 
+    def test_reindex_doc(self):
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        class Dummy:
+            abc = 'abc'
+        dummy = Dummy()
+        index.reindex_doc(1, dummy)
+        self.assertEqual(index.unindexed, 1)
+        self.assertEqual(index.value, 'abc')
+        self.assertEqual(index.docid, 1)
 
 from repoze.catalog.interfaces import ICatalogIndex
 from zope.interface import implements

@@ -43,6 +43,14 @@ class TestCatalog(unittest.TestCase):
         catalog['name'] = idx
         self.assertRaises(ValueError, catalog.index_doc, 'abc', 'value')
 
+    def test_reindex_doc(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_doc(1, 'value')
+        self.assertEqual(idx.reindexed_docid, 1)
+        self.assertEqual(idx.reindexed_ob, 'value')
+
     def test_unindex_doc(self):
         catalog = self._makeOne()
         idx = DummyIndex()
@@ -302,6 +310,10 @@ class DummyIndex(object):
 
     def clear(self):
         self.cleared = True
+
+    def reindex_doc(self, docid, object):
+        self.reindexed_docid = docid
+        self.reindexed_ob = object
 
     def apply(self, query):
         return self.arg[0]

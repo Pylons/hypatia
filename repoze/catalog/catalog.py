@@ -36,6 +36,15 @@ class Catalog(PersistentMapping):
         for index in self.values():
             index.unindex_doc(docid)
 
+    def reindex_doc(self, docid, obj):
+        """ Reindex the document referenced by docid using the object
+        passed in as ``obj`` (typically just does the equivalent of
+        ``index_doc``, then ``unindex_doc``, but specialized indexes
+        can override the method that this API calls to do less work. """
+        assertint(docid)
+        for index in self.values():
+            index.reindex_doc(docid, obj)
+
     def __setitem__(self, name, index):
         """ Add an object which implements
         ``repoze.catalog.interfaces.ICatalogIndex`` to the catalog.
