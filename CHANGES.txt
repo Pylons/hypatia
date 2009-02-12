@@ -1,4 +1,4 @@
-Next release
+0.5.5 (2/11/2009)
 =================
 
 - Add a ``reindex_doc`` method to the catalog and to the ``common``
