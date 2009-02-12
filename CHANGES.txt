@@ -1,5 +1,5 @@
 Next release
-============
+=================
 
 - Add a ``reindex_doc`` method to the catalog and to the ``common``
   shared index base class.  The catalog's ``reindex_doc`` calls each
@@ -22,6 +22,30 @@ Next release
 - The CatalogKeywordIndex's ``apply`` method mutated the query passed
   in if it was a dict.  To fix, we override the ``apply`` method from
   the zope.index implementation.
+
+- Added a Range class importable as ``repoze.catalog.Range``.  The
+  Range class should be used to represent a range query to a
+  CatalogFieldIndex.  The old-style of passing a 2-tuple to represent
+  a range is still supported, but will be eventually removed in favor
+  of requring a Range object to represent a Range query.  A Range
+  object can be instantiated ala "Range(start, end)".
+
+- It is now possible to pass a sequence of items to the
+  CatalogFieldIndex ``apply`` method.  When a sequence of terms that
+  is passed in is not a 2-tuple (representing a range; deprecated), it
+  is considered a query for multiple terms.  The docids returned will
+  be unioned together.
+
+- It is now possible to pass a dictionary to the CatalogFieldIndex
+  ``apply`` method.  When a dictionary is passed, the member of the
+  dictionary named ``query`` is treated as the query.  It may be a
+  single term, a sequence of terms, or a Range.  An additional
+  dictionary member named ``operator`` may also be specified: when
+  this is specified, it must be one of ``or`` or ``and`` (the default
+  is ``or``).  If the query specifies multiple terms, and the operator
+  is ``or``, the results will be unioned; if the query specifies
+  multiple terms and the operator is ``and``, the results will be
+  intersected.
 
 0.5.4 (2/5/2009)
 ================

@@ -171,3 +171,144 @@ class TestCatalogFieldIndex(unittest.TestCase):
         c1 = IFSet([1, 2, 3, 4, 5])
         self.assertRaises(ValueError, index.sort, c1, limit=0)
 
+    def test_search_single_range_querymember_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.search([Range(1,1)])
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+        
+    def test_search_double_range_querymember_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.search([Range(1,1), Range(1,2)])
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+
+    def test_search_double_range_querymember_and(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.search([Range(1,1), Range(1,2)], 'and')
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+
+    def test_search_single_int_querymember_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.search([1])
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+        
+    def test_search_double_int_querymember_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.search([1, 2])
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+
+    def test_search_double_int_querymember_and(self):
+        # this is a nonsensical query
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.search([1, 2], 'and')
+        result = sorted(list(result))
+        self.assertEqual(result, [])
+
+    def test_apply_dict_operator_or_with_ranges(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.apply({'query':[Range(1,1), Range(1,2)],
+                              'operator':'or'})
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+        
+    def test_apply_dict_operator_and_with_ranges_and(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.apply({'query':[Range(1,1), Range(1,2)],
+                              'operator':'and'})
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+
+    def test_apply_dict_operator_and_with_ranges_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.apply({'query':[Range(1,1), Range(1,2)],
+                              'operator':'or'})
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+        
+    def test_apply_dict_operator_or_with_single_int(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.apply({'query':1})
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+        
+    def test_apply_dict_operator_or_with_list_of_ints_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.apply({'query':[1,2]})
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+        
+    def test_apply_dict_operator_or_with_list_of_ints_and(self):
+        # nonsensical query
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.apply({'query':[1, 2], 'operator':'and'})
+        result = sorted(list(result))
+        self.assertEqual(result, [])
+        
+    def test_apply_dict_operator_or_with_int_and_range_or(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.apply({'query':[1, Range(1,2)], 'operator':'or'})
+        result = sorted(list(result))
+        self.assertEqual(result, [2,5,50])
+
+    def test_apply_dict_operator_or_with_int_and_range_and(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        from repoze.catalog import Range
+        result = index.apply({'query':[1, Range(1,2)], 'operator':'and'})
+        result = sorted(list(result))
+        self.assertEqual(result, [5,50])
+
+    def test_apply_nondict_2tuple(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.apply((1,2))
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5,50])
+        
+    def test_apply_nondict_int(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.apply(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+        

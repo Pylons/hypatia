@@ -8,6 +8,7 @@ from zope.index.field import FieldIndex
 
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
+from repoze.catalog import Range
 
 _marker = []
 
@@ -180,6 +181,46 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             yield docid
             if limit and n >= limit:
                 raise StopIteration
+
+    def search(self, queries, operator='or'):
+        sets = []
+        for query in queries:
+            if isinstance(query, Range):
+                query = query.as_tuple()
+            else:
+                query = (query, query)
+            set = self.family.IF.multiunion(self._fwd_index.values(*query))
+            sets.append(set)
+
+        result = None
+
+        if len(sets) == 1:
+            result = sets[0]
+        elif operator == 'and':
+            sets.sort()
+            for set in sets:
+                result = self.family.IF.intersection(set, result)
+        else:
+            result = self.family.IF.multiunion(sets)
+
+        return result
+            
+    def apply(self, query):
+        if isinstance(query, dict):
+            val = query['query']
+            if isinstance(val, Range):
+                val = [val]
+            elif not isinstance(val, (list, tuple)):
+                val = [val]
+            operator = query.get('operator', 'or')
+            result = self.search(val, operator)
+        else:
+            if isinstance(query, tuple) and len(query) == 2:
+                # b/w compat stupidity
+                query = Range(*query)
+            result = self.search([query], 'or')
+
+        return result
 
 def nsort(docids, rev_index):
     for docid in docids:
