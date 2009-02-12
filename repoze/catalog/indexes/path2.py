@@ -23,11 +23,13 @@ class CatalogPathIndex2(CatalogIndex):
     ``path`` index.
     """
     implements(ICatalogIndex)
+    attr_discriminator = None # b/w compat
 
     family = BTrees.family32
 
     def __init__(self, *arg, **kw):
         super(CatalogPathIndex2, self).__init__(*arg, **kw)
+        self.attr_discriminator = kw.get('attr_discriminator')
         self.clear()
 
     def clear(self):
@@ -35,6 +37,7 @@ class CatalogPathIndex2(CatalogIndex):
         self.path_to_docid = self.family.OI.BTree()
         self.adjacency = self.family.IO.BTree()
         self.disjoint = self.family.OO.BTree()
+        self.docid_to_attr = self.family.IO.BTree()
 
     def __len__(self):
         return len(self.docid_to_path)
@@ -63,6 +66,13 @@ class CatalogPathIndex2(CatalogIndex):
 
         return path
         
+    def _getObjectAttr(self, object):
+        if callable(self.attr_discriminator):
+            attr = self.attr_discriminator(object, _marker)
+        else:
+            attr = getattr(object, self.attr_discriminator, _marker)
+        return attr
+
     def index_doc(self, docid, object):
 
         path = self._getObjectPath(object)
@@ -72,6 +82,11 @@ class CatalogPathIndex2(CatalogIndex):
             return None
 
         path = self._getPathTuple(path)
+
+        if self.attr_discriminator is not None:
+            attr = self._getObjectAttr(object)
+            if attr is not _marker:
+                self.docid_to_attr[docid] = attr
 
         self.docid_to_path[docid] = path
         self.path_to_docid[path] = docid
@@ -119,6 +134,8 @@ class CatalogPathIndex2(CatalogIndex):
             path = self.docid_to_path[docid]
             del self.path_to_docid[path]
             del self.docid_to_path[docid]
+            if docid in self.docid_to_attr:
+                del self.docid_to_attr[docid]
             next_docids = self.adjacency.get(docid)
             if next_docids is None:
                 next_docids = self.disjoint.get(path)
@@ -138,9 +155,19 @@ class CatalogPathIndex2(CatalogIndex):
             return True
 
         else:
+            if self.attr_discriminator is not None:
+                attr = self._getObjectAttr(object)
+                if docid in self.docid_to_attr:
+                    if attr is _marker:
+                        del self.docid_to_attr[docid]
+                    elif attr != self.docid_to_attr[docid]:
+                        self.docid_to_attr = attr
+                else:
+                    if attr is not _marker:
+                        self.docid_to_attr[docid] = attr
             return False
 
-    def search(self, path, depth=None, include_path=False):
+    def search(self, path, depth=None, include_path=False, attr_checker=None):
         """ Provided a path string (e.g. ``/path/to/object``) or a
         path tuple (e.g. ``('', 'path', 'to', 'object')``, or a path
         list (e.g. ``['', 'path', 'to' object'])``), search the index
@@ -168,7 +195,21 @@ class CatalogPathIndex2(CatalogIndex):
         of the search results.  If ``include_path`` is True, the
         object specified by the ``path`` argument *is* returned as
         part of the search results.
+
+        If ``attr_checker`` is not None, it must be a callback that
+        accepts two arguments: the first argument will be the
+        attribute value found, the second argument is a sequence of
+        all previous attributes encountered during this search (in
+        path order).  If ``attr_checker`` returns True, traversal will
+        continue; otherwise, traversal will cease.
         """
+        if attr_checker is None:
+            return self._simple_search(path, depth, include_path)
+        else:
+            return self._attr_search(path, depth, include_path, attr_checker)
+
+    def _simple_search(self, path, depth, include_path):
+        """ Codepath taken when no attr checker is used """
         path = self._getPathTuple(path)
         sets = []
 
@@ -177,7 +218,7 @@ class CatalogPathIndex2(CatalogIndex):
             if docid is not None:
                 sets.append(self.family.IF.Set([docid]))
 
-        stack = [tuple(path)]
+        stack = [path]
         plen = len(path)
 
         while stack:
@@ -188,15 +229,72 @@ class CatalogPathIndex2(CatalogIndex):
             if docid is None:
                 continue
             theset = self.adjacency.get(docid)
-            if not theset:
-                continue
-            sets.append(theset)
-            for docid in theset:
-                newpath = self.docid_to_path.get(docid)
-                if newpath is not None:
-                    stack.append(newpath)
+            if theset is not None:
+                sets.append(theset)
+                for docid in theset:
+                    newpath = self.docid_to_path.get(docid)
+                    if newpath is not None:
+                        stack.append(newpath)
 
         return self.family.IF.multiunion(sets)
+
+    def _attr_search(self, path, depth, include_path, attr_checker):
+        """ Codepath taken when an attr checker is used """
+        path = self._getPathTuple(path)
+
+        if depth is not None:
+            raise NotImplementedError('depth not yet supported')
+
+        attrs = []
+
+        # make sure we get "leading" attrs
+        for p in range(len(path)-1):
+            subpath = path[:p+1]
+            docid = self.path_to_docid.get(subpath)
+            if docid is None:
+                continue
+            attr = self.docid_to_attr.get(docid, _marker)
+            if attr is not _marker:
+                attrs.append(attr)
+                
+        stack = [path]
+        plen = len(path)
+        attrset = self.family.IF.Set()
+        result = {path:(attrs, attrset)}
+
+        while stack:
+            nextpath = stack.pop()
+            #if depth is not None and len(nextpath) - plen >= depth:
+            #    continue
+            docid = self.path_to_docid.get(nextpath)
+            if docid is None:
+                continue
+            attr = self.docid_to_attr.get(docid, _marker)
+            if attr is _marker:
+                if include_path and nextpath == path:
+                    add_to_closest(
+                        result, nextpath, self.family.IF.Set([docid]))
+            else:
+                remove_from_closest(result, nextpath, docid)
+                attrs = attrs[:]
+                attrs.append(attr)
+                if nextpath == path:
+                    if include_path:
+                        attrset = self.family.IF.Set([docid])
+                    else:
+                        attrset = self.family.IF.Set()
+                else:
+                    attrset = self.family.IF.Set([docid])
+                result[nextpath] = (attrs, attrset)
+            theset = self.adjacency.get(docid)
+            if theset is not None:
+                add_to_closest(result, nextpath, theset)
+                for docid in theset:
+                    newpath = self.docid_to_path.get(docid)
+                    if newpath is not None:
+                        stack.append(newpath)
+
+        return attr_checker(result.values())
 
     def apply(self, query):
         """ Search the path index using the query.  If ``query`` is a
@@ -214,9 +312,32 @@ class CatalogPathIndex2(CatalogIndex):
             path = query
             depth = None
             include_path = False
+            attr_checker = None
         else:
             path = query['query']
             depth = query.get('depth', None)
             include_path = query.get('include_path', False)
+            attr_checker = query.get('attr_checker', None)
 
-        return self.search(path, depth, include_path)
+        return self.search(path, depth, include_path, attr_checker)
+
+def add_to_closest(sofar, thispath, theset):
+    paths = sofar.keys()
+    paths.reverse()
+    for path in paths:
+        pathlen = len(path)
+        if thispath[:pathlen] == path:
+            sofar[path][1].update(theset)
+            break
+
+def remove_from_closest(sofar, thispath, docid):
+    paths = sofar.keys()
+    paths.reverse()
+    for path in paths:
+        pathlen = len(path)
+        if thispath[:pathlen] == path:
+            theset = sofar[path][1]
+            if docid in theset:
+                theset.remove(docid)
+            break
+
