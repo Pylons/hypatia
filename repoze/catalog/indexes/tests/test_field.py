@@ -311,4 +311,13 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = index.apply(1)
         result = sorted(list(result))
         self.assertEqual(result, [5, 50])
+
+    def test_apply_list(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.apply([1,2])
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+        
         

@@ -218,7 +218,10 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             if isinstance(query, tuple) and len(query) == 2:
                 # b/w compat stupidity
                 query = Range(*query)
-            result = self.search([query], 'or')
+                query = [query]
+            elif not isinstance(query, (list, tuple)):
+                query = [query]
+            result = self.search(query, 'or')
 
         return result
 
