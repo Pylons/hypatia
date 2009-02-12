@@ -32,9 +32,10 @@
 
 - It is now possible to pass a sequence of items to the
   CatalogFieldIndex ``apply`` method.  When a sequence of terms that
-  is passed in is not a 2-tuple (representing a range; deprecated), it
-  is considered a query for multiple terms.  The docids returned will
-  be unioned together.
+  is passed in is *not* a tuple with two items in it (the previous API
+  representing a range, which is deprecated), it will be considered a
+  query for multiple terms.  The docids returned for each term will be
+  unioned together to form the result.
 
 - It is now possible to pass a dictionary to the CatalogFieldIndex
   ``apply`` method.  When a dictionary is passed, the member of the
