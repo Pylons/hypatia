@@ -1,3 +1,17 @@
+Next release
+============
+
+- Add "attribute discriminator" and "attribute checker" support to
+  path2 index.  If an index is created with an attribute
+  discriminator, when any object is indexed, the value of the
+  attribute will be stored in the path index.  The path index will
+  know that that attribute belongs to a particular path.  Later, when
+  the "attribute checker" feature of the ``apply`` or ``search``
+  method is used, a user-supplied attribute checker function will be
+  able to filter the result set returned by the index.  This is used
+  by the author primarily to support security-filtered searches of a
+  path index.  It is not otherwise documented.
+  
 0.5.5 (2/11/2009)
 =================
 
