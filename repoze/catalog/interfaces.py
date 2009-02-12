@@ -17,6 +17,10 @@ class ICatalogIndex(IIndexSearch, IInjection):
         intersected with the ``docids`` set that is supplied.  If
         ``docids`` is None, return the bare query results. """
 
+    def reindex_doc(docid, obj):
+        """ Reindex the document numbered ``docid`` using in the
+        information on object ``obj``"""
+
 class ICatalogAdapter(Interface):
     def __call__(default):
         """ Return the value or the default if the object no longer
