@@ -216,7 +216,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             result = self.search(val, operator)
         else:
             if isinstance(query, tuple) and len(query) == 2:
-                # b/w compat stupidity
+                # b/w compat stupidity; this needs to die
                 query = Range(*query)
                 query = [query]
             elif not isinstance(query, (list, tuple)):
