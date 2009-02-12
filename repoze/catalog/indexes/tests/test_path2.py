@@ -66,7 +66,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(index.path_to_docid.keys()), [])
         self.assertEqual(list(index.docid_to_path.keys()), [])
 
-    def test_reindex_doesnt_dupe(self):
+    def test_unindex_then_index_doesnt_dupe(self):
         index = self._makeOne()
         o = Dummy('/foo/bar')
         index.index_doc(1, o)
@@ -287,10 +287,32 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         result = index.reindex_doc(1, VALUES[1])
         self.assertEqual(result, False)
 
-    def test_reindex_doc_withchange(self):
+    def test_reindex_doc_attradd(self):
+        index = self._makeOne(VALUES, 'attr')
+        self.assertEqual(index.docid_to_attr.get(1), None)
+        result = index.reindex_doc(1, Dummy('/aa', 'acl5'))
+        self.assertEqual(result, True)
+        self.assertEqual(index.docid_to_attr[1], 'acl5')
+
+    def test_reindex_doc_attrchange(self):
+        index = self._makeOne(VALUES, 'attr')
+        self.assertEqual(index.docid_to_attr[0], 'acl1')
+        result = index.reindex_doc(0, Dummy('/', 'acl11'))
+        self.assertEqual(result, True)
+        self.assertEqual(index.docid_to_attr[0], 'acl11')
+
+    def test_reindex_doc_attrdel(self):
+        index = self._makeOne(VALUES, 'attr')
+        self.assertEqual(index.docid_to_attr[0], 'acl1')
+        result = index.reindex_doc(0, Dummy('/'))
+        self.assertEqual(result, True)
+        self.assertEqual(index.docid_to_attr.get(0), None)
+
+    def test_reindex_doc_pathchange(self):
         index = self._makeOne(VALUES)
         result = index.reindex_doc(1, Dummy('/abcdef'))
         self.assertEqual(result, True)
+        self.assertEqual(index.docid_to_path[1], ('', 'abcdef'))
 
     def test_index_doc_unindex_doc_with_attr_discriminator(self):
         index = self._makeOne(VALUES, 'attr')
@@ -331,50 +353,13 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         results = attr_checker.results
         self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1'])
+        self.assertEqual(attrs, (0, ['acl1']))
         self.assertEqual(
             list(theset),
             [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
         attrs, theset = results[1]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [8, 19, 20])
-
-##     def test_search_root_depth0_with_attrchecker(self):
-##         index = self._makeOne(VALUES, 'attr')
-##         attr_checker = DummyAttrChecker()
-##         result = index.search('/', depth=0, attr_checker=attr_checker)
-##         self.assertEqual(sorted(result), [])
-##         results = attr_checker.results
-##         self.assertEqual(len(results), 1)
-##         attrs, theset = results[0]
-##         self.assertEqual(attrs, [])
-##         self.assertEqual(list(theset), [])
-
-##     def test_search_root_depth1_with_attrchecker(self):
-##         index = self._makeOne(VALUES, 'attr')
-##         attr_checker = DummyAttrChecker()
-##         result = index.search('/', depth=1, attr_checker=attr_checker)
-##         self.assertEqual(sorted(result), [1, 5])
-##         results = attr_checker.results
-##         self.assertEqual(len(results), 1)
-##         attrs, theset = results[0]
-##         self.assertEqual(attrs, ['acl1'])
-##         self.assertEqual(list(theset), [1,5])
-
-##     def test_search_root_depth2_with_attrchecker(self):
-##         index = self._makeOne(VALUES, 'attr')
-##         attr_checker = DummyAttrChecker()
-##         import pdb; pdb.set_trace()
-##         result = index.search('/', depth=2, attr_checker=attr_checker)
-##         self.assertEqual(sorted(result), [1, 2, 3, 4, 5, 6, 7, 8])
-##         results = attr_checker.results
-##         #self.assertEqual(len(results), 2)
-##         attrs, theset = results[0]
-##         self.assertEqual(attrs, ['acl1'])
-##         self.assertEqual(list(theset), [1,2,3,4,5,6,7])
-##         attrs, theset = results[1]
-##         self.assertEqual(attrs, ['acl1', 'acl2'])
-##         self.assertEqual(list(theset), [8])
 
     def test_search_root_nodepth_with_attrchecker_and_include_path(self):
         index = self._makeOne(VALUES, 'attr')
@@ -384,12 +369,119 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         results = attr_checker.results
         self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1'])
+        self.assertEqual(attrs, (0, ['acl1']))
         self.assertEqual(
             list(theset),
             [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
         attrs, theset = results[1]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8, 19, 20])
+
+    def test_search_root_depth0_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=0, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [])
+        results = attr_checker.results
+        self.assertEqual(len(results), 1)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+
+    def test_search_root_depth0_with_attrchecker_and_include_path(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=0, include_path=True,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [0])
+        results = attr_checker.results
+        self.assertEqual(len(results), 1)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [0])
+
+    def test_search_root_depth1_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=1, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [1, 5])
+        results = attr_checker.results
+        self.assertEqual(len(results), 1)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [1,5])
+
+    def test_search_root_depth1_with_attrchecker_and_include_path(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=1, include_path=True,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [0, 1, 5])
+        results = attr_checker.results
+        self.assertEqual(len(results), 1)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [0, 1, 5])
+
+    def test_search_root_depth2_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=2, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [1, 2, 3, 4, 5, 6, 7, 8])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [1,2,3,4,5,6,7])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8])
+
+    def test_search_root_depth2_with_attrchecker_and_include_path(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=2, include_path=True,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [0, 1, 2, 3, 4, 5, 6, 7, 8])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [0,1,2,3,4,5,6,7])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8])
+
+
+    def test_search_root_depth3_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=3, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), range(1, 21))
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset),
+                         [1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8, 19, 20])
+
+    def test_search_root_depth3_with_attrchecker_and_include_path(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/', depth=3, include_path=True,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), range(0, 21))
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset),
+                         [0,1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_nodepth_with_attrchecker(self):
@@ -400,10 +492,10 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         results = attr_checker.results
         self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1'])
+        self.assertEqual(attrs, (0, ['acl1']))
         self.assertEqual(list(theset), [6, 7, 15, 16, 17, 18])
         attrs, theset = results[1]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_nodepth_with_attrchecker_and_include_path(self):
@@ -415,10 +507,63 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         results = attr_checker.results
         self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1'])
+        self.assertEqual(attrs, (0, ['acl1']))
         self.assertEqual(list(theset), [5, 6, 7, 15, 16, 17, 18])
         attrs, theset = results[1]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8, 19, 20])
+
+    def test_search_bb_depth0_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb', depth=0, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [])
+        results = attr_checker.results
+        self.assertEqual(len(results), 1)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+
+    def test_search_bb_depth1_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb', depth=1, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [6,7,8])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [6,7])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8])
+
+    def test_search_bb_depth2_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb', depth=2, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [6, 7, 8, 15, 16, 17, 18, 19, 20])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [6, 7, 15, 16, 17, 18])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [8, 19, 20])
+
+    def test_search_bb_depth3_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb', depth=3, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [6, 7, 8, 15, 16, 17, 18, 19, 20])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [6, 7, 15, 16, 17, 18])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_cc_nodepth_with_attrchecker(self):
@@ -427,9 +572,12 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         result = index.search('/bb/cc', attr_checker=attr_checker)
         self.assertEqual(sorted(result), [19, 20])
         results = attr_checker.results
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [19, 20])
 
     def test_search_bb_cc_nodepth_with_attrchecker_and_include_path(self):
@@ -439,10 +587,55 @@ class CatalogPathIndex2Tests(unittest.TestCase):
                               attr_checker=attr_checker)
         self.assertEqual(sorted(result), [8, 19, 20])
         results = attr_checker.results
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [8, 19, 20])
+
+    def test_search_bb_cc_depth0_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb/cc', depth=0, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [])
+
+    def test_search_bb_cc_depth1_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb/cc', depth=1, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [19, 20])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [19, 20])
+
+    def test_search_bb_cc_depth2_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb/cc', depth=2, attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [19, 20])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [19, 20])
 
     def test_search_bb_cc_11_nodepth_with_attrchecker(self):
         index = self._makeOne(VALUES, 'attr')
@@ -450,9 +643,12 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         result = index.search('/bb/cc/11.html', attr_checker=attr_checker)
         self.assertEqual(sorted(result), [])
         results = attr_checker.results
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [])
 
     def test_search_bb_cc_11_nodepth_with_attrchecker_include_path(self):
@@ -462,9 +658,57 @@ class CatalogPathIndex2Tests(unittest.TestCase):
                               attr_checker=attr_checker)
         self.assertEqual(sorted(result), [19])
         results = attr_checker.results
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         attrs, theset = results[0]
-        self.assertEqual(attrs, ['acl1', 'acl2'])
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [19])
+
+    def test_search_bb_cc_11_depth0_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb/cc/11.html', depth=0,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [])
+
+    def test_search_bb_cc_11_depth1_with_attrchecker(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb/cc/11.html', depth=1,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
+        self.assertEqual(list(theset), [])
+        
+    def test_search_bb_cc_11_depth1_with_attrchecker_and_includepath(self):
+        index = self._makeOne(VALUES, 'attr')
+        attr_checker = DummyAttrChecker()
+        result = index.search('/bb/cc/11.html', depth=1, include_path=True,
+                              attr_checker=attr_checker)
+        self.assertEqual(sorted(result), [19])
+        results = attr_checker.results
+        self.assertEqual(len(results), 2)
+        attrs, theset = results[0]
+        self.assertEqual(attrs, (0, ['acl1']))
+        self.assertEqual(list(theset), [])
+        attrs, theset = results[1]
+        self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [19])
 
 class DummyAttrChecker(object):

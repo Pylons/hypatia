@@ -160,11 +160,14 @@ class CatalogPathIndex2(CatalogIndex):
                 if docid in self.docid_to_attr:
                     if attr is _marker:
                         del self.docid_to_attr[docid]
+                        return True
                     elif attr != self.docid_to_attr[docid]:
-                        self.docid_to_attr = attr
+                        self.docid_to_attr[docid] = attr
+                        return True
                 else:
                     if attr is not _marker:
                         self.docid_to_attr[docid] = attr
+                        return True
             return False
 
     def search(self, path, depth=None, include_path=False, attr_checker=None):
@@ -242,10 +245,8 @@ class CatalogPathIndex2(CatalogIndex):
         """ Codepath taken when an attr checker is used """
         path = self._getPathTuple(path)
 
-        if depth is not None:
-            raise NotImplementedError('depth not yet supported')
-
         attrs = []
+        result = {}
 
         # make sure we get "leading" attrs
         for p in range(len(path)-1):
@@ -255,12 +256,14 @@ class CatalogPathIndex2(CatalogIndex):
                 continue
             attr = self.docid_to_attr.get(docid, _marker)
             if attr is not _marker:
+                remove_from_closest(result, subpath, docid)
+                attrs = attrs[:]
                 attrs.append(attr)
+                result[subpath] = ((docid, attrs), self.family.IF.Set())
                 
         stack = [path]
         plen = len(path)
         attrset = self.family.IF.Set()
-        result = {path:(attrs, attrset)}
 
         while stack:
             nextpath = stack.pop()
@@ -274,6 +277,8 @@ class CatalogPathIndex2(CatalogIndex):
                 if include_path and nextpath == path:
                     add_to_closest(
                         result, nextpath, self.family.IF.Set([docid]))
+                if depth is not None and len(nextpath) - plen >= depth:
+                    continue
             else:
                 remove_from_closest(result, nextpath, docid)
                 attrs = attrs[:]
@@ -285,7 +290,9 @@ class CatalogPathIndex2(CatalogIndex):
                         attrset = self.family.IF.Set()
                 else:
                     attrset = self.family.IF.Set([docid])
-                result[nextpath] = (attrs, attrset)
+                result[nextpath] = ((docid, attrs), attrset)
+                if depth is not None and len(nextpath) - plen >= depth:
+                    continue
             theset = self.adjacency.get(docid)
             if theset is not None:
                 add_to_closest(result, nextpath, theset)
