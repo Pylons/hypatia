@@ -1,5 +1,5 @@
-Next release
-============
+0.5.6 (2/12/2009)
+=================
 
 - Add "attribute discriminator" and "attribute checker" support to
   path2 index.  If an index is created with an attribute
