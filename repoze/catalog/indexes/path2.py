@@ -245,7 +245,7 @@ class CatalogPathIndex2(CatalogIndex):
         """ Codepath taken when an attr checker is used """
         path = self._getPathTuple(path)
 
-        attrs = []
+        leading_attrs = []
         result = {}
 
         # make sure we get "leading" attrs
@@ -257,18 +257,16 @@ class CatalogPathIndex2(CatalogIndex):
             attr = self.docid_to_attr.get(docid, _marker)
             if attr is not _marker:
                 remove_from_closest(result, subpath, docid)
-                attrs = attrs[:]
-                attrs.append(attr)
-                result[subpath] = ((docid, attrs), self.family.IF.Set())
+                leading_attrs.append(attr)
+                result[subpath] = ((docid, leading_attrs[:]),
+                                   self.family.IF.Set())
                 
-        stack = [path]
+        stack = [(path, leading_attrs)]
         plen = len(path)
         attrset = self.family.IF.Set()
 
         while stack:
-            nextpath = stack.pop()
-            #if depth is not None and len(nextpath) - plen >= depth:
-            #    continue
+            nextpath, attrs = stack.pop()
             docid = self.path_to_docid.get(nextpath)
             if docid is None:
                 continue
@@ -281,7 +279,6 @@ class CatalogPathIndex2(CatalogIndex):
                     continue
             else:
                 remove_from_closest(result, nextpath, docid)
-                attrs = attrs[:]
                 attrs.append(attr)
                 if nextpath == path:
                     if include_path:
@@ -299,7 +296,7 @@ class CatalogPathIndex2(CatalogIndex):
                 for docid in theset:
                     newpath = self.docid_to_path.get(docid)
                     if newpath is not None:
-                        stack.append(newpath)
+                        stack.append((newpath, attrs[:]))
 
         return attr_checker(result.values())
 
