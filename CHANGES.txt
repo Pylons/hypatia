@@ -1,5 +1,5 @@
-Next release
-============
+0.5.7 (2/14/2009)
+=================
 
 - Attributes returned to attribute checker were not correct.
 
