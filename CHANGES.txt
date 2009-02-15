@@ -1,3 +1,8 @@
+Next release
+============
+
+- Attributes returned to attribute checker were not correct.
+
 0.5.6 (2/12/2009)
 =================
 
