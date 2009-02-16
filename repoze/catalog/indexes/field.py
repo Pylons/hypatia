@@ -19,6 +19,9 @@ TIMSORT = 'timsort'
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
 
+    def reindex_doc(self, docid, value):
+        return self.index_doc(docid, value)
+
     def unindex_doc(self, docid):
         """See interface IInjection.
 

@@ -71,3 +71,12 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         self.assertEqual(list(result), [2,3])
         self.assertEqual(query, {'operator':'or', 'query':[5]})
 
+    def test_reindex_doc(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        self.assertEqual(index.documentCount(), 1)
+        index.reindex_doc(1, [1,2,3])
+        self.assertEqual(index.documentCount(), 1)
+        index.reindex_doc(50, [1])
+        self.assertEqual(index.documentCount(), 2)
+        

@@ -8,6 +8,9 @@ from repoze.catalog.indexes.common import CatalogIndex
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     implements(ICatalogIndex)
 
+    def reindex_doc(self, docid, value):
+        return self.index_doc(docid, value)
+
     def apply(self, query):
         """ Work around the fact that zope.index's apply method
         actually mutates the query if it's a dict """

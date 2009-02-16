@@ -319,5 +319,16 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = index.apply([1,2])
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
+
+    def test_reindex_doc(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertEqual(index.documentCount(), 11)
+        index.reindex_doc(5, 1)
+        self.assertEqual(index.documentCount(), 11)
+        index.reindex_doc(50, 1)
+        self.assertEqual(index.documentCount(), 12)
+        
+        
         
         

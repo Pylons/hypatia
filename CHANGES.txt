@@ -1,3 +1,9 @@
+Next release
+============
+
+- Add ``reindex_doc`` method as an alias for ``index_doc`` to both
+  CatalogFieldIndex and CatalogKeywordIndex (for performance).
+
 0.5.8 (2/16/2009)
 =================
 
