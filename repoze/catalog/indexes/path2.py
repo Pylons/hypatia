@@ -217,8 +217,11 @@ class CatalogPathIndex2(CatalogIndex):
         sets = []
 
         if include_path:
-            docid = self.path_to_docid.get(path)
-            if docid is not None:
+            try:
+                docid = self.path_to_docid[path]
+            except KeyError:
+                pass
+            else:
                 sets.append(self.family.IF.Set([docid]))
 
         stack = [path]
@@ -228,16 +231,22 @@ class CatalogPathIndex2(CatalogIndex):
             nextpath = stack.pop()
             if depth is not None and len(nextpath) - plen >= depth:
                 continue
-            docid = self.path_to_docid.get(nextpath)
-            if docid is None:
+            try:
+                docid = self.path_to_docid[nextpath]
+            except KeyError:
                 continue
-            theset = self.adjacency.get(docid)
-            if theset is not None:
+            try:
+                theset = self.adjacency[docid]
+            except KeyError:
+                pass
+            else:
                 sets.append(theset)
                 for docid in theset:
-                    newpath = self.docid_to_path.get(docid)
-                    if newpath is not None:
-                        stack.append(newpath)
+                    try:
+                        newpath = self.docid_to_path[docid]
+                    except KeyError:
+                        continue
+                    stack.append(newpath)
 
         return self.family.IF.multiunion(sets)
 
@@ -247,12 +256,14 @@ class CatalogPathIndex2(CatalogIndex):
 
         leading_attrs = []
         result = {}
+        plen = len(path)
 
         # make sure we get "leading" attrs
-        for p in range(len(path)-1):
+        for p in range(plen-1):
             subpath = path[:p+1]
-            docid = self.path_to_docid.get(subpath)
-            if docid is None:
+            try:
+                docid = self.path_to_docid[subpath]
+            except KeyError:
                 continue
             attr = self.docid_to_attr.get(docid, _marker)
             if attr is not _marker:
@@ -262,13 +273,13 @@ class CatalogPathIndex2(CatalogIndex):
                                    self.family.IF.Set())
                 
         stack = [(path, leading_attrs)]
-        plen = len(path)
         attrset = self.family.IF.Set()
 
         while stack:
             nextpath, attrs = stack.pop()
-            docid = self.path_to_docid.get(nextpath)
-            if docid is None:
+            try:
+                docid = self.path_to_docid[nextpath]
+            except KeyError:
                 continue
             attr = self.docid_to_attr.get(docid, _marker)
             if attr is _marker:
@@ -290,15 +301,27 @@ class CatalogPathIndex2(CatalogIndex):
                 result[nextpath] = ((docid, attrs), attrset)
                 if depth is not None and len(nextpath) - plen >= depth:
                     continue
-            theset = self.adjacency.get(docid)
-            if theset is not None:
+            try:
+                theset = self.adjacency[docid]
+            except KeyError:
+                pass
+            else:
                 add_to_closest(result, nextpath, theset)
                 for docid in theset:
-                    newpath = self.docid_to_path.get(docid)
-                    if newpath is not None:
-                        stack.append((newpath, attrs[:]))
+                    try:
+                        newpath = self.docid_to_path[docid]
+                    except KeyError:
+                        continue
+                    stack.append((newpath, attrs[:]))
 
         return attr_checker(result.values())
+
+    def apply_intersect(self, query, docids):
+        """ Default apply_intersect implementation """
+        result = self.apply(query)
+        if docids is None:
+            return result
+        return self.family.IF.weightedIntersection(result, docids)[1]
 
     def apply(self, query):
         """ Search the path index using the query.  If ``query`` is a

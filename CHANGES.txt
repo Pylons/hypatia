@@ -1,3 +1,13 @@
+Next release
+============
+
+- Speed up path2 index attribute search by using __getitem__ rather
+  than .get in some places.
+
+- Override textindex reindex_doc method: calling index_doc only
+  instead of calling unindex_doc and then index_doc is much more
+  efficient.
+
 0.5.7 (2/14/2009)
 =================
 

@@ -34,5 +34,13 @@ class TestCatalogTextIndex(unittest.TestCase):
         self.assertEqual(list(result), [2, 7])
         result = index.apply('time')
         self.assertEqual(list(result), [1])
+
+    def test_reindex_doc(self):
+        index = self._makeOne()
+        index.reindex_doc(1, 'now is the time')
+        result = index.apply('time')
+        self.assertEqual(list(result), [1])
+        
+        
         
 
