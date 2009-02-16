@@ -20,6 +20,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     implements(ICatalogIndex)
 
     def reindex_doc(self, docid, value):
+        # the base index's index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
     def unindex_doc(self, docid):
