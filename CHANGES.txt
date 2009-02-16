@@ -1,5 +1,5 @@
-Next release
-============
+0.5.8 (2/16/2009)
+=================
 
 - Speed up path2 index attribute search by using __getitem__ rather
   than .get in some places.
