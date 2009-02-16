@@ -81,7 +81,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 # if this is true
                 sort_type = FWSCAN
                 
-            elif nbest_ascending_wins(limit, rlen, numdocs):
+            elif limit and nbest_ascending_wins(limit, rlen, numdocs):
                 # nbest beats timsort reliably if this is true
                 sort_type = NBEST
 
@@ -289,6 +289,10 @@ def nbest_ascending_wins(limit, rlen, numdocs):
     optimized for an index size of about 32768 (98% accuracy); it gets
     about 93% accuracy at index size 65536.
     """
+    if not limit:
+        # n-best can't be used without a limit
+        return False
+
     if numdocs <= 768:
         return True
 

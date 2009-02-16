@@ -1,3 +1,10 @@
+Next release
+============
+
+- N-Best ascending fieldindex sort was being chosen incorrectly when
+  there was no limit.  Symptom: ``RuntimeError, 'n-best used without
+  limit'``.
+
 0.5.9 (2/16/2009)
 =================
 
