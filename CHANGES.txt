@@ -1,19 +1,27 @@
-0.6.0 (2/16/2009)
-=================
+After 0.6.0
+===========
+
+- Fixed constructor inheritance issues which kept ``repoze.catalog``
+  from working under Python 2.6.  Note that this change involved removing
+  the ``*args, **kw`` arguments from index constructors:  those values were
+  never used, but had (bogus) tests.
+
+0.6.0 (2009-02-16)
+==================
 
 - N-Best ascending fieldindex sort was being chosen incorrectly when
   there was no limit.  Symptom: ``RuntimeError, 'n-best used without
   limit'``.
 
-0.5.9 (2/16/2009)
-=================
+0.5.9 (2009-02-16)
+==================
 
 - Add ``reindex_doc`` method as an alias for ``index_doc`` to both
   CatalogFieldIndex and CatalogKeywordIndex (for performance,
   ``index_doc`` for both indexes has special case code for reindexing).
 
-0.5.8 (2/16/2009)
-=================
+0.5.8 (2009-02-16)
+==================
 
 - Speed up path2 index attribute search by using __getitem__ rather
   than .get in some places.
@@ -22,13 +30,13 @@
   instead of calling unindex_doc and then index_doc is much more
   efficient.
 
-0.5.7 (2/14/2009)
-=================
+0.5.7 (2009-02-14)
+==================
 
 - Attributes returned to attribute checker were not correct.
 
-0.5.6 (2/12/2009)
-=================
+0.5.6 (2009-02-12)
+==================
 
 - Add "attribute discriminator" and "attribute checker" support to
   path2 index.  If an index is created with an attribute
@@ -41,8 +49,8 @@
   by the author primarily to support security-filtered searches of a
   path index.  It is not otherwise documented.
   
-0.5.5 (2/11/2009)
-=================
+0.5.5 (2009-02-11)
+==================
 
 - Add a ``reindex_doc`` method to the catalog and to the ``common``
   shared index base class.  The catalog's ``reindex_doc`` calls each
@@ -91,8 +99,8 @@
   multiple terms and the operator is ``and``, the results will be
   intersected.
 
-0.5.4 (2/5/2009)
-================
+0.5.4 (2009-02-5)
+=================
 
 Features
 --------
@@ -115,8 +123,8 @@ Features
 - It is now possible to specify index query/merge order within a
   catalog query.  See ``Index Query/Merge Order`` in the docs.
 
-0.5.3 (1/5/2009)
-================
+0.5.3 (2009-01-05)
+=================
 
 Features
 --------
@@ -127,8 +135,8 @@ Features
 - Better detection of when to use nbest vs. timsort on ascending sorts
   in field indexes.
 
-0.5.2 (1/4/2009)
-================
+0.5.2 (2009-01-04)
+=================
 
 Features
 --------
@@ -155,7 +163,7 @@ Bug Fixes
 - Prevent the potential for a zero division error when attempting to
   sort an empty set of results.
 
-0.5.1 (12/31/2008)
+0.5.1 (2008-12-31)
 ==================
 
 Features
@@ -176,7 +184,7 @@ Bug Fixes
   limited the number of documents to half the number that it could
   actually handle.
 
-0.5 (11/10/2008)
+0.5 (2008-11-10)
 ================
 
 Features
@@ -207,8 +215,8 @@ Features
   use in a narrowing UI.  This count implementation is not meant for
   very large-scale sites; it is naive.
 
-0.4 (10/6/2008)
-===============
+0.4 (2008-10-06)
+================
 
 Features
 --------
@@ -223,7 +231,8 @@ Documentation
 
 - Add ``overview`` page.
 
-0.3 (10/4/2008)
+0.3 (2008-10-04)
+===============
 
 Features
 --------
@@ -247,13 +256,12 @@ Backwards incompatibilities
 
 - All interfaces moved to ``repoze.catalog.interfaces``.
 
-0.2
-===
+0.2 (2008-09-26)
+================
 
 - Provide ``sort_index`` capability.
 
-0.1
-===
+0.1 (2008-07-26)
+================
 
 - Initial release.
-

@@ -8,8 +8,7 @@ class CatalogIndex(object):
 
     family = BTrees.family32
 
-    def __init__(self, discriminator, *args, **kwargs):
-        super(CatalogIndex, self).__init__(*args, **kwargs)
+    def __init__(self, discriminator):
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

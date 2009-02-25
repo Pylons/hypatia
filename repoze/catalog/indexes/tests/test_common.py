@@ -11,25 +11,21 @@ class TestCatalogIndex(unittest.TestCase):
             pass
         def callback(object, default):
             return default
-        index = Test(callback, 'a', a=1)
+        index = Test(callback)
         self.assertEqual(index.discriminator, callback)
-        self.assertEqual(index.arg, ('a',))
-        self.assertEqual(index.kw, {'a':1})
 
     def test_ctor_string(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
-        index = Test('abc', 'a', a=1)
+        index = Test('abc')
         self.assertEqual(index.discriminator, 'abc')
-        self.assertEqual(index.arg, ('a',))
-        self.assertEqual(index.kw, {'a':1})
 
     def test_ctor_bad_discrim(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
-        self.assertRaises(ValueError, Test, None, 'a', a=1)
+        self.assertRaises(ValueError, Test, None)
 
     def test_index_doc_callback_returns_nondefault(self):
         klass = self._getTargetClass()

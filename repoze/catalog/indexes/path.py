@@ -30,8 +30,12 @@ class CatalogPathIndex(CatalogIndex):
 
     family = BTrees.family32
 
-    def __init__(self, *arg, **kw):
-        super(CatalogPathIndex, self).__init__(*arg, **kw)
+    def __init__(self, discriminator):
+        if not callable(discriminator):
+            if not isinstance(discriminator, basestring):
+                raise ValueError('discriminator value must be callable or a '
+                                 'string')
+        self.discriminator = discriminator
         self.clear()
 
     def clear(self):
