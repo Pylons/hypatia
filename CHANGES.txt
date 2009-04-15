@@ -1,3 +1,12 @@
+Next release
+============
+
+- Add metadata-related APIs to
+  ``repoze.catalog.document.DocumentMap``: ``add_metadata``,
+  ``remove_metadata``, ``get_metadata``.  "Metadata" is a freeform set
+  of key/value pairs related to a docid.  See the API documentation
+  for more information.
+
 0.6.1 (2009-02-25)
 ==================
 
