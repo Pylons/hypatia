@@ -12,7 +12,8 @@ _marker = ()
 class DocumentMap(Persistent):
     """ A document map maps addresses (e.g. location paths) to
     document ids.  It is a persistent object meant to live in a ZODB
-    storage."""
+    storage.  Additionally, it is capable of mapping 'metadata' to
+    docids."""
     _v_nextid = None
     family = BTrees.family32
     _randrange = random.randrange
