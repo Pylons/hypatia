@@ -61,7 +61,11 @@ class TestCatalogIndex(unittest.TestCase):
         dummy.abc = 'abc'
         self.assertEqual(index.index_doc(1, dummy), 'abc')
         del dummy.abc
+        del index.docid
+        del index.value
         self.assertEqual(index.index_doc(1, dummy), None)
+        self.assertEqual(index.docid, None)
+        self.assertEqual(index.value, None)
         self.assertEqual(index.unindexed, 1)
 
     def test_index_doc_persistent_value_raises(self):
