@@ -1,13 +1,18 @@
 import unittest
 
+_marker = object()
+
 class TestCatalogTextIndex(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.indexes.text import CatalogTextIndex
         return CatalogTextIndex
 
-    def _makeOne(self):
-        klass = self._getTargetClass()
-        return klass(lambda x, default: x)
+    def _makeOne(self, discriminator=_marker):
+        def _discriminator(obj, default):
+            return obj
+        if discriminator is _marker:
+            discriminator = _discriminator
+        return self._getTargetClass()(discriminator)
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
@@ -19,28 +24,21 @@ class TestCatalogTextIndex(unittest.TestCase):
         from repoze.catalog.interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
-    def test_apply(self):
-        index = self._makeOne()
-        index.index_doc(1, 'now is the time')
-        index.index_doc(2, 'for all good men')
-        index.index_doc(3, 'to come to')
-        index.index_doc(4, 'the aid of') 
-        index.index_doc(5, 'their country')
-        index.index_doc(6, 'country music')
-        index.index_doc(7, 'is good music')
-        result = index.apply('country')
-        self.assertEqual(list(result), [5, 6])
-        result = index.apply('good')
-        self.assertEqual(list(result), [2, 7])
-        result = index.apply('time')
-        self.assertEqual(list(result), [1])
+    def test_ctor_callback_discriminator(self):
+        def _discriminator(obj, default):
+            return obj
+        index = self._makeOne(_discriminator)
+        self.failUnless(index.discriminator is _discriminator)
 
-    def test_reindex_doc(self):
-        index = self._makeOne()
-        index.reindex_doc(1, 'now is the time')
-        result = index.apply('time')
-        self.assertEqual(list(result), [1])
-        
-        
-        
+    def test_ctor_string_discriminator(self):
+        index = self._makeOne('abc')
+        self.assertEqual(index.discriminator, 'abc')
 
+    def test_ctor_bad_discriminator(self):
+        self.assertRaises(ValueError, self._makeOne, object())
+
+    def test_reindex_doc_doesnt_unindex(self):
+        index = self._makeOne()
+        index.index_doc(5, 'now is the time')
+        index.unindex_doc = lambda *args, **kw: 1/0
+        index.reindex_doc(5, 'now is the time')
