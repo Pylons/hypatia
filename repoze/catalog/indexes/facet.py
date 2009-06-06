@@ -1,4 +1,7 @@
-import md5
+try:
+    from hashlib import md5
+except:
+    from md5 import new as md5  #pragma NO COVERAGE
 
 from persistent import Persistent
 from zope.interface import implements
@@ -107,7 +110,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
         return counts
 
 def cachekey(set):
-    h = md5.new()
+    h = md5()
     for item in sorted(list(set)):
         h.update(item)
     return h.hexdigest()
