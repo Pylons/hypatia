@@ -1,20 +1,6 @@
-##############################################################################
-#
-# Copyright (c) 2002 Zope Corporation and Contributors. All Rights Reserved.
-#
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-#
-##############################################################################
-"""PathIndex unit tests.
-
-"""
-
 import unittest
+
+_marker = object()
 
 class PathIndexTests(unittest.TestCase):
     """ Test PathIndex objects
@@ -23,10 +9,14 @@ class PathIndexTests(unittest.TestCase):
         from repoze.catalog.indexes.path import CatalogPathIndex
         return CatalogPathIndex
 
-    def _makeOne(self, values=None):
+    def _makeOne(self, values=None, discriminator=_marker):
         if values is None:
             values = {}
-        index = self._getTargetClass()('path')
+        def _discriminator(obj, default):
+            return obj.path
+        if discriminator is _marker:
+            discriminator = _discriminator
+        index = self._getTargetClass()(discriminator)
         for doc_id, path in values.items():
             index.index_doc(doc_id, path)
         return index
@@ -41,9 +31,23 @@ class PathIndexTests(unittest.TestCase):
         from repoze.catalog.interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
+    def test_ctor_callback_discriminator(self):
+        def _discriminator(obj, default):
+            return obj
+        index = self._makeOne(discriminator=_discriminator)
+        self.failUnless(index.discriminator is _discriminator)
+
+    def test_ctor_string_discriminator(self):
+        index = self._makeOne(discriminator='abc')
+        self.assertEqual(index.discriminator, 'abc')
+
+    def test_ctor_bad_discriminator(self):
+        self.assertRaises(ValueError, self._makeOne, discriminator=object())
+
     def test_empty_index(self):
         index = self._makeOne({})
         self.assertEqual(index.numObjects() ,0)
+        self.assertEqual(index._depth, 0)
         self.assertEqual(index.getEntryForObject(1234), None)
         index.unindex_doc(1234) # nothrow
         result = index.apply({"suxpath":"xxx"})
@@ -52,6 +56,114 @@ class PathIndexTests(unittest.TestCase):
     def test_nonempty_index(self):
         index = self._makeOne(VALUES)
         self.assertEqual(index.numObjects(), 18)
+        self.assertEqual(index.getEntryForObject(1), '/aa/aa/aa/1.html')
+
+    def test_clear(self):
+        index = self._makeOne(VALUES)
+        index.clear()
+        self.assertEqual(index.numObjects(), 0)
+        self.assertEqual(index.getEntryForObject(1), None)
+        self.assertEqual(index._depth, 0)
+
+    def test_insertEntry_new_component_new_level(self):
+        index = self._makeOne()
+        index.insertEntry('aaa', 1, 1)
+        self.assertEqual(len(index._index), 1)
+        self.assertEqual(len(index._index['aaa']), 1)
+        self.assertEqual(list(index._index['aaa'][1]), [1])
+        self.assertEqual(index._depth, 1)
+
+    def test_insertEntry_existing_component_new_level(self):
+        index = self._makeOne()
+        index._index['aaa'] = {2: FakeTreeSet()}
+        index._depth = 2
+        index.insertEntry('aaa', 1, 1)
+        self.assertEqual(len(index._index), 1)
+        self.assertEqual(len(index._index['aaa']), 2)
+        self.assertEqual(list(index._index['aaa'][1]), [1])
+        self.assertEqual(index._depth, 2)
+
+    def test_insertEntry_existing_component_exsiting_level(self):
+        index = self._makeOne()
+        fts = FakeTreeSet()
+        index._index['aaa'] = {2: fts}
+        index._depth = 2
+        index.insertEntry('aaa', 1, 2)
+        self.assertEqual(len(index._index), 1)
+        self.assertEqual(len(index._index['aaa']), 1)
+        self.failUnless(index._index['aaa'][2] is fts)
+        self.assertEqual(list(index._index['aaa'][2]), [1])
+        self.assertEqual(index._depth, 2)
+
+    def test_index_doc_callback_returns_nondefault(self):
+        def callback(ob, default):
+            return ob
+        index = self._makeOne(discriminator=callback)
+        index.index_doc(1, '/a/b/c')
+        self.assertEqual(len(index._index), 3)
+        self.assertEqual(list(index._index['a'][0]), [1])
+        self.assertEqual(list(index._index['b'][1]), [1])
+        self.assertEqual(list(index._index['c'][2]), [1])
+        self.assertEqual(index._depth, 2)
+
+    def test_index_doc_string_discrim(self):
+        index = self._makeOne(discriminator='abc')
+        class Dummy:
+            abc = '/a/b/c'
+        dummy = Dummy()
+        index.index_doc(1, dummy)
+        self.assertEqual(len(index._index), 3)
+        self.assertEqual(list(index._index['a'][0]), [1])
+        self.assertEqual(list(index._index['b'][1]), [1])
+        self.assertEqual(list(index._index['c'][2]), [1])
+        self.assertEqual(index._depth, 2)
+
+    def test_index_doc_string_discrim_tuple_value(self):
+        index = self._makeOne(discriminator='abc')
+        class Dummy:
+            abc = ('', 'a', 'b', 'c')
+        dummy = Dummy()
+        index.index_doc(1, dummy)
+        self.assertEqual(len(index._index), 3)
+        self.assertEqual(list(index._index['a'][0]), [1])
+        self.assertEqual(list(index._index['b'][1]), [1])
+        self.assertEqual(list(index._index['c'][2]), [1])
+        self.assertEqual(index._depth, 2)
+
+    def test_index_doc_string_discrim_list_value(self):
+        index = self._makeOne(discriminator='abc')
+        class Dummy:
+            abc = ['', 'a', 'b', 'c']
+        dummy = Dummy()
+        index.index_doc(1, dummy)
+        self.assertEqual(len(index._index), 3)
+        self.assertEqual(list(index._index['a'][0]), [1])
+        self.assertEqual(list(index._index['b'][1]), [1])
+        self.assertEqual(list(index._index['c'][2]), [1])
+        self.assertEqual(index._depth, 2)
+
+    def test_index_doc_missing_value_unindexes(self):
+        index = self._makeOne(discriminator='abc')
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.abc = '/a/b/c'
+        index.index_doc(1, dummy)
+        del dummy.abc
+        index.index_doc(1, dummy)
+        self.failIf('a' in index._index)
+        self.failIf('b' in index._index)
+        self.failIf('c' in index._index)
+        self.assertEqual(index._depth, 2)
+
+    def test_index_doc_persistent_value_raises(self):
+        from persistent import Persistent
+        index = self._makeOne(discriminator='abc')
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.abc = Persistent()
+        self.assertRaises(ValueError, index.index_doc, 1, dummy)
 
     def test_unindex_doc(self):
         index = self._makeOne(VALUES)
@@ -80,6 +192,27 @@ class PathIndexTests(unittest.TestCase):
         index._unindex[1] = "/broken/thing"
         index.unindex_doc(1)
 
+    def test_searches_against_root_plain_string(self):
+        index = self._makeOne(VALUES)
+        expected = range(1,19)
+
+        results = list(index.apply('/').keys())
+        self.assertEqual(results, expected)
+
+    def test_searches_against_root_tuple(self):
+        index = self._makeOne(VALUES)
+        expected = range(1,19)
+
+        results = list(index.apply(('',)).keys())
+        self.assertEqual(results, expected)
+
+    def test_searches_against_root_list(self):
+        index = self._makeOne(VALUES)
+        expected = range(1,19)
+
+        results = list(index.apply(['']).keys())
+        self.assertEqual(results, expected)
+
     def test_searches_against_root_wo_level(self):
         index = self._makeOne(VALUES)
         expected = range(1,19)
@@ -103,6 +236,20 @@ class PathIndexTests(unittest.TestCase):
         results = list(index.apply({'query': '/aa'}).keys())
         self.assertEqual(results, expected)
 
+    def test_root_aa_tuple(self):
+        index = self._makeOne(VALUES)
+        expected = [1,2,3,4,5,6,7,8,9]
+
+        results = list(index.apply(('/aa', '/cc')).keys())
+        self.assertEqual(results, expected)
+
+    def test_root_aa_list(self):
+        index = self._makeOne(VALUES)
+        expected = [1,2,3,4,5,6,7,8,9]
+
+        results = list(index.apply(['/aa', '/cc']).keys())
+        self.assertEqual(results, expected)
+
     def test_aa_explicit_level_0(self):
         index = self._makeOne(VALUES)
         expected = [1,2,3,4,5,6,7,8,9]
@@ -121,6 +268,16 @@ class PathIndexTests(unittest.TestCase):
         self.assertEqual(results, expected)
 
         results = list(index.apply({'query': [('aa', 1)]}).keys())
+        self.assertEqual(results, expected)
+
+    def test_aa_level_4(self):
+        index = self._makeOne(VALUES)
+        expected = []
+
+        results = list(index.apply({'query': 'aa', 'level': 4}).keys())
+        self.assertEqual(results, expected)
+
+        results = list(index.apply({'query': [('aa', 4)]}).keys())
         self.assertEqual(results, expected)
 
     def test_bb_level_0(self):
@@ -326,6 +483,10 @@ class PathIndexTests(unittest.TestCase):
         index.index_doc(4, Dummy("/ff/gg/4.html"))
         result = list(index.apply({'query':'/ff/gg'}).keys())
         self.assertEqual(result, [2, 3, 4])
+
+class FakeTreeSet(set):
+    def insert(self, thing):
+        self.add(thing)
 
 class Dummy:
 
