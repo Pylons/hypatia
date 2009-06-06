@@ -1,14 +1,21 @@
 import unittest
 
+_marker = object()
+
 class CatalogPathIndex2Tests(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.indexes.path2 import CatalogPathIndex2
         return CatalogPathIndex2
 
-    def _makeOne(self, values=None, attr_discriminator=None):
+    def _makeOne(self, values=None,
+                 discriminator='path', attr_discriminator=_marker):
         if values is None:
             values = {}
-        index = self._getTargetClass()('path',
+        def _attr_discriminator(obj, default):
+            return obj.path
+        if attr_discriminator is _marker:
+            attr_discriminator = _attr_discriminator
+        index = self._getTargetClass()(discriminator,
                                        attr_discriminator=attr_discriminator)
         for doc_id, path in values.items():
             index.index_doc(doc_id, path)
@@ -24,21 +31,90 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         from repoze.catalog.interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
+    def test_ctor_callback_discriminator(self):
+        def _discriminator(obj, default):
+            return obj
+        index = self._makeOne(discriminator=_discriminator)
+        self.failUnless(index.discriminator is _discriminator)
+
+    def test_ctor_string_discriminator(self):
+        index = self._makeOne(discriminator='abc')
+        self.assertEqual(index.discriminator, 'abc')
+
+    def test_ctor_bad_discriminator(self):
+        self.assertRaises(ValueError, self._makeOne, discriminator=object())
+
+    def test_ctor_callback_attr_discriminator(self):
+        def _attr_discriminator(obj, default):
+            return obj
+        index = self._makeOne(attr_discriminator=_attr_discriminator)
+        self.failUnless(index.attr_discriminator is _attr_discriminator)
+
+    def test_ctor_string_attr_discriminator(self):
+        index = self._makeOne(attr_discriminator='abc')
+        self.assertEqual(index.attr_discriminator, 'abc')
+
+    def test_ctor_no_attr_discriminator(self):
+        index = self._makeOne(attr_discriminator=None)
+        self.assertEqual(index.attr_discriminator, None)
+
+    def test_ctor_bad_attr_discriminator(self):
+        self.assertRaises(ValueError, self._makeOne,
+                          attr_discriminator=object())
+
     def test_throws_on_no_query(self):
         index = self._makeOne({})
         self.assertRaises(KeyError, index.apply, {})
 
     def test_empty_index(self):
         index = self._makeOne({})
-        self.assertEqual(len(index) ,0)
-
-    def test_unindex_works_if_nonexisting(self):
-        index = self._makeOne({})
-        index.unindex_doc(1234) # nothrow
+        self.assertEqual(len(index), 0)
+        self.failUnless(index) # True even if empty
 
     def test_nonempty_index(self):
         index = self._makeOne(VALUES)
         self.assertEqual(len(index), 22)
+        self.failUnless(index)
+
+    def test_index_object_bad_path(self):
+        index = self._makeOne()
+        class Dummy:
+            path = ()
+        self.assertRaises(ValueError, index.index_doc, 1, Dummy())
+
+    def test_index_object_simple(self):
+        index = self._makeOne()
+        class Dummy:
+            path = '/abc'
+        index.index_doc(1, Dummy())
+        self.assertEqual(index.path_to_docid[('', 'abc')], 1)
+        self.assertEqual(index.docid_to_path[1], ('', 'abc'))
+
+    def test_index_object_callback_discriminator(self):
+        def _discriminator(obj, default):
+            return '/abc'
+        index = self._makeOne(discriminator=_discriminator)
+        class Dummy:
+            path = '/foo'
+        index.index_doc(1, Dummy())
+        self.assertEqual(index.path_to_docid[('', 'abc')], 1)
+        self.assertEqual(index.docid_to_path[1], ('', 'abc'))
+
+    def test_index_object_missing_value_unindexes(self):
+        index = self._makeOne()
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.path = '/abc'
+        index.index_doc(1, Dummy())
+        del dummy.path
+        index.index_doc(1, Dummy())
+        self.failIf(('', 'abc') in index.path_to_docid)
+        self.failIf(1 in index.docid_to_path)
+
+    def test_unindex_nonesuch(self):
+        index = self._makeOne({})
+        index.unindex_doc(1234) # nothrow
 
     def test_unindex_doc(self):
         index = self._makeOne(VALUES)
@@ -73,6 +149,14 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(len(index), 1)
         index.index_doc(1, o)
         self.assertEqual(len(index), 1)
+
+    # This test fails, but I can't see why it should.
+    #def XXX_test_search_from_unindexed_root(self):
+    #    index = self._makeOne()
+    #    index.index_doc(1, '/abc/def')
+    #    index.index_doc(2, '/abc/ghi')
+    #    result = index.search('/abc', depth=1, include_path=True)
+    #    self.assertEqual(sorted(result), [1, 2])
 
     def test_search_root_nodepth(self):
         index = self._makeOne(VALUES)
@@ -228,6 +312,17 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         result = index.search('/')
         self.assertEqual(sorted(result), [0, 1, 2, 3, 5])
 
+    def test_apply_intersect_wo_docids(self):
+        index = self._makeOne(VALUES)
+        result = index.apply_intersect('/aa', None)
+        self.assertEqual(sorted(result), [2, 3, 4, 9, 10, 11, 12, 13, 14])
+
+    def test_apply_intersect_w_docids(self):
+        index = self._makeOne(VALUES)
+        to_intersect = index.family.IF.Set([2, 3, 4, 7, 8])
+        result = index.apply_intersect('/aa', to_intersect)
+        self.assertEqual(sorted(result), [2, 3, 4])
+
     def test_apply_path_string(self):
         index = self._makeOne(VALUES)
         result = index.apply('/aa')
@@ -288,21 +383,21 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(result, False)
 
     def test_reindex_doc_attradd(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         self.assertEqual(index.docid_to_attr.get(1), None)
         result = index.reindex_doc(1, Dummy('/aa', 'acl5'))
         self.assertEqual(result, True)
         self.assertEqual(index.docid_to_attr[1], 'acl5')
 
     def test_reindex_doc_attrchange(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         self.assertEqual(index.docid_to_attr[0], 'acl1')
         result = index.reindex_doc(0, Dummy('/', 'acl11'))
         self.assertEqual(result, True)
         self.assertEqual(index.docid_to_attr[0], 'acl11')
 
     def test_reindex_doc_attrdel(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         self.assertEqual(index.docid_to_attr[0], 'acl1')
         result = index.reindex_doc(0, Dummy('/'))
         self.assertEqual(result, True)
@@ -315,7 +410,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(index.docid_to_path[1], ('', 'abcdef'))
 
     def test_index_doc_unindex_doc_with_attr_discriminator(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_keys = sorted(index.docid_to_attr.keys())
         self.assertEqual(attr_keys, [0, 2, 8, 12])
 
@@ -331,7 +426,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(index.docid_to_path.keys()), [])
         self.assertEqual(list(index.docid_to_attr.keys()), [])
 
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         # randomize the order
         import random
         random.shuffle(docids)
@@ -346,7 +441,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(index.docid_to_attr.keys()), [])
 
     def test_search_root_nodepth_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', attr_checker=attr_checker)
         self.assertEqual(sorted(result), range(1, 21))
@@ -366,7 +461,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(sorted(theset), [2,9, 10])
 
     def test_search_root_nodepth_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', include_path=True, attr_checker=attr_checker)
         self.assertEqual(sorted(result), range(0, 21))
@@ -386,7 +481,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(sorted(theset), [2,9, 10])
 
     def test_search_root_depth0_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=0, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [])
@@ -397,7 +492,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_root_depth0_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=0, include_path=True,
                               attr_checker=attr_checker)
@@ -409,7 +504,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [0])
 
     def test_search_root_depth1_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=1, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [1, 5])
@@ -420,7 +515,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [1,5])
 
     def test_search_root_depth1_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=1, include_path=True,
                               attr_checker=attr_checker)
@@ -432,7 +527,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [0, 1, 5])
 
     def test_search_root_depth2_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=2, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [1, 2, 3, 4, 5, 6, 7, 8])
@@ -449,7 +544,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [2])
 
     def test_search_root_depth2_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=2, include_path=True,
                               attr_checker=attr_checker)
@@ -468,7 +563,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
 
 
     def test_search_root_depth3_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=3, attr_checker=attr_checker)
         self.assertEqual(sorted(result), range(1, 21))
@@ -488,7 +583,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [2, 9, 10])
 
     def test_search_root_depth3_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=3, include_path=True,
                               attr_checker=attr_checker)
@@ -509,7 +604,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [2, 9, 10])
 
     def test_search_bb_nodepth_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb', attr_checker=attr_checker)
         self.assertEqual(sorted(result), [6, 7, 8, 15, 16, 17, 18, 19, 20])
@@ -523,7 +618,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_nodepth_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb', include_path=True,
                               attr_checker=attr_checker)
@@ -538,7 +633,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_depth0_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb', depth=0, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [])
@@ -549,7 +644,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_bb_depth1_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb', depth=1, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [6,7,8])
@@ -563,7 +658,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [8])
 
     def test_search_bb_depth2_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb', depth=2, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [6, 7, 8, 15, 16, 17, 18, 19, 20])
@@ -577,7 +672,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_depth3_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb', depth=3, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [6, 7, 8, 15, 16, 17, 18, 19, 20])
@@ -591,7 +686,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_cc_nodepth_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc', attr_checker=attr_checker)
         self.assertEqual(sorted(result), [19, 20])
@@ -605,7 +700,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [19, 20])
 
     def test_search_bb_cc_nodepth_with_attrchecker_and_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc', include_path=True,
                               attr_checker=attr_checker)
@@ -620,7 +715,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [8, 19, 20])
 
     def test_search_bb_cc_depth0_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc', depth=0, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [])
@@ -634,7 +729,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_bb_cc_depth1_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc', depth=1, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [19, 20])
@@ -648,7 +743,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [19, 20])
 
     def test_search_bb_cc_depth2_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc', depth=2, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [19, 20])
@@ -662,7 +757,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [19, 20])
 
     def test_search_bb_cc_11_nodepth_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc/11.html', attr_checker=attr_checker)
         self.assertEqual(sorted(result), [])
@@ -676,7 +771,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_bb_cc_11_nodepth_with_attrchecker_include_path(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc/11.html', include_path=True,
                               attr_checker=attr_checker)
@@ -691,7 +786,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [19])
 
     def test_search_bb_cc_11_depth0_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc/11.html', depth=0,
                               attr_checker=attr_checker)
@@ -706,7 +801,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_bb_cc_11_depth1_with_attrchecker(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc/11.html', depth=1,
                               attr_checker=attr_checker)
@@ -721,7 +816,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
         
     def test_search_bb_cc_11_depth1_with_attrchecker_and_includepath(self):
-        index = self._makeOne(VALUES, 'attr')
+        index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/bb/cc/11.html', depth=1, include_path=True,
                               attr_checker=attr_checker)
@@ -736,7 +831,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [19])
 
     def test_search_root_nodepth_with_attrchecker_values2(self):
-        index = self._makeOne(VALUES2, 'attr')
+        index = self._makeOne(VALUES2, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', attr_checker=attr_checker)
         self.assertEqual(sorted(result), range(1, 6))
@@ -762,7 +857,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_root_nodepth_with_attrchecker_incpath_values2(self):
-        index = self._makeOne(VALUES2, 'attr')
+        index = self._makeOne(VALUES2, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', include_path=True, attr_checker=attr_checker)
         self.assertEqual(sorted(result), range(0, 6))
@@ -788,7 +883,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [0])
 
     def test_search_root_depth0_with_attrchecker_values2(self):
-        index = self._makeOne(VALUES2, 'attr')
+        index = self._makeOne(VALUES2, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=0, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [])
@@ -799,7 +894,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_root_depth0_with_attrchecker_incpath_values2(self):
-        index = self._makeOne(VALUES2, 'attr')
+        index = self._makeOne(VALUES2, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', include_path=True, depth=0,
                               attr_checker=attr_checker)
@@ -811,7 +906,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [0])
 
     def test_search_root_depth1_with_attrchecker_values2(self):
-        index = self._makeOne(VALUES2, 'attr')
+        index = self._makeOne(VALUES2, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', depth=1, attr_checker=attr_checker)
         self.assertEqual(sorted(result), [1,5])
@@ -828,7 +923,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(list(theset), [])
 
     def test_search_root_depth1_with_attrchecker_incpath_values2(self):
-        index = self._makeOne(VALUES2, 'attr')
+        index = self._makeOne(VALUES2, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
         result = index.search('/', include_path=True, depth=1,
                               attr_checker=attr_checker)
