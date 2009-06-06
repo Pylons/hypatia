@@ -14,6 +14,15 @@ class TestCatalogIndex(unittest.TestCase):
         index = Test(callback)
         self.assertEqual(index.discriminator, callback)
 
+    def test_ctor_callback(self):
+        klass = self._getTargetClass()
+        def _discriminator(obj, default):
+            return obj
+        class Test(klass, DummyIndex):
+            pass
+        index = Test(_discriminator)
+        self.failUnless(index.discriminator is _discriminator)
+
     def test_ctor_string(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
