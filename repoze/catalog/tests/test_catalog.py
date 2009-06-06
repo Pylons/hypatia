@@ -77,8 +77,8 @@ class TestCatalog(unittest.TestCase):
         self.assertRaises(ValueError, catalog.__setitem__, 'a', None)
 
     def test_search(self):
-        catalog = self._makeOne()
         from BTrees.IFBTree import IFSet
+        catalog = self._makeOne()
         c1 = IFSet([1, 2, 3])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
@@ -88,6 +88,52 @@ class TestCatalog(unittest.TestCase):
         numdocs, result = catalog.search(name1={}, name2={})
         self.assertEqual(numdocs, 1)
         self.assertEqual(list(result), [3])
+
+    def test_search_index_returns_empty(self):
+        from BTrees.IFBTree import IFSet
+        catalog = self._makeOne()
+        c1 = IFSet([])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        c2 = IFSet([3, 4, 5])
+        idx2 = DummyIndex(c2)
+        catalog['name2'] = idx2
+        numdocs, result = catalog.search(name1={}, name2={})
+        self.assertEqual(numdocs, 0)
+        self.assertEqual(list(result), [])
+
+    def test_search_no_intersection(self):
+        from BTrees.IFBTree import IFSet
+        catalog = self._makeOne()
+        c1 = IFSet([1, 2])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        c2 = IFSet([3, 4, 5])
+        idx2 = DummyIndex(c2)
+        catalog['name2'] = idx2
+        numdocs, result = catalog.search(name1={}, name2={})
+        self.assertEqual(numdocs, 0)
+        self.assertEqual(list(result), [])
+
+    def test_search_index_query_order_returns_empty(self):
+        from BTrees.IFBTree import IFSet
+        catalog = self._makeOne()
+        c1 = IFSet([1, 2])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        c2 = IFSet([])
+        idx2 = DummyIndex(c2)
+        catalog['name2'] = idx2
+        numdocs, result = catalog.search(name1={}, name2={},
+                                         index_query_order=['name2', 'name1'])
+        self.assertEqual(numdocs, 0)
+        self.assertEqual(list(result), [])
+
+    def test_search_no_indexes_in_search(self):
+        catalog = self._makeOne()
+        numdocs, result = catalog.search()
+        self.assertEqual(numdocs, 0)
+        self.assertEqual(list(result), [])
 
     def test_search_noindex(self):
         catalog = self._makeOne()
