@@ -1,13 +1,18 @@
 import unittest
 
+_marker = object()
+
 class TestCatalogKeywordIndex(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.indexes.keyword import CatalogKeywordIndex
         return CatalogKeywordIndex
 
-    def _makeOne(self):
-        klass = self._getTargetClass()
-        return klass(lambda x, default: x)
+    def _makeOne(self, discriminator=_marker):
+        def _discriminator(obj, default):
+            return obj
+        if discriminator is _marker:
+            discriminator = _discriminator
+        return self._getTargetClass()(discriminator)
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
@@ -19,47 +24,51 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         from repoze.catalog.interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
-    def test_apply_with_dict_operator_or(self):
-        index = self._makeOne()
-        index.index_doc(1, [1,2,3])
-        index.index_doc(2, [3,4,5])
-        index.index_doc(3, [5,6,7])
-        index.index_doc(4, [7,8,9]) 
-        index.index_doc(5, [9,10])
-        result = index.apply({'operator':'or', 'query':[5]})
-        self.assertEqual(list(result), [2,3])
+    def test_ctor_callback_discriminator(self):
+        def _discriminator(obj, default):
+            return obj
+        index = self._makeOne(_discriminator)
+        self.failUnless(index.discriminator is _discriminator)
 
-    def test_apply_with_dict_operator_and(self):
-        index = self._makeOne()
-        index.index_doc(1, [1,2,3])
-        index.index_doc(2, [3,4,5])
-        index.index_doc(3, [5,6,7])
-        index.index_doc(4, [7,8,9]) 
-        index.index_doc(5, [9,10])
-        result = index.apply({'operator':'and', 'query':[5, 6]})
-        self.assertEqual(list(result), [3])
+    def test_ctor_string_discriminator(self):
+        index = self._makeOne('abc')
+        self.assertEqual(index.discriminator, 'abc')
 
-    def test_apply_with_empty_result_first(self):
+    def test_ctor_bad_discriminator(self):
+        self.assertRaises(ValueError, self._makeOne, object())
+
+    def test_reindex_doc_doesnt_unindex(self):
+        index = self._makeOne()
+        index.index_doc(5, [1])
+        index.unindex_doc = lambda *args, **kw: 1/0
+        index.reindex_doc(5, [1])
+
+    def test_reindex_doc_same_values(self):
         index = self._makeOne()
         index.index_doc(1, [1,2,3])
-        index.index_doc(2, [3,4,5])
-        index.index_doc(3, [5,6,7])
-        index.index_doc(4, [7,8,9]) 
-        index.index_doc(5, [9,10])
-        result = index.apply({'operator':'and', 'query':[11,5]})
-        self.assertEqual(list(result), [])
-        
-    def test_apply_with_empty_result_last(self):
+        self.assertEqual(index.documentCount(), 1)
+        index.reindex_doc(1, [1,2,3])
+        self.assertEqual(index.documentCount(), 1)
+        self.failUnless(1 in index._rev_index)
+        self.failUnless(1 in index._fwd_index[1])
+        self.failUnless(1 in index._fwd_index[2])
+        self.failUnless(1 in index._fwd_index[3])
+        self.failIf(4 in index._fwd_index)
+
+    def test_reindex_doc_different_values(self):
         index = self._makeOne()
         index.index_doc(1, [1,2,3])
-        index.index_doc(2, [3,4,5])
-        index.index_doc(3, [5,6,7])
-        index.index_doc(4, [7,8,9]) 
-        index.index_doc(5, [9,10])
-        result = index.apply({'operator':'and', 'query':[5,11]})
-        self.assertEqual(list(result), [])
+        self.assertEqual(index.documentCount(), 1)
+        index.reindex_doc(1, [2,3,4])
+        self.assertEqual(index.documentCount(), 1)
+        self.failUnless(1 in index._rev_index)
+        self.failIf(1 in index._fwd_index[1])
+        self.failUnless(1 in index._fwd_index[2])
+        self.failUnless(1 in index._fwd_index[3])
+        self.failUnless(1 in index._fwd_index[4])
 
     def test_apply_doesnt_mutate_query(self):
+        # Some previous version of zope.index munged the query dict
         index = self._makeOne()
         index.index_doc(1, [1,2,3])
         index.index_doc(2, [3,4,5])
@@ -67,16 +76,12 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         index.index_doc(4, [7,8,9]) 
         index.index_doc(5, [9,10])
         query = {'operator':'or', 'query':[5]}
-        result = index.apply(query)
+        result = index.apply(FrozenDict(query))
         self.assertEqual(list(result), [2,3])
         self.assertEqual(query, {'operator':'or', 'query':[5]})
-
-    def test_reindex_doc(self):
-        index = self._makeOne()
-        index.index_doc(1, [1,2,3])
-        self.assertEqual(index.documentCount(), 1)
-        index.reindex_doc(1, [1,2,3])
-        self.assertEqual(index.documentCount(), 1)
-        index.reindex_doc(50, [1])
-        self.assertEqual(index.documentCount(), 2)
         
+
+class FrozenDict(dict):
+    def _forbidden(self, *args, **kw):
+        assert 0
+    __setitem__ = __delitem__ = clear = update = _forbidden
