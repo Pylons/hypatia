@@ -1,13 +1,17 @@
 import unittest
 
+_marker = object()
+
 class TestCatalog(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.catalog import Catalog
         return Catalog
 
-    def _makeOne(self):
+    def _makeOne(self, family=_marker):
         klass = self._getTargetClass()
-        return klass()
+        if family is _marker:
+            return klass()
+        return klass(family)
     
     def test_klass_provides_ICatalog(self):
         klass = self._getTargetClass()
@@ -21,6 +25,16 @@ class TestCatalog(unittest.TestCase):
         from repoze.catalog.catalog import ICatalog
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
+
+    def test_ctor_defaults(self):
+        from BTrees import family32
+        catalog = self._makeOne()
+        self.failUnless(catalog.family is family32)
+
+    def test_ctor_explicit_family(self):
+        from BTrees import family64
+        catalog = self._makeOne(family64)
+        self.failUnless(catalog.family is family64)
 
     def test_clear(self):
         catalog = self._makeOne()
