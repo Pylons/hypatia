@@ -1,6 +1,6 @@
 import unittest
 
-facets = [
+FACETS = [
     'price',
     'price:0-100',
     'price:100-500',
@@ -18,14 +18,28 @@ facets = [
     'style:gucci:dress',
     ]
 
+_marker = object()
+
 class TestCatalogFacetIndex(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.indexes.facet import CatalogFacetIndex
         return CatalogFacetIndex
 
-    def _makeOne(self, facets):
-        klass = self._getTargetClass()
-        return klass(lambda x, default: x, facets)
+    def _makeOne(self, discriminator=None, facets=FACETS, family=_marker):
+        def _discriminator(obj, default):
+            return obj
+        if discriminator is None:
+            discriminator = _discriminator
+        if family is _marker:
+            return self._getTargetClass()(discriminator, facets)
+        return self._getTargetClass()(discriminator, facets, family)
+
+    def _populateIndex(self, idx):
+        idx.index_doc(1, ['price:0-100', 'color:blue', 'style:gucci:handbag'])
+        idx.index_doc(2, ['price:0-100', 'color:blue', 'style:gucci:dress'])
+        idx.index_doc(3, ['price:0-100', 'color:red', 'color:blue',
+                          'style:gucci'])
+        idx.index_doc(4, ['size:large'])
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
@@ -35,17 +49,89 @@ class TestCatalogFacetIndex(unittest.TestCase):
     def test_instance_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyObject
         from repoze.catalog.interfaces import ICatalogIndex
-        verifyObject(ICatalogIndex, self._makeOne(facets))
+        verifyObject(ICatalogIndex, self._makeOne())
 
-    def _populateIndex(self, idx):
-        idx.index_doc(1, ['price:0-100', 'color:blue', 'style:gucci:handbag'])
-        idx.index_doc(2, ['price:0-100', 'color:blue', 'style:gucci:dress'])
-        idx.index_doc(3, ['price:0-100', 'color:red', 'color:blue',
-                          'style:gucci'])
-        idx.index_doc(4, ['size:large'])
+    def test_ctor_defaults(self):
+        from BTrees import family32
+        index = self._makeOne()
+        self.failUnless(index.discriminator(self, index) is self)
+        self.assertEqual(list(index.facets), sorted(FACETS))
+        self.failUnless(index.family is family32)
+
+    def test_ctor_explicit(self):
+        from BTrees import family64
+        OTHER_FACETS = ['foo', 'foo:bar']
+        def _discrimintator(obj, default):
+            return default
+        index = self._makeOne(_discrimintator, OTHER_FACETS, family64)
+        self.failUnless(index.discriminator(self, index) is index)
+        self.assertEqual(list(index.facets), OTHER_FACETS)
+        self.failUnless(index.family is family64)
+
+    def test_ctor_bad_discriminator(self):
+        self.assertRaises(ValueError, self._makeOne, object())
+
+    def test_index_doc_callback_discriminator(self):
+        OTHER_FACETS = ['foo', 'foo:bar', 'foo:baz']
+        def _discrimintator(obj, default):
+            return ['foo:bar']
+        index = self._makeOne(_discrimintator, OTHER_FACETS)
+        index.index_doc(1, object())
+        self.assertEqual(list(index._fwd_index['foo']), [1])
+        self.assertEqual(list(index._fwd_index['foo:bar']), [1])
+        self.assertEqual(list(index._rev_index[1]), ['foo', 'foo:bar'])
+
+    def test_index_doc_string_discriminator(self):
+        OTHER_FACETS = ['foo', 'foo:bar', 'foo:baz']
+        class Dummy:
+            facets = ['foo:bar']
+        index = self._makeOne('facets', OTHER_FACETS)
+        index.index_doc(1, Dummy())
+        self.assertEqual(list(index._fwd_index['foo']), [1])
+        self.assertEqual(list(index._fwd_index['foo:bar']), [1])
+        self.assertEqual(list(index._rev_index[1]), ['foo', 'foo:bar'])
+
+    def test_index_doc_missing_value_unindexes(self):
+        OTHER_FACETS = ['foo', 'foo:bar', 'foo:baz']
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.facets = ['foo:bar']
+        index = self._makeOne('facets', OTHER_FACETS)
+        index.index_doc(1, dummy)
+        del dummy.facets
+        index.index_doc(1, dummy)
+        self.failIf('foo' in index._fwd_index)
+        self.failIf('foo:bar' in index._fwd_index)
+        self.failIf(1 in index._rev_index)
+
+    def test_index_doc_persistent_value_raises(self):
+        from persistent import Persistent
+        OTHER_FACETS = ['foo', 'foo:bar', 'foo:baz']
+        class Dummy:
+            pass
+        index = self._makeOne('facets', OTHER_FACETS)
+        dummy = Dummy()
+        dummy.facets = Persistent()
+        self.assertRaises(ValueError, index.index_doc, 1, dummy)
+
+    def test_index_doc_unindexes_old_values(self):
+        OTHER_FACETS = ['foo', 'foo:bar', 'foo:baz']
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.facets = ['foo:bar']
+        index = self._makeOne('facets', OTHER_FACETS)
+        index.index_doc(1, dummy)
+        dummy.facets = ['foo:baz']
+        index.index_doc(1, dummy)
+        self.assertEqual(list(index._fwd_index['foo']), [1])
+        self.assertEqual(list(index._fwd_index['foo:baz']), [1])
+        self.assertEqual(list(index._rev_index[1]), ['foo', 'foo:baz'])
+        self.failIf('foo:bar' in index._fwd_index)
 
     def test_search(self):
-        index = self._makeOne(facets)
+        index = self._makeOne()
         self._populateIndex(index)
 
         result = index.search(['color:blue', 'color:red'])
@@ -96,7 +182,7 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(sorted(list(result)), [])
 
     def test_counts(self):
-        index = self._makeOne(facets)
+        index = self._makeOne()
         self._populateIndex(index)
 
         search = ['price:0-100']
