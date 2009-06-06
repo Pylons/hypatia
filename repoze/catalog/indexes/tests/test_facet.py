@@ -61,12 +61,18 @@ class TestCatalogFacetIndex(unittest.TestCase):
     def test_ctor_explicit(self):
         from BTrees import family64
         OTHER_FACETS = ['foo', 'foo:bar']
-        def _discrimintator(obj, default):
+        def _discriminator(obj, default):
             return default
-        index = self._makeOne(_discrimintator, OTHER_FACETS, family64)
+        index = self._makeOne(_discriminator, OTHER_FACETS, family64)
         self.failUnless(index.discriminator(self, index) is index)
         self.assertEqual(list(index.facets), OTHER_FACETS)
         self.failUnless(index.family is family64)
+
+    def test_ctor_string_discriminator(self):
+        from BTrees import family64
+        OTHER_FACETS = ['foo', 'foo:bar']
+        index = self._makeOne('facets')
+        self.assertEqual(index.discriminator, 'facets')
 
     def test_ctor_bad_discriminator(self):
         self.assertRaises(ValueError, self._makeOne, object())
