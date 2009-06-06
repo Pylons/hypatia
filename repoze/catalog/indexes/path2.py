@@ -5,7 +5,7 @@ import BTrees
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
-_marker = ()
+_marker = object()
 
 class CatalogPathIndex2(CatalogIndex):
     """Index for model paths (tokens separated by '/' characters or
@@ -33,6 +33,10 @@ class CatalogPathIndex2(CatalogIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        if attr_discriminator is not None and not callable(attr_discriminator):
+            if not isinstance(attr_discriminator, basestring):
+                raise ValueError('attr_discriminator value must be callable '
+                                 'or a string')
         self.attr_discriminator = attr_discriminator
         self.clear()
 
@@ -224,7 +228,7 @@ class CatalogPathIndex2(CatalogIndex):
             try:
                 docid = self.path_to_docid[path]
             except KeyError:
-                pass
+                pass # XXX should we just return an empty set?
             else:
                 sets.append(self.family.IF.Set([docid]))
 
@@ -238,7 +242,7 @@ class CatalogPathIndex2(CatalogIndex):
             try:
                 docid = self.path_to_docid[nextpath]
             except KeyError:
-                continue
+                continue    # XXX we can't search from an unindexed root path?
             try:
                 theset = self.adjacency[docid]
             except KeyError:
@@ -268,7 +272,7 @@ class CatalogPathIndex2(CatalogIndex):
             try:
                 docid = self.path_to_docid[subpath]
             except KeyError:
-                continue
+                continue  # XXX should we just return an empty set?
             attr = self.docid_to_attr.get(docid, _marker)
             if attr is not _marker:
                 remove_from_closest(result, subpath, docid)
@@ -284,7 +288,7 @@ class CatalogPathIndex2(CatalogIndex):
             try:
                 docid = self.path_to_docid[nextpath]
             except KeyError:
-                continue
+                continue # XXX we can't search from an unindexed root path?
             attr = self.docid_to_attr.get(docid, _marker)
             if attr is _marker:
                 if include_path and nextpath == path:
