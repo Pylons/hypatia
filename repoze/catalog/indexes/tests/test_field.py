@@ -50,6 +50,12 @@ class TestCatalogFieldIndex(unittest.TestCase):
     def test_ctor_bad_discriminator(self):
         self.assertRaises(ValueError, self._makeOne, object())
 
+    def test_reindex_doc_doesnt_unindex(self):
+        index = self._makeOne()
+        index.index_doc(5, 1)
+        index.unindex_doc = lambda *args, **kw: 1/0
+        index.reindex_doc(5, 1)
+
     def test_reindex_doc_w_existing_docid_same_value(self):
         index = self._makeOne()
         index.index_doc(5, 1)
