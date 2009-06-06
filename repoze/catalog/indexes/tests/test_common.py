@@ -50,6 +50,32 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.value, 'abc')
         self.assertEqual(index.docid, 1)
 
+    def test_index_doc_missing_value_unindexes(self):
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.abc = 'abc'
+        self.assertEqual(index.index_doc(1, dummy), 'abc')
+        del dummy.abc
+        self.assertEqual(index.index_doc(1, dummy), None)
+        self.assertEqual(index.unindexed, 1)
+
+    def test_index_doc_persistent_value_raises(self):
+        from persistent import Persistent
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.abc = Persistent()
+        self.assertRaises(ValueError, index.index_doc, 1, dummy)
+
     def test_reindex_doc(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
