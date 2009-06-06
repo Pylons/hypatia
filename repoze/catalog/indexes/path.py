@@ -171,12 +171,11 @@ class CatalogPathIndex(CatalogIndex):
     def apply(self, query):
         """  
         """
-
         level = 0
         operator = self.useOperator
 
         if isinstance(query, basestring):
-            paths = [ query ]
+            paths = [query]
         elif isinstance(query, (tuple, list)):
             paths = query
         else:
