@@ -26,6 +26,29 @@ class DocumentMap(Persistent):
         self.address_to_docid = OIBTree()
         self.docid_to_metadata = IOBTree()
 
+    def docid_for_address(self, address):
+        """ Retrieve a document id for a given address.
+
+        ``address`` is a string or other hashable object which represents
+        a token known by the application.
+
+        Return the integer document id corresponding to ``address``.
+
+        If ``address`` doesn't exist in the document map, return None.
+        """
+        return self.address_to_docid.get(address)
+
+    def address_for_docid(self, docid):
+        """ Retrieve an address for a given document id.
+
+        ``docid`` is an integer document id.
+
+        Return the address corresponding to ``docid``.
+
+        If ``docid`` doesn't exist in the document map, return None.
+        """
+        return self.docid_to_address.get(docid)
+
     def add(self, address, docid=_marker):
         """ Add a new document to the document map.
 
@@ -34,6 +57,7 @@ class DocumentMap(Persistent):
 
         ``docid``, if passed, must be an int.  In this case, remove any
         previous address stored for it before mapping it to the new address.
+        Preserve any metadata for ``docid`` in this case.
         
         If ``docid`` is not passed, generate a new docid.
 
@@ -41,75 +65,13 @@ class DocumentMap(Persistent):
         """
         if docid is _marker:
             docid = self.new_docid()
+        else:
+            old_address = self.docid_to_address.get(docid)
+            if old_address is not None:
+                del self.address_to_docid[old_address]
         self.docid_to_address[docid] = address
         self.address_to_docid[address] = docid
         return docid
-
-    def _check_metadata(self):
-        # backwards compatibility
-        if self.docid_to_metadata is None:
-            self.docid_to_metadata = IOBTree()
-
-    def add_metadata(self, docid, data):
-        """ Add metadata related to a given document id.
-
-        For each key/value pair in ``data`` (which should be a mapping, such
-        as a dictionary), insert a metadata key/value pair into the metadata
-        BTree.
-
-        Overwrite any existing values for the keys in ``data``, leaving values
-        unchange for other existing keys.
-
-        Raise a KeyError If ``docid`` doesn't relate to an address in the
-        document map,
-        """
-        if not docid in self.docid_to_address:
-            raise KeyError(docid)
-        self._check_metadata()
-        meta = self.docid_to_metadata.setdefault(docid, OOBTree())
-        for k in data:
-            meta[k] = data[k]
-        if not meta:
-            del self.docid_to_metadata[docid]
-
-    def remove_metadata(self, docid, *keys):
-        """ Remove metadata related to a given document id.
-
-        If ``docid`` doesn't exist in the metadata map, raise a KeyError.
-
-        For each key in ``keys``, remove the metadata value for the
-        docid related to that key.
-        
-        Do not raise any error if no value exists for a given key.
-
-        If no keys are specified, remove all metadata related to the docid.
-        """
-        self._check_metadata()
-        if keys:
-            meta = self.docid_to_metadata.get(docid, None)
-            if meta is None:
-                raise KeyError(docid)
-            for k in keys:
-                if k in meta:
-                    del meta[k]
-            if not meta:
-                del self.docid_to_metadata[docid]
-        else:
-            if not (docid in self.docid_to_metadata):
-                raise KeyError(docid)
-            del self.docid_to_metadata[docid]
-
-    def get_metadata(self, docid):
-        """ Return the metadata for ``docid``.
-
-        Return a mapping of the keys and values set using ``add_metadata``.
-
-        Raise a KeyError If metadata does not exist for ``docid``.
-        """
-        if self.docid_to_metadata is None:
-            raise KeyError(docid)
-        meta = self.docid_to_metadata[docid]
-        return meta
 
     def remove_docid(self, docid):
         """ Remove a document from the document map for the given document ID.
@@ -150,28 +112,72 @@ class DocumentMap(Persistent):
             del self.docid_to_metadata[docid]
         return True
 
-    def docid_for_address(self, address):
-        """ Retrieve a document id for a given address.
+    def _check_metadata(self):
+        # backwards compatibility
+        if self.docid_to_metadata is None:
+            self.docid_to_metadata = IOBTree()
 
-        ``address`` is a string or other hashable object which represents
-        a token known by the application.
+    def add_metadata(self, docid, data):
+        """ Add metadata related to a given document id.
 
-        Return the integer document id corresponding to ``address``.
+        ``data`` must be a mapping, such as a dictionary.
+        
+        For each key/value pair in ``data`` insert a metadata key/value pair
+        into the metadata stored for ``docid``.
 
-        If ``address`` doesn't exist in the document map, return None.
+        Overwrite any existing values for the keys in ``data``, leaving values
+        unchanged for other existing keys.
+
+        Raise a KeyError If ``docid`` doesn't relate to an address in the
+        document map,
         """
-        return self.address_to_docid.get(address)
+        if not docid in self.docid_to_address:
+            raise KeyError(docid)
+        if len(data.keys()) == 0:
+            return
+        self._check_metadata()
+        meta = self.docid_to_metadata.setdefault(docid, OOBTree())
+        for k in data:
+            meta[k] = data[k]
 
-    def address_for_docid(self, docid):
-        """ Retrieve an address for a given document id.
+    def remove_metadata(self, docid, *keys):
+        """ Remove metadata related to a given document id.
 
-        ``docid`` is an integer document id.
+        If ``docid`` doesn't exist in the metadata map, raise a KeyError.
 
-        Return the address corresponding to ``docid``.
+        For each key in ``keys``, remove the metadata value for the
+        docid related to that key.
+        
+        Do not raise any error if no value exists for a given key.
 
-        If ``docid`` doesn't exist in the document map, return None.
+        If no keys are specified, remove all metadata related to the docid.
         """
-        return self.docid_to_address.get(docid)
+        self._check_metadata()
+        if keys:
+            meta = self.docid_to_metadata.get(docid, None)
+            if meta is None:
+                raise KeyError(docid)
+            for k in keys:
+                if k in meta:
+                    del meta[k]
+            if not meta:
+                del self.docid_to_metadata[docid]
+        else:
+            if not (docid in self.docid_to_metadata):
+                raise KeyError(docid)
+            del self.docid_to_metadata[docid]
+
+    def get_metadata(self, docid):
+        """ Return the metadata for ``docid``.
+
+        Return a mapping of the keys and values set using ``add_metadata``.
+
+        Raise a KeyError If metadata does not exist for ``docid``.
+        """
+        if self.docid_to_metadata is None:
+            raise KeyError(docid)
+        meta = self.docid_to_metadata[docid]
+        return meta
 
     def new_docid(self):
         """ Return a new document id.

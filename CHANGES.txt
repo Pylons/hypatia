@@ -1,11 +1,16 @@
+Unreleased
+==========
+
+- Fixed bug in ``DocumentMap.add`` which left orphan mappings for previous
+  addresses when adding an existing docid with a new address.
+
 0.6.2 (2009-04-15)
 ==================
 
-- Add metadata-related APIs to
-  ``repoze.catalog.document.DocumentMap``: ``add_metadata``,
-  ``remove_metadata``, ``get_metadata``.  "Metadata" is a freeform set
-  of key/value pairs related to a docid.  See the API documentation
-  for more information.
+- Add metadata-related APIs to ``repoze.catalog.document.DocumentMap``:
+  ``add_metadata``, ``remove_metadata``, ``get_metadata``.
+  "Metadata" is a freeform set of key/value pairs related to a docid.
+  See the API documentation for more information.
 
 0.6.1 (2009-02-25)
 ==================
