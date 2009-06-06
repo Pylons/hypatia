@@ -10,10 +10,12 @@ import BTrees
 _marker = ()
 
 class DocumentMap(Persistent):
-    """ A document map maps addresses (e.g. location paths) to
-    document ids.  It is a persistent object meant to live in a ZODB
-    storage.  Additionally, it is capable of mapping 'metadata' to
-    docids."""
+    """ A two-way map between addresses (e.g. location paths) and document ids.
+
+    The map is a persistent object meant to live in a ZODB storage.
+
+    Additionally, the map is capable of mapping 'metadata' to docids.
+    """
     _v_nextid = None
     family = BTrees.family32
     _randrange = random.randrange
@@ -25,12 +27,18 @@ class DocumentMap(Persistent):
         self.docid_to_metadata = IOBTree()
 
     def add(self, address, docid=_marker):
-        """ Add a new document to the document map.  ``address`` is a
-        string or other hashable object which represents a token known
-        by the application.  This method returns an integer document
-        id.  An optional ``docid`` argument allows you to add a a
-        document with an already-known document id.  If it is not
-        passed, a docid is generated and used."""
+        """ Add a new document to the document map.
+
+        ``address`` is a string or other hashable object which represents
+        a token known by the application.
+
+        ``docid``, if passed, must be an int.  In this case, remove any
+        previous address stored for it before mapping it to the new address.
+        
+        If ``docid`` is not passed, generate a new docid.
+
+        Return the integer document id mapped to ``address``.
+        """
         if docid is _marker:
             docid = self.new_docid()
         self.docid_to_address[docid] = address
@@ -43,18 +51,17 @@ class DocumentMap(Persistent):
             self.docid_to_metadata = IOBTree()
 
     def add_metadata(self, docid, data):
-        """
-        Add metadata related to docid.  If ``docid`` doesn't
-        relate to an address in in the document map, a KeyError will
-        be raised.
+        """ Add metadata related to a given document id.
 
-        For each key/value pair in ``data`` (which should be a
-        mapping, such as a dictionary), insert a metadata key/value
-        pair into the metadata BTree.
+        For each key/value pair in ``data`` (which should be a mapping, such
+        as a dictionary), insert a metadata key/value pair into the metadata
+        BTree.
 
-        When metadata values are added, any existing values related to
-        the keys are overwritten, but existing values that don't
-        relate to the keys are left unchanged.
+        Overwrite any existing values for the keys in ``data``, leaving values
+        unchange for other existing keys.
+
+        Raise a KeyError If ``docid`` doesn't relate to an address in the
+        document map,
         """
         if not docid in self.docid_to_address:
             raise KeyError(docid)
@@ -66,15 +73,16 @@ class DocumentMap(Persistent):
             del self.docid_to_metadata[docid]
 
     def remove_metadata(self, docid, *keys):
-        """ Remove metadata related to docid.  If the docid doesn't
-        exist in the metadata map, a KeyError will be raised.
+        """ Remove metadata related to a given document id.
+
+        If ``docid`` doesn't exist in the metadata map, raise a KeyError.
 
         For each key in ``keys``, remove the metadata value for the
-        docid related to that key.  If any entry related to a key does
-        not exist, no error will be raised.
+        docid related to that key.
+        
+        Do not raise any error if no value exists for a given key.
 
-        If no keys are specified, all metadata related to the docid is
-        removed.
+        If no keys are specified, remove all metadata related to the docid.
         """
         self._check_metadata()
         if keys:
@@ -92,10 +100,11 @@ class DocumentMap(Persistent):
             del self.docid_to_metadata[docid]
 
     def get_metadata(self, docid):
-        """
-        Return the metadata BTree related to ``docid``.
+        """ Return the metadata for ``docid``.
 
-        If metadata does not exist for ``docid``, a KeyError is raised.
+        Return a mapping of the keys and values set using ``add_metadata``.
+
+        Raise a KeyError If metadata does not exist for ``docid``.
         """
         if self.docid_to_metadata is None:
             raise KeyError(docid)
@@ -103,9 +112,14 @@ class DocumentMap(Persistent):
         return meta
 
     def remove_docid(self, docid):
-        """ Remove a document from the document map using an integer
-        document id.  If the document id doesn't actually exist in the
-        document map, return False.  Otherwise, return True."""
+        """ Remove a document from the document map for the given document ID.
+
+        ``docid`` is an integer document id.
+
+        Remove any corresponding metadata for ``docid`` as well.
+
+        Return a True if ``docid`` existed in the map, else return False.
+        """
         self._check_metadata()
         address = self.docid_to_address.get(docid)
         if address is None:
@@ -118,8 +132,14 @@ class DocumentMap(Persistent):
 
     def remove_address(self, address):
         """ Remove a document from the document map using an address.
-        If the address doesn't actually exist in the document map,
-        return False.  Otherwise, return True."""
+
+        ``address`` is a string or other hashable object which represents
+        a token known by the application.
+
+        Remove any corresponding metadata for ``address`` as well.
+
+        Return a True if ``address`` existed in the map, else return False.
+        """
         self._check_metadata()
         docid = self.address_to_docid.get(address)
         if docid is None:
@@ -131,19 +151,32 @@ class DocumentMap(Persistent):
         return True
 
     def docid_for_address(self, address):
-        """ Retrieve an integer document id given an address.  If the
-        address doesn't actually exist in the document map, return
-        None."""
+        """ Retrieve a document id for a given address.
+
+        ``address`` is a string or other hashable object which represents
+        a token known by the application.
+
+        Return the integer document id corresponding to ``address``.
+
+        If ``address`` doesn't exist in the document map, return None.
+        """
         return self.address_to_docid.get(address)
 
     def address_for_docid(self, docid):
-        """ Retrieve an address given an integer document id.  If the
-        document id doesn't actually exist in the document map, return
-        None."""
+        """ Retrieve an address for a given document id.
+
+        ``docid`` is an integer document id.
+
+        Return the address corresponding to ``docid``.
+
+        If ``docid`` doesn't exist in the document map, return None.
+        """
         return self.docid_to_address.get(docid)
 
     def new_docid(self):
-        """Return a document id which is not yet taken in this
+        """ Return a new document id.
+
+        The returned value is guaranteed not to be used already in this
         document map.
         """
         while True:
@@ -155,5 +188,3 @@ class DocumentMap(Persistent):
             if uid not in self.docid_to_address:
                 return uid
             self._v_nextid = None
-
-
