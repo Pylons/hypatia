@@ -78,7 +78,6 @@ class Catalog(PersistentMapping):
             # unordered query (use apply)
             results = []
             for index_name, index_query in query.items():
-                index_query = query[index_name]
                 index = self.get(index_name)
                 if index is None:
                     raise ValueError('No such index %s' % index_name)
