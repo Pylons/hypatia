@@ -151,6 +151,11 @@ contain all the documents returned by the search, the ``numdocs``
 value returned by ``search`` may be incorrect.  There will be fewer
 results than those indicated by ``numdocs`` in this circumstance.
 
+When querying a text index, to sort the results by relevance, specify
+the name of the text index as the sort index.  The most relevant
+results will be provided first, unless you specify reverse=True, in
+which case the least relevant will be provided first.
+
 Document Map
 ------------
 
