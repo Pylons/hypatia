@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.7.0 (2009-08-03)
+==================
 
 - Fixed bug in ``DocumentMap.add`` which left orphan mappings for previous
   addresses when adding an existing docid with a new address.
