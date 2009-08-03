@@ -64,13 +64,13 @@ class TestCatalogTextIndex(unittest.TestCase):
     def test_sort_unlimited_forward(self):
         index = self._makeOne()
         results = {-2: 5.0, 3: 3.0, 0: 4.5}
-        expect = [3, 0, -2]
+        expect = [-2, 0, 3]
         self.assertEqual(index.sort(results), expect)
 
     def test_sort_unlimited_reverse(self):
         index = self._makeOne()
         results = {-2: 5.0, 3: 3.0, 0: 4.5}
-        expect = [-2, 0, 3]
+        expect = [3, 0, -2]
         self.assertEqual(index.sort(results, reverse=True), expect)
 
     def test_sort_limited(self):
