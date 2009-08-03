@@ -62,7 +62,7 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         index.reindex_doc(1, [2,3,4])
         self.assertEqual(index.documentCount(), 1)
         self.failUnless(1 in index._rev_index)
-        self.failIf(1 in index._fwd_index[1])
+        self.failIf(1 in index._fwd_index.get(1, []))
         self.failUnless(1 in index._fwd_index[2])
         self.failUnless(1 in index._fwd_index[3])
         self.failUnless(1 in index._fwd_index[4])
