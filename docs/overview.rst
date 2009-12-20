@@ -1,10 +1,10 @@
 A Tour of :mod:`repoze.catalog`
 ===============================
 
-All versions of Zope depend heavily on the Zope Object Datbase (ZODB).
+All versions of Zope depend heavily on the Zope Object Database (ZODB).
 Because ZODB is less a database and more a persistent object store (it
-doesn't possess a query language; Python *is* its query language), its
-been necessary to create indexing and searching facilities for data
+doesn't possess a query language; Python *is* its query language), it
+has been necessary to create indexing and searching facilities for data
 stored in ZODB.
 
 The first iteration of searching and indexing for ZODB-based
@@ -26,7 +26,7 @@ assumption that that it's located within a Zope 3 "site" object within
 a ZODB, and assumes that you want query result sets to be sets of
 Python references to the original object you indexed.  In other words,
 these packages assume too much to be maximally useful outside the
-context in which they were developed.  `Repoze <http://repoze.org>` is
+context in which they were developed.  `Repoze <http://repoze.org>`_ is
 a project which has as a stated goal making it easier for non-Zope
 Python developers to use Zope technologies outside Zope, so this
 seemed like a natural thing to do under the Repoze flag.
