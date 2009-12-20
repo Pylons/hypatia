@@ -170,7 +170,7 @@ integrate a catalog into an arbitrary Python application.  The most
 obvious is a ``FileStorageCatalogFactory``, which makes it reasonably
 easy to create a Catalog object within an arbitrary Python
 application.  Using this facility, you don't have to know anything
-about ZODB to use :mod:`repoze.catalog`.  If you have an existing ZOB
+about ZODB to use :mod:`repoze.catalog`.  If you have an existing ZODB
 application, however, you can ignore this facility entirely and use
 the Catalog implementation directly.
 
