@@ -1,13 +1,30 @@
 Next release
 ============
 
+Bug Fixes
+---------
+
 - Fix a bug which allowed the document map to map more than one docid
   onto the same address, which put the reverse and forward document
   map bookeeping out of sync with each other.
 
+Packaging
+---------
+
 - Move benchmark directory into root of distribution instead of
   leaving it in package.  It interfered with normal operations of the
   setuptools testrunner.
+
+- Bump version to 0.7.2.
+
+- Disuse nose.collector as test_suite (use normal setuptools test runner).
+
+Backwards Incompatibilities
+---------------------------
+
+- When using ``DocumentMap.add`` with a ``docid`` argument that
+  references an existing docid with metadata, that metadata is now
+  removed.  Previously it was retained.
 
 0.7.1 (2009-09-27)
 ==================
