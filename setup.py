@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 
 import os
 import sys
@@ -62,11 +62,11 @@ setup(name='repoze.catalog',
       extras_require = {
         'benchmark': ['PyChart']
         },
-      test_suite="nose.collector",
-      entry_points = """\
-      [console_scripts]
-      catalog_benchmark = repoze.catalog.benchmark.benchmark:run
-      sortbench = repoze.catalog.benchmark.sortbench:main
-      """,
+      test_suite="repoze.catalog",
+      ## entry_points = """\
+      ## [console_scripts]
+      ## catalog_benchmark = repoze.catalog.benchmark.benchmark:run
+      ## sortbench = repoze.catalog.benchmark.sortbench:main
+      ## """,
       )
 

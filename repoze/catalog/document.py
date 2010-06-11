@@ -55,9 +55,10 @@ class DocumentMap(Persistent):
         ``address`` is a string or other hashable object which represents
         a token known by the application.
 
-        ``docid``, if passed, must be an int.  In this case, remove any
-        previous address stored for it before mapping it to the new address.
-        Preserve any metadata for ``docid`` in this case.
+        ``docid``, if passed, must be an int.  In this case, remove
+        any previous address stored for it before mapping it to the
+        new address.  Passing an explicit ``docid`` also removes any
+        metadata associated with that docid.
         
         If ``docid`` is not passed, generate a new docid.
 
@@ -65,10 +66,10 @@ class DocumentMap(Persistent):
         """
         if docid is _marker:
             docid = self.new_docid()
-        else:
-            old_address = self.docid_to_address.get(docid)
-            if old_address is not None:
-                del self.address_to_docid[old_address]
+
+        self.remove_docid(docid)
+        self.remove_address(address)
+
         self.docid_to_address[docid] = address
         self.address_to_docid[address] = docid
         return docid
@@ -82,15 +83,49 @@ class DocumentMap(Persistent):
 
         Return a True if ``docid`` existed in the map, else return False.
         """
+        # It should be an invariant that if one entry exists in
+        # docid_to_address for a docid/address pair, exactly one
+        # corresponding entry exists in address_to_docid for the same
+        # docid/address pair.  However, versions of this code before
+        # r.catalog 0.7.3 had a bug which, if this method was called
+        # multiple times, each time with the same address but a
+        # different docid, the ``docid_to_address`` mapping could
+        # contain multiple entries for the same address each with a
+        # different docid, causing this invariant to be violated.  The
+        # symptom: in systems that used r.catalog 0.7.2 and lower,
+        # there might be more entries in docid_to_address than there
+        # are in address_to_docid.  The conditional fuzziness in the
+        # code directly below is a runtime kindness to systems in that
+        # state.  Technically, the administrator of a system in such a
+        # state should normalize the two data structures by running a
+        # script after upgrading to 0.7.3.  If we made the admin do
+        # this, some of the code fuzziness below could go away,
+        # replaced with something simpler.  But there's no sense in
+        # breaking systems at runtime through being a hardass about
+        # consistency if an unsuspecting upgrader has not yet run the
+        # data fixer script. The "fix the data" mantra rings a
+        # little hollow when you weren't the one who broke the data in
+        # the first place ;-)
+
         self._check_metadata()
-        address = self.docid_to_address.get(docid)
-        if address is None:
+
+        address = self.docid_to_address.get(docid, _marker)
+        if address is _marker:
             return False
-        del self.docid_to_address[docid]
-        del self.address_to_docid[address]
+        
+        old_docid = self.address_to_docid.get(address, _marker)
+        if (old_docid is not _marker) and (old_docid != docid):
+            self.remove_docid(old_docid)
+
+        if docid in self.docid_to_address:
+            del self.docid_to_address[docid]
+        if address in self.address_to_docid:
+            del self.address_to_docid[address]
         if docid in self.docid_to_metadata:
             del self.docid_to_metadata[docid]
+
         return True
+
 
     def remove_address(self, address):
         """ Remove a document from the document map using an address.
@@ -102,14 +137,25 @@ class DocumentMap(Persistent):
 
         Return a True if ``address`` existed in the map, else return False.
         """
+        # See the comment in remove_docid for complexity rationalization
+        
         self._check_metadata()
-        docid = self.address_to_docid.get(address)
-        if docid is None:
+
+        docid = self.address_to_docid.get(address, _marker)
+        if docid is _marker:
             return False
-        del self.docid_to_address[docid]
-        del self.address_to_docid[address]
+        
+        old_address = self.docid_to_address.get(docid, _marker)
+        if (old_address is not _marker) and (old_address != address):
+            self.remove_address(old_address)
+
+        if docid in self.docid_to_address:
+            del self.docid_to_address[docid]
+        if address in self.address_to_docid:
+            del self.address_to_docid[address]
         if docid in self.docid_to_metadata:
             del self.docid_to_metadata[docid]
+
         return True
 
     def _check_metadata(self):
@@ -129,7 +175,7 @@ class DocumentMap(Persistent):
         unchanged for other existing keys.
 
         Raise a KeyError If ``docid`` doesn't relate to an address in the
-        document map,
+        document map.
         """
         if not docid in self.docid_to_address:
             raise KeyError(docid)
@@ -154,8 +200,8 @@ class DocumentMap(Persistent):
         """
         self._check_metadata()
         if keys:
-            meta = self.docid_to_metadata.get(docid, None)
-            if meta is None:
+            meta = self.docid_to_metadata.get(docid, _marker)
+            if meta is _marker:
                 raise KeyError(docid)
             for k in keys:
                 if k in meta:

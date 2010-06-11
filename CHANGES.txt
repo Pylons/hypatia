@@ -1,3 +1,14 @@
+Next release
+============
+
+- Fix a bug which allowed the document map to map more than one docid
+  onto the same address, which put the reverse and forward document
+  map bookeeping out of sync with each other.
+
+- Move benchmark directory into root of distribution instead of
+  leaving it in package.  It interfered with normal operations of the
+  setuptools testrunner.
+
 0.7.1 (2009-09-27)
 ==================
 
