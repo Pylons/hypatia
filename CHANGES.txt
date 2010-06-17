@@ -1,5 +1,5 @@
-Next release
-============
+0.7.2 (2010-06-17)
+==================
 
 Bug Fixes
 ---------
@@ -15,9 +15,19 @@ Packaging
   leaving it in package.  It interfered with normal operations of the
   setuptools testrunner.
 
+- Deactivate "sortbench" console script.
+
+- Remove "Development Status" Trove classifier.
+
 - Bump version to 0.7.2.
 
 - Disuse nose.collector as test_suite (use normal setuptools test runner).
+
+- Remove (unused) TODO.txt.
+
+- Disuse ez_setup.py.
+
+- Make docs render properly in Google Chrome.
 
 Backwards Incompatibilities
 ---------------------------
