@@ -17,9 +17,6 @@ __version__ = '0.7.2'
 import os
 import sys
 
-from ez_setup import use_setuptools
-use_setuptools()
-
 from setuptools import setup, find_packages
 
 try:
