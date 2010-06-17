@@ -7,7 +7,7 @@ div.document {
     background-color: #dad3bd;
 }
 
-div.sphinxsidebar h3,h4,h5,li,a {
+div.sphinxsidebar h3, h4, h5, a {
     color: #127c56 !important;
 }
 
@@ -18,4 +18,16 @@ div.related {
  
 div.related a {
     color: #dad3bd !important;
+}
+
+/* override the justify text align of the default */
+
+div.body p {
+    text-align: left !important;
+}
+
+/* fix google chrome <pre> tag renderings */
+
+pre {
+   line-height: normal !important;
 }
