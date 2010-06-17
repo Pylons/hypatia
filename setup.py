@@ -33,7 +33,6 @@ setup(name='repoze.catalog',
       description='Searching and indexing based on zope.index',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
-        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
