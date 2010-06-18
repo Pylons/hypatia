@@ -39,7 +39,7 @@ class Catalog(PersistentMapping):
     def reindex_doc(self, docid, obj):
         """ Reindex the document referenced by docid using the object
         passed in as ``obj`` (typically just does the equivalent of
-        ``index_doc``, then ``unindex_doc``, but specialized indexes
+        ``unindex_doc``, then ``index_doc``, but specialized indexes
         can override the method that this API calls to do less work. """
         assertint(docid)
         for index in self.values():
