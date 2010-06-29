@@ -36,12 +36,12 @@ Glossary
     A type of index that keeps track of documents within a graph;
     documents can be searched for by their position in the graph.
   zope.index
-    The `<underlying indexing machinery
-    http://pypi.python.org/pypi/zope.index>`_ that
+    The `underlying indexing machinery
+    <http://pypi.python.org/pypi/zope.index>`_ that
     :mod:`repoze.catalog` uses.
   zope.app.catalog
-    The `<cataloging implementation
-    http://pypi.python.org/pypi/zope.app.catalog>`_ on which
+    The `cataloging implementation
+    <http://pypi.python.org/pypi/zope.app.catalog>`_ on which
     :mod:`repoze.catalog` is based (although it doesn't use any of
     its code).
   Virtualenv
