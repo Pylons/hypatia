@@ -378,7 +378,7 @@ class DummyIndex(object):
     def apply(self, query):
         return self.arg[0]
 
-    def apply_intersect(self, query, docids):
+    def apply_intersect(self, query, docids): # pragma: no cover
         if docids is None:
             return self.arg[0]
         L = []

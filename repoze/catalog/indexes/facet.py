@@ -1,7 +1,7 @@
 try:
-    from hashlib import md5
-except:
-    from md5 import new as md5  #pragma NO COVERAGE
+    from hashlib import md5 
+except: # pragma no cover
+    from md5 import new as md5
 
 from persistent import Persistent
 from zope.interface import implements

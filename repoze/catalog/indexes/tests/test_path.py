@@ -33,7 +33,7 @@ class PathIndexTests(unittest.TestCase):
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):
-            return obj
+            """ """
         index = self._makeOne(discriminator=_discriminator)
         self.failUnless(index.discriminator is _discriminator)
 

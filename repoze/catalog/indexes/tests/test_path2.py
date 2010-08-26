@@ -33,7 +33,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):
-            return obj
+            """ """
         index = self._makeOne(discriminator=_discriminator)
         self.failUnless(index.discriminator is _discriminator)
 
@@ -46,7 +46,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
 
     def test_ctor_callback_attr_discriminator(self):
         def _attr_discriminator(obj, default):
-            return obj
+            """ """
         index = self._makeOne(attr_discriminator=_attr_discriminator)
         self.failUnless(index.attr_discriminator is _attr_discriminator)
 

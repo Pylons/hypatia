@@ -26,7 +26,7 @@ class TestCatalogKeywordIndex(unittest.TestCase):
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):
-            return obj
+            """ """
         index = self._makeOne(_discriminator)
         self.failUnless(index.discriminator is _discriminator)
 
@@ -83,5 +83,5 @@ class TestCatalogKeywordIndex(unittest.TestCase):
 
 class FrozenDict(dict):
     def _forbidden(self, *args, **kw):
-        assert 0
+        assert 0 # pragma: no cover
     __setitem__ = __delitem__ = clear = update = _forbidden
