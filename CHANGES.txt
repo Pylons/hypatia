@@ -1,3 +1,19 @@
+Next release
+============
+
+Features
+--------
+
+- Refuse to pickle instances of ``zodb.broken.Broken`` which are
+  returned as the result of an index attempting to call a callable
+  discriminator function.  This prevents edge cases where instances
+  with out-of-sync code could too easily write Broken objects to the
+  database, leaving them around for the next hapless unpickler to
+  find.  This is particularly a problem because many of our
+  discriminators are *functions*; the Broken machinery attempts to
+  recover the state of a broken object when it is unpickled, but it
+  cannot recover the state of an attempted function call.
+
 0.7.2 (2010-06-17)
 ==================
 

@@ -10,14 +10,14 @@ class TestCatalogIndex(unittest.TestCase):
         class Test(klass, DummyIndex):
             pass
         def callback(object, default):
-            return default
+            """ """
         index = Test(callback)
         self.assertEqual(index.discriminator, callback)
 
     def test_ctor_callback(self):
         klass = self._getTargetClass()
         def _discriminator(obj, default):
-            return obj
+            """ """
         class Test(klass, DummyIndex):
             pass
         index = Test(_discriminator)
@@ -89,6 +89,18 @@ class TestCatalogIndex(unittest.TestCase):
         dummy.abc = Persistent()
         self.assertRaises(ValueError, index.index_doc, 1, dummy)
 
+    def test_index_doc_broken_object_raises(self):
+        from ZODB.broken import Broken
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.abc = Broken()
+        self.assertRaises(ValueError, index.index_doc, 1, dummy)
+
     def test_reindex_doc(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
@@ -111,10 +123,6 @@ class DummyIndex(object):
     value = None
     docid = None
 
-    def __init__(self, *arg, **kw):
-        self.arg = arg
-        self.kw = kw
-
     def index_doc(self, docid, value):
         self.docid = docid
         self.value = value
@@ -123,14 +131,3 @@ class DummyIndex(object):
     def unindex_doc(self, docid):
         self.unindexed = docid
 
-    def clear(self):
-        self.cleared = True
-
-    def apply(self, query):
-        return self.arg[0]
-
-    def sort(self, results, reverse=False, limit=None):
-        self.limited = True
-        if reverse:
-            return ['sorted3', 'sorted2', 'sorted1']
-        return ['sorted1', 'sorted2', 'sorted3']

@@ -1,4 +1,5 @@
 from persistent import Persistent
+from ZODB.broken import Broken
 import BTrees
 
 _marker = ()
@@ -29,6 +30,11 @@ class CatalogIndex(object):
         if isinstance(value, Persistent):
             raise ValueError('Catalog cannot index persistent object %s' %
                              value)
+
+        if isinstance(value, Broken):
+            raise ValueError('Catalog cannot index broken object %s' %
+                             value)
+            
 
         return super(CatalogIndex, self).index_doc(docid, value)
 
