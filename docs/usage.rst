@@ -41,7 +41,7 @@ within your application, which uses callbacks to adapt cataloged
 objects to values rather than directly inspecting attributes of the
 content object.  We use the same types of indexes, but we set up
 callbacks that allow us to adapt content to a result instead of
-exmaining the object for an attribute directly.  This is useful in the
+examining the object for an attribute directly.  This is useful in the
 case that your content objects don't have attributes that match
 exactly what you want to index:
 
