@@ -22,13 +22,15 @@ class TestFunctional(unittest.TestCase):
                                      ['a', 'b', 'c']))
         catalog.index_doc(6, Content('name6', 'title6', 'text six',['d']))
 
-        textq = query.Text('text', 'text')
-        inq = query.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5'])
-        neq = query.Eq('name', 'name3')
-        alw = query.All('allowed', ['a', 'b'])
-
-        numdocs, result = catalog.query(textq).And(alw).And(inq).Not(neq).apply(
-            sort_index='name')
+        numdocs, result = catalog.query(
+            query.Text('text', 'text')
+            ).And(
+            query.All('allowed', ['a', 'b'])
+            ).And(
+            query.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5'])
+            ).Not(
+            query.Eq('name', 'name3')
+            ).apply(sort_index='name', limit=5)
 
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
