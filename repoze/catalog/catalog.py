@@ -133,9 +133,8 @@ class Catalog(PersistentMapping):
         else:
             return numdocs, result
 
-    def query(self, q):
-        q = SearchQuery(self, q)
-        return q
+    def query(self, queryobject):
+        return SearchQuery(self, queryobject)
 
     def apply(self, query):
         return self.search(**query)

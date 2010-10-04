@@ -20,3 +20,19 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
+    def applyAnyOf(self, values):
+        return self.apply({'query': values, 'operator':'or'})
+
+    applyIn = applyAnyOf
+
+    def applyAllOf(self, values):
+        return self.apply({'query': values, 'operator':'and'})
+
+    def applyEq(self, value):
+        return self.apply(value)
+
+    def applyNotEq(self, not_value):
+        all = self.family.IF.multiunion(self._fwd_index.values())
+        r = self.apply(not_value)
+        return self.family.IF.difference(all, r)
+

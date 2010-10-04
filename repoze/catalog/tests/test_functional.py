@@ -18,18 +18,20 @@ class TestFunctional(unittest.TestCase):
         catalog.index_doc(2, Content('name2', 'title2', 'text two', ['b']))
         catalog.index_doc(3, Content('name3', 'title3', 'text three', ['c']))
         catalog.index_doc(4, Content('name4', 'title4', 'text four',['a', 'b']))
-        catalog.index_doc(5, Content('name5', 'title5', 'text five',['b', 'c']))
+        catalog.index_doc(5, Content('name5', 'title5', 'text five',
+                                     ['a', 'b', 'c']))
         catalog.index_doc(6, Content('name6', 'title6', 'text six',['d']))
 
         textq = query.Text('text', 'text')
-        inq = query.In('name', ['name1', 'name2', 'name3'])
+        inq = query.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5'])
         neq = query.Eq('name', 'name3')
+        alw = query.All('allowed', ['a', 'b'])
 
-        numdocs, result = catalog.query(textq).And(inq).Not(neq).apply(
+        numdocs, result = catalog.query(textq).And(alw).And(inq).Not(neq).apply(
             sort_index='name')
 
         self.assertEqual(numdocs, 2)
-        self.assertEqual(list(result), [1, 2])
+        self.assertEqual(list(result), [4, 5])
 
 class Content(object):
     def __init__(self, name, title, text, allowed):

@@ -259,22 +259,10 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         return self.apply(Range(None, max_value))
 
     def applyIn(self, values):
-        results = []
-        for value in values:
-            res = self.apply(Range(value, value))
-            # empty results
-            if not res:
-                continue
-            results.append(res)
+        queries = list(values)
+        return self.search(queries, operator='or')
 
-        if not results:
-            # no applicable terms at all
-            return self.family.IF.BTree()
-
-        result = results.pop(0)
-        for res in results:
-            result = self.family.IF.union(result, res)
-        return result
+    applyAnyOf = applyIn
 
 def nsort(docids, rev_index):
     for docid in docids:

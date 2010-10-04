@@ -21,13 +21,10 @@ import zope.component
 
 import BTrees
 
-from zope.index.interfaces import IIndexSort
 from repoze.catalog import interfaces
 
 class Text(object):
     """Text query."""
-
-    zope.interface.implements(interfaces.ITextQuery)
 
     def __init__(self, index_name, value):
         self.index_name = index_name
@@ -40,8 +37,6 @@ class Text(object):
 
 class Eq(object):
     """Equal query."""
-
-    zope.interface.implements(interfaces.IEqQuery)
 
     def __init__(self, index_name, value):
         if value is None:
@@ -57,8 +52,6 @@ class Eq(object):
 class NotEq(object):
     """Not equal query."""
 
-    zope.interface.implements(interfaces.INotEqQuery)
-
     def __init__(self, index_name, value):
         if value is None:
             raise AssertionError('value to NotEq query must not be ``None``')
@@ -73,8 +66,6 @@ class NotEq(object):
 class Between(object):
     """Between query."""
 
-    zope.interface.implements(interfaces.IBetweenQuery)
-
     def __init__(self, index_name, min_value, max_value):
         self.index_name = index_name
         self.min_value = min_value
@@ -84,11 +75,8 @@ class Between(object):
         index = catalog[self.index_name]
         return index.applyBetween(self.min_value, self.max_value)
 
-
 class Ge(object):
     """Greater (or equal) query."""
-
-    zope.interface.implements(interfaces.IGeQuery)
 
     def __init__(self, index_name, min_value):
         self.index_name = index_name
@@ -102,8 +90,6 @@ class Ge(object):
 class Le(object):
     """Less (or equal) query."""
 
-    zope.interface.implements(interfaces.ILeQuery)
-
     def __init__(self, index_name, max_value):
         self.index_name = index_name
         self.max_value = max_value
@@ -116,8 +102,6 @@ class Le(object):
 class In(object):
     """In query."""
 
-    zope.interface.implements(interfaces.IInQuery)
-
     def __init__(self, index_name, values):
         self.index_name = index_name
         self.values = values
@@ -126,6 +110,32 @@ class In(object):
         index = catalog[self.index_name]
         return index.applyIn(self.values)
 
+class Any(object):
+    """Any of query.
+
+    The result will be the docids whose values contain any of the given values.
+    """
+
+    def __init__(self, index_name, values):
+        self.index_name = index_name
+        self.values = values
+
+    def apply(self, catalog):
+        index = catalog[self.index_name]
+        return index.applyAnyOf(self.values)
+
+class All(object):
+    """Any of query.
+
+    The result will be the docids whose values contain all of the given values.
+    """
+    def __init__(self, index_name, values):
+        self.index_name = index_name
+        self.values = values
+
+    def apply(self, catalog):
+        index = catalog[self.index_name]
+        return index.applyAllOf(self.values)
 
 class SearchQuery(object):
     """Chainable query processor.
