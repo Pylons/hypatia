@@ -22,14 +22,14 @@ class TestFunctional(unittest.TestCase):
         catalog.index_doc(6, Content('name6', 'title6', 'text six',['d']))
 
         textq = query.Text('text', 'text')
-        eqq = query.Eq('name', 'name1')
-        neq = query.NotEq('name', 'name2')
+        inq = query.In('name', ['name1', 'name2', 'name3'])
+        neq = query.Eq('name', 'name3')
 
-        numdocs, result = catalog.query(textq).And(eqq).And(neq).apply(
+        numdocs, result = catalog.query(textq).And(inq).Not(neq).apply(
             sort_index='name')
 
-        self.assertEqual(numdocs, 1)
-        self.assertEqual(list(result), [1])
+        self.assertEqual(numdocs, 2)
+        self.assertEqual(list(result), [1, 2])
 
 class Content(object):
     def __init__(self, name, title, text, allowed):
