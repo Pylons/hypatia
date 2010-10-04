@@ -53,6 +53,7 @@ setup(name='repoze.catalog',
         ],
       install_requires = [
         'setuptools',
+        'zope.component',
         'zope.index >= 3.5.0',
         ],
       extras_require = {

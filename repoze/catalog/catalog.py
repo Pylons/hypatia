@@ -6,6 +6,7 @@ from zope.interface import implements
 
 from repoze.catalog.interfaces import ICatalog
 from repoze.catalog.interfaces import ICatalogIndex
+from repoze.catalog.query import SearchQuery
 
 class Catalog(PersistentMapping):
 
@@ -115,6 +116,11 @@ class Catalog(PersistentMapping):
                     # empty results
                     return 0, result
 
+        return self.sort_result(result, sort_index, limit, sort_type, reverse)
+
+    def sort_result(self, result, sort_index=None, limit=None, sort_type=None,
+                    reverse=False):
+
         numdocs = len(result)
 
         if sort_index:
@@ -126,6 +132,10 @@ class Catalog(PersistentMapping):
             return numdocs, result
         else:
             return numdocs, result
+
+    def query(self, q):
+        q = SearchQuery(self, q)
+        return q
 
     def apply(self, query):
         return self.search(**query)

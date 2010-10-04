@@ -19,3 +19,4 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     def reindex_doc(self, docid, value):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
+

@@ -515,6 +515,61 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
 
+    def test_applyEq(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyEq(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+
+    def test_applyNotEq(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyNotEq(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [1,2,3,4,6,7,8,9,10,11])
+
+    def test_applyBetween(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyBetween(1, 2)
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+
+    def test_applyGe(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyGe(10)
+        result = sorted(list(result))
+        self.assertEqual(result, [10, 11])
+
+    def test_applyLe(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyLe(2)
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+
+    def test_applyIn(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyIn([1, 2, 60])
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 50])
+
+    def test_applyIn_noresults(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyIn([60, 70])
+        result = sorted(list(result))
+        self.assertEqual(result, [])
 
 class Test_fwscan_wins(unittest.TestCase):
 

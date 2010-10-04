@@ -132,7 +132,6 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def scan_forward(self, docids, limit=None):
         fwd_index = self._fwd_index
 
-        sets = []
         n = 0
         for set in fwd_index.values():
             for docid in set:
@@ -240,6 +239,41 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 query = [query]
             result = self.search(query, 'or')
 
+        return result
+
+    def applyEq(self, value):
+        return self.apply(value)
+
+    def applyNotEq(self, not_value):
+        all = self.apply(Range(None, None))
+        r = self.apply((not_value, not_value))
+        return self.family.IF.difference(all, r)
+
+    def applyBetween(self, min_value, max_value):
+        return self.apply(Range(min_value, max_value))
+
+    def applyGe(self, min_value):
+        return self.apply(Range(min_value, None))
+
+    def applyLe(self, max_value):
+        return self.apply(Range(None, max_value))
+
+    def applyIn(self, values):
+        results = []
+        for value in values:
+            res = self.apply(Range(value, value))
+            # empty results
+            if not res:
+                continue
+            results.append(res)
+
+        if not results:
+            # no applicable terms at all
+            return self.family.IF.BTree()
+
+        result = results.pop(0)
+        for res in results:
+            result = self.family.IF.union(result, res)
         return result
 
 def nsort(docids, rev_index):
