@@ -23,8 +23,8 @@ import BTrees
 
 from repoze.catalog import interfaces
 
-class Text(object):
-    """Text query."""
+class Contains(object):
+    """Contains (text) query."""
 
     def __init__(self, index_name, value):
         self.index_name = index_name
