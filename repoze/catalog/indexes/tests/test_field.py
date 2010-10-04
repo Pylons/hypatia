@@ -531,14 +531,6 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [1,2,3,4,6,7,8,9,10,11])
 
-    def test_applyBetween(self):
-        index = self._makeOne()
-        self._populateIndex(index)
-        index.index_doc(50, 1)
-        result = index.applyBetween(1, 2)
-        result = sorted(list(result))
-        self.assertEqual(result, [2, 5, 50])
-
     def test_applyGe(self):
         index = self._makeOne()
         self._populateIndex(index)

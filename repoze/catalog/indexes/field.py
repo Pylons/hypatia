@@ -249,9 +249,6 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         r = self.apply((not_value, not_value))
         return self.family.IF.difference(all, r)
 
-    def applyBetween(self, min_value, max_value):
-        return self.apply(Range(min_value, max_value))
-
     def applyGe(self, min_value):
         return self.apply(Range(min_value, None))
 

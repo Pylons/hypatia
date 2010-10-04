@@ -51,3 +51,6 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
         if limit:
             result = result[:limit]
         return result
+
+    def applyContains(self, value):
+        return self.apply(value)

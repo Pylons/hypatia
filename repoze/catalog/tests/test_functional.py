@@ -23,13 +23,13 @@ class TestFunctional(unittest.TestCase):
         catalog.index_doc(6, Content('name6', 'title6', 'body six',['d']))
 
         numdocs, result = catalog.query(
-            query.Contains('text', 'body')
-            ).And(
             query.All('allowed', ['a', 'b'])
             ).And(
             query.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5'])
             ).Not(
-            query.Eq('name', 'name3')
+            query.Eq('title', 'title3')
+            ).And(
+            query.Contains('text', 'body')
             ).apply(sort_index='name', limit=5)
 
         self.assertEqual(numdocs, 2)

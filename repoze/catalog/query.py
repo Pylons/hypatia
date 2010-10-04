@@ -23,119 +23,108 @@ import BTrees
 
 from repoze.catalog import interfaces
 
-class Contains(object):
-    """Contains (text) query."""
-
+class Query(object):
     def __init__(self, index_name, value):
         self.index_name = index_name
         self.value = value
+
+class Contains(Query):
+    """Contains query.
+
+    AST hint: 'foo' in index
+    """
 
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.apply(self.value)
+        return index.applyContains(self.value)
 
+class Eq(Query):
+    """Equals query.
 
-class Eq(object):
-    """Equal query."""
-
-    def __init__(self, index_name, value):
-        if value is None:
-            raise AssertionError('value to Eq query must not be ``None``')
-        self.index_name = index_name
-        self.value = value
-
+    AST hint:  index == 'foo'
+    """
     def apply(self, catalog):
         index = catalog[self.index_name]
         return index.applyEq(self.value)
 
 
-class NotEq(object):
-    """Not equal query."""
+class NotEq(Query):
+    """Not equal query.
 
-    def __init__(self, index_name, value):
-        if value is None:
-            raise AssertionError('value to NotEq query must not be ``None``')
-        self.index_name = index_name
-        self.value = value
+    AST hint: index != 'foo'
+    """
 
     def apply(self, catalog):
         index = catalog[self.index_name]
         return index.applyNotEq(self.value)
 
+class Gt(Query):
+    """ Greater than query.
 
-class Between(object):
-    """Between query."""
-
-    def __init__(self, index_name, min_value, max_value):
-        self.index_name = index_name
-        self.min_value = min_value
-        self.max_value = max_value
-
+    AST hint: index > 'foo'
+    """
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.applyBetween(self.min_value, self.max_value)
+        return index.applyGt(self.value)
 
-class Ge(object):
-    """Greater (or equal) query."""
+class Lt(Query):
+    """ Less than query.
 
-    def __init__(self, index_name, min_value):
-        self.index_name = index_name
-        self.min_value = min_value
-
-    def apply(self, catalog):
-        index = catalog['index_name']
-        return index.applyGe(self.min_value, self.exclude_min)
-
-
-class Le(object):
-    """Less (or equal) query."""
-
-    def __init__(self, index_name, max_value):
-        self.index_name = index_name
-        self.max_value = max_value
-
+    AST hint: index < 'foo'
+    """
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.applyLe(self.max_value)
+        return index.applyLt(self.value)
 
+class Ge(Query):
+    """Greater (or equal) query.
 
-class In(object):
-    """In query."""
-
-    def __init__(self, index_name, values):
-        self.index_name = index_name
-        self.values = values
-
-    def apply(self, catalog):
-        index = catalog[self.index_name]
-        return index.applyIn(self.values)
-
-class Any(object):
-    """Any of query.
-
-    The result will be the docids whose values contain any of the given values.
+    AST hint: index >= 'foo'
     """
 
-    def __init__(self, index_name, values):
-        self.index_name = index_name
-        self.values = values
+    def apply(self, catalog):
+        index = catalog[self.index_name]
+        return index.applyGe(self.value)
+
+
+class Le(Query):
+    """Less (or equal) query.
+
+    AST hint: index <= 'foo
+    """
 
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.applyAnyOf(self.values)
+        return index.applyLe(self.value)
 
-class All(object):
+class In(Query):
+    """In query.
+
+    AST hint: index in 'foo'
+    """
+
+    def apply(self, catalog):
+        index = catalog[self.index_name]
+        return index.applyIn(self.value)
+
+class Any(Query):
     """Any of query.
 
-    The result will be the docids whose values contain all of the given values.
+    AST hint: any(['a', 'b', 'c']) in index
     """
-    def __init__(self, index_name, values):
-        self.index_name = index_name
-        self.values = values
 
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.applyAllOf(self.values)
+        return index.applyAnyOf(self.value)
+
+class All(Query):
+    """Any of query.
+
+    AST hint: all(['a', 'b', 'c']) in index
+    """
+    def apply(self, catalog):
+        index = catalog[self.index_name]
+        return index.applyAllOf(self.value)
 
 class SearchQuery(object):
     """Chainable query processor.
