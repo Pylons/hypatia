@@ -81,6 +81,19 @@ class _AstQuery(object):
             return operator(self._index_name(operand2), self._value(operand1))
         return operator(self._index_name(operand1), self._value(operand2))
 
+    def process_Or(self, node, children):
+        return query.Or
+
+    def process_BoolOp(self, node, children):
+        operator = children.pop(0)
+        for subquery in children:
+            if not isinstance(subquery, (query.Query, query.Operator)):
+                raise ValueError(
+                    "Bad expression: operands for 'or' must boolean "
+                    "expressions or comparisons."
+                )
+        return operator(children)
+
     def _index_name(self, node):
         if not isinstance(node, ast.Name):
             raise ValueError("Index name must be a name.")
