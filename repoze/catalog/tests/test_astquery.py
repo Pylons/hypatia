@@ -24,6 +24,9 @@ class Test_generate_query(unittest.TestCase):
     def test_bad_value_name(self):
         self.assertRaises(NameError, self._call_fut, 'a == b')
 
+    def test_bad_boolean_op(self):
+        self.assertRaises(ValueError, self._call_fut, '1 or 2')
+
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
         self.assertEqual(self._call_fut('1.1'), 1.1)
@@ -95,7 +98,7 @@ class Test_generate_query(unittest.TestCase):
     def test_or(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Or
-        op = self._call_fut("a == 1 or a == 2")
+        op = self._call_fut("a == 1 or b == 2")
         self.failUnless(isinstance(op, Or))
         self.assertEqual(len(op.queries), 2)
         query = op.queries[0]
@@ -104,7 +107,7 @@ class Test_generate_query(unittest.TestCase):
         self.assertEqual(query.value, 1)
         query = op.queries[1]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
 
     def test_and(self):
@@ -121,3 +124,38 @@ class Test_generate_query(unittest.TestCase):
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
+
+    def test_any(self):
+        from repoze.catalog.query import Any
+        op = self._call_fut("a == 1 or a == 2")
+        self.failUnless(isinstance(op, Any))
+        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.value, [1, 2])
+
+    def test_all(self):
+        from repoze.catalog.query import All
+        op = self._call_fut("a == 1 and a == 2") # Could be keyword index
+        self.failUnless(isinstance(op, All))
+        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.value, [1, 2])
+
+    def test_nested_bool(self):
+        from repoze.catalog.query import And
+        from repoze.catalog.query import Or
+        from repoze.catalog.query import Eq
+        op = self._call_fut("a == 1 and b == 2 or c == 3")
+        self.failUnless(isinstance(op, Or))
+        self.assertEqual(len(op.queries), 2)
+        subop = op.queries[0]
+        self.failUnless(isinstance(subop, And))
+        self.assertEqual(len(subop.queries), 2)
+        query = subop.queries[0]
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 1)
+        query = subop.queries[1]
+        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.value, 2)
+        query = op.queries[1]
+        self.assertEqual(query.index_name, 'c')
+        self.assertEqual(query.value, 3)
+

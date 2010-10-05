@@ -89,12 +89,30 @@ class _AstQuery(object):
 
     def process_BoolOp(self, node, children):
         operator = children.pop(0)
+        index_name = None
+        values = []
         for subquery in children:
             if not isinstance(subquery, (query.Query, query.Operator)):
                 raise ValueError(
-                    "Bad expression: operands for 'or' must boolean "
-                    "expressions or comparisons."
+                    "Bad expression: operands for %s must be boolean "
+                    "expressions or comparisons." % operator.__name__
                 )
+            if isinstance(subquery, query.Query):
+                if index_name is None:
+                    index_name = subquery.index_name
+                elif subquery.index_name != index_name:
+                    index_name = _different
+                values.append(subquery.value)
+            else:
+                index_name = _different
+
+        # If all subqueries
+        if index_name is not _different:
+            if operator is query.Or:
+                return query.Any(index_name, values)
+            elif operator is query.And:
+                return query.All(index_name, values)
+
         return operator(children)
 
     def _index_name(self, node):
@@ -109,6 +127,9 @@ class _AstQuery(object):
             except:
                 raise NameError(node.id)
         return node
+
+_notset = object()
+_different = object()
 
 def generate_query(expr):
     caller = sys._getframe(1)
