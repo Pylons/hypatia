@@ -65,7 +65,6 @@ class Test_generate_query(unittest.TestCase):
 
     def test_le(self):
         from repoze.catalog.query import Le
-        foo = 6
         le = self._call_fut("a <= 4")
         self.failUnless(isinstance(le, Le))
         self.assertEqual(le.index_name, 'a')

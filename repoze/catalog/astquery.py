@@ -1,5 +1,4 @@
 import ast
-import sys
 
 from repoze.catalog import query
 
