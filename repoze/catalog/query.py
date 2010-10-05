@@ -20,6 +20,32 @@ import BTrees
 from repoze.catalog import interfaces
 
 class Query(object):
+    """
+    Base class for all elements that make up queries.
+    """
+    def __and__(self, right):
+        self._check_type("set intersection", right)
+        return Intersection(self, right)
+
+    def __or__(self, right):
+        self._check_type("set union", right)
+        return Union(self, right)
+
+    def __sub__(self, right):
+        self._check_type("set difference", right)
+        return Difference(self, right)
+
+    def _check_type(self, operator, operand):
+        if not isinstance(operand, Query):
+            raise TypeError(
+                "TypeError: unsupported operand types for %s: %s %s" %
+                (operator, type(self), type(operand))
+            )
+
+class Comparator(Query):
+    """
+    Base class for all comparators used in queries.
+    """
     def __init__(self, index_name, value):
         self.index_name = index_name
         self.value = value
@@ -27,7 +53,7 @@ class Query(object):
     def get_index(self, catalog):
         return catalog[self.index_name]
 
-class Contains(Query):
+class Contains(Comparator):
     """Contains query.
 
     AST hint: 'foo' in index
@@ -37,7 +63,7 @@ class Contains(Query):
         index = self.get_index(catalog)
         return index.applyContains(self.value)
 
-class Eq(Query):
+class Eq(Comparator):
     """Equals query.
 
     AST hint:  index == 'foo'
@@ -47,7 +73,7 @@ class Eq(Query):
         return index.applyEq(self.value)
 
 
-class NotEq(Query):
+class NotEq(Comparator):
     """Not equal query.
 
     AST hint: index != 'foo'
@@ -57,7 +83,7 @@ class NotEq(Query):
         index = self.get_index(catalog)
         return index.applyNotEq(self.value)
 
-class Gt(Query):
+class Gt(Comparator):
     """ Greater than query.
 
     AST hint: index > 'foo'
@@ -66,7 +92,7 @@ class Gt(Query):
         index = self.get_index(catalog)
         return index.applyGt(self.value)
 
-class Lt(Query):
+class Lt(Comparator):
     """ Less than query.
 
     AST hint: index < 'foo'
@@ -75,7 +101,7 @@ class Lt(Query):
         index = self.get_index(catalog)
         return index.applyLt(self.value)
 
-class Ge(Query):
+class Ge(Comparator):
     """Greater (or equal) query.
 
     AST hint: index >= 'foo'
@@ -86,7 +112,7 @@ class Ge(Query):
         return index.applyGe(self.value)
 
 
-class Le(Query):
+class Le(Comparator):
     """Less (or equal) query.
 
     AST hint: index <= 'foo
@@ -96,7 +122,7 @@ class Le(Query):
         index = self.get_index(catalog)
         return index.applyLe(self.value)
 
-class Any(Query):
+class Any(Comparator):
     """Any of query.
 
     AST hint: any(['a', 'b', 'c']) in index
@@ -106,7 +132,7 @@ class Any(Query):
         index = self.get_index(catalog)
         return index.applyAny(self.value)
 
-class All(Query):
+class All(Comparator):
     """Any of query.
 
     AST hint: all(['a', 'b', 'c']) in index
@@ -115,7 +141,7 @@ class All(Query):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
 
-class Operator(object):
+class Operator(Query):
     """
     Base class for operators.
     """

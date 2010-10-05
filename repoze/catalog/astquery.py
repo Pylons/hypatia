@@ -91,12 +91,12 @@ class _AstQuery(object):
 
     def process_BinOp(self, node, children):
         left, operator, right = children
-        if not isinstance(left, (query.Query, query.Operator)):
+        if not isinstance(left, query.Query):
             raise ValueError(
                 "Bad expression: left operand for %s must be a result set." %
                 operator.__name__
             )
-        if not isinstance(right, (query.Query, query.Operator)):
+        if not isinstance(right, query.Query):
             raise ValueError(
                 "Bad expression: right operand for %s must be a result set." %
                 operator.__name__
@@ -112,7 +112,7 @@ class _AstQuery(object):
     def process_BoolOp(self, node, children):
         operator = children.pop(0)
         for child in children:
-            if not isinstance(child, (query.Query, query.Operator)):
+            if not isinstance(child, query.Query):
                 raise ValueError(
                     "Bad expression: All operands for %s must be result sets."
                     % operator.__name__)
@@ -153,7 +153,7 @@ def _group_any_and_all(tree):
                 node.right = group(node.right, right_index, right_values)
                 return None, []
             return left_index, left_values + right_values
-        elif isinstance(node, query.Query):
+        elif isinstance(node, query.Eq):
             return node.index_name, [node.value]
         return None, []
 
