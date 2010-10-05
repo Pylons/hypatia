@@ -116,8 +116,30 @@ class _AstQuery(object):
             )
         return operator(left, right)
 
-_notset = object()
-_different = object()
+def _group_any_and_all(tree):
+    def group(node, index_name, values):
+        if len(values) > 1:
+            if isinstance(node, query.Intersection):
+                return query.All(index_name, values)
+            elif isinstance(node, query.Union):
+                return query.Any(index_name, values)
+        return node
+
+    def visit(node):
+        if isinstance(node, query.Operator):
+            left_index, left_values = visit(node.left)
+            right_index, right_values = visit(node.right)
+            if left_index != right_index:
+                node.left = group(node.left, left_index, left_values)
+                node.right = group(node.right, right_index, right_values)
+                return None, []
+            return left_index, left_values + right_values
+        elif isinstance(node, query.Query):
+            return node.index_name, [node.value]
+        return None, []
+
+    index, values = visit(tree)
+    return group(tree, index, values)
 
 def parse_query(expr, names=None):
     """
@@ -126,4 +148,4 @@ def parse_query(expr, names=None):
     """
     if names is None:
         names = {}
-    return _AstQuery(expr, names).query
+    return _group_any_and_all(_AstQuery(expr, names).query)
