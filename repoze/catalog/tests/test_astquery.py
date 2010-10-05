@@ -92,3 +92,18 @@ class Test_generate_query(unittest.TestCase):
         self.assertEqual(contains.index_name, 'a')
         self.assertEqual(contains.value, 6)
 
+    def test_or(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Or
+        op = self._call_fut("a == 1 or a == 2")
+        self.failUnless(isinstance(op, Or))
+        self.assertEqual(len(op.queries), 2)
+        query = op.queries[0]
+        self.failUnless(isinstance(query, Eq))
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 1)
+        query = op.queries[1]
+        self.failUnless(isinstance(query, Eq))
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 2)
+

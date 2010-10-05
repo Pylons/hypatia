@@ -115,6 +115,25 @@ class All(Query):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
 
+class Operator(object):
+    """
+    Base class for operators.
+    """
+    family = BTrees.family32
+
+    def __init__(self, queries):
+        self.queries = queries
+
+class Or(Operator):
+    """Or operator on queries."""
+    def apply(self, catalog):
+        # Untested, should look something like this:
+        results = self.queries[0].apply(catalog)
+        for query in self.queries[1:]:
+            _, results = self.family.IF.weightedUnion(
+                query.apply(catalog), results)
+        return results
+
 class SearchQuery(object):
     """Chainable query processor.
 
