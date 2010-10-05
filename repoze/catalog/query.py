@@ -140,9 +140,19 @@ class And(Operator):
         # Untested, should look something like this:
         results = self.queries[0].apply(catalog)
         for query in self.queries[1:]:
-            _, results = self.family.IF.weightedIntersection(
-                query.apply(catalog), results)
+            if isinstance(query, Not):
+                results = self.family.IF.difference(
+                    results, query.query.apply(catalog))
+            else:
+                _, results = self.family.IF.weightedIntersection(
+                    query.apply(catalog), results)
         return results
+
+class Not(object):
+    """An instruction to And to subtract the result set from this query
+       from its result set."""
+    def __init__(self, query):
+        self.query = query
 
 class SearchQuery(object):
     """Chainable query processor.

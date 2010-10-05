@@ -27,6 +27,14 @@ class Test_generate_query(unittest.TestCase):
     def test_bad_boolean_op(self):
         self.assertRaises(ValueError, self._call_fut, '1 or 2')
 
+    def test_or_not(self):
+        self.assertRaises(
+            ValueError, self._call_fut, "a == 1 or not(b == 2 and c== 3)")
+
+    def test_bad_not(self):
+        self.assertRaises(
+            ValueError, self._call_fut, "not 1")
+
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
         self.assertEqual(self._call_fut('1.1'), 1.1)
@@ -158,4 +166,52 @@ class Test_generate_query(unittest.TestCase):
         query = op.queries[1]
         self.assertEqual(query.index_name, 'c')
         self.assertEqual(query.value, 3)
+
+    def test_and_not(self):
+        from repoze.catalog.query import And
+        from repoze.catalog.query import Not
+        from repoze.catalog.query import Or
+        from repoze.catalog.query import Eq
+        op = self._call_fut("a == 1 and not(b == 2 or c == 3)")
+        self.failUnless(isinstance(op, And))
+        self.assertEqual(len(op.queries), 2)
+        query = op.queries[0]
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 1)
+        subop = op.queries[1]
+        self.failUnless(isinstance(subop, Not))
+        subop = subop.query
+        self.failUnless(isinstance(subop, Or))
+        self.assertEqual(len(subop.queries), 2)
+        query = subop.queries[0]
+        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.value, 2)
+        query = subop.queries[1]
+        self.assertEqual(query.index_name, 'c')
+        self.assertEqual(query.value, 3)
+
+    def test_move_nots_to_end(self):
+        from repoze.catalog.query import And
+        from repoze.catalog.query import Not
+        from repoze.catalog.query import Or
+        from repoze.catalog.query import Eq
+        op = self._call_fut("not(b == 2 or c == 3) and a == 1")
+        self.failUnless(isinstance(op, And))
+        self.assertEqual(len(op.queries), 2)
+        query = op.queries[0]
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 1)
+        subop = op.queries[1]
+        self.failUnless(isinstance(subop, Not))
+        subop = subop.query
+        self.failUnless(isinstance(subop, Or))
+        self.assertEqual(len(subop.queries), 2)
+        query = subop.queries[0]
+        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.value, 2)
+        query = subop.queries[1]
+        self.assertEqual(query.index_name, 'c')
+        self.assertEqual(query.value, 3)
+
+
 
