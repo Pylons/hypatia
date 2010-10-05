@@ -155,8 +155,11 @@ class _AstQuery(object):
 _notset = object()
 _different = object()
 
-def generate_query(expr):
-    caller = sys._getframe(1)
-    names = dict(caller.f_globals)
-    names.update(caller.f_locals)
+def parse_query(expr, names=None):
+    """
+    Parses the given expression string into a catalog query.  The `names` dict
+    provides local variable names that can be used in the expression.
+    """
+    if names is None:
+        names = {}
     return _AstQuery(expr, names).query

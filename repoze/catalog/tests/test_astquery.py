@@ -1,12 +1,9 @@
 import unittest
 
 class Test_generate_query(unittest.TestCase):
-    def _call_fut(self, expr):
-        import sys
-        frame = sys._getframe(1)
-        locals().update(frame.f_locals)
-        from repoze.catalog.astquery import generate_query as fut
-        return fut(expr)
+    def _call_fut(self, expr, names=None):
+        from repoze.catalog.astquery import parse_query as fut
+        return fut(expr, names)
 
     def test_not_an_expression(self):
         self.assertRaises(ValueError, self._call_fut, 'a = 1')
@@ -50,7 +47,7 @@ class Test_generate_query(unittest.TestCase):
 
     def test_tuple(self):
         a, b, c = 1, 2, 3
-        self.assertEqual(self._call_fut('(a, b, c)'), (1, 2, 3))
+        self.assertEqual(self._call_fut('(a, b, c)', locals()), (1, 2, 3))
 
     def test_eq(self):
         from repoze.catalog.query import Eq
@@ -68,8 +65,7 @@ class Test_generate_query(unittest.TestCase):
 
     def test_lt(self):
         from repoze.catalog.query import Lt
-        foo = 6
-        lt = self._call_fut("a < foo")
+        lt = self._call_fut("a < foo", dict(foo=6))
         self.failUnless(isinstance(lt, Lt))
         self.assertEqual(lt.index_name, 'a')
         self.assertEqual(lt.value, 6)
