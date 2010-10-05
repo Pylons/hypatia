@@ -33,7 +33,6 @@ class _AstQuery(object):
         return visit(tree)
 
     def process_Load(self, node, children):
-        # ignore
         pass
 
     def process_Name(self, node, children):
@@ -44,6 +43,16 @@ class _AstQuery(object):
 
     def process_Num(self, node, children):
         return node.n
+
+    def process_List(self, node, children):
+        l = list(children[:-1])
+        for i in xrange(len(l)):
+            if isinstance(l[i], ast.Name):
+                l[i] = self._value(l[i])
+        return l
+
+    def process_Tuple(self, node, children):
+        return tuple(self.process_List(node, children))
 
     def process_Eq(self, node, children):
         return query.Eq

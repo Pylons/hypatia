@@ -1,15 +1,18 @@
 import unittest
 
 class Test_generate_query(unittest.TestCase):
-    def _call_fut(self, expr, foo=None):
+    def _call_fut(self, expr):
+        import sys
+        frame = sys._getframe(1)
+        locals().update(frame.f_locals)
         from repoze.catalog.astquery import generate_query as fut
         return fut(expr)
 
     def test_not_an_expression(self):
-        self.assertRaises(ValueError, self._call_fut, 'a = 1', 1)
+        self.assertRaises(ValueError, self._call_fut, 'a = 1')
 
     def test_multiple_expressions(self):
-        self.assertRaises(ValueError, self._call_fut, 'a == 1\nb == 2\n', 1)
+        self.assertRaises(ValueError, self._call_fut, 'a == 1\nb == 2\n')
 
     def test_unhandled_expression(self):
         self.assertRaises(ValueError, self._call_fut, 'a | b')
@@ -23,6 +26,20 @@ class Test_generate_query(unittest.TestCase):
 
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
+        self.assertEqual(self._call_fut('1.1'), 1.1)
+
+    def test_str(self):
+        self.assertEqual(self._call_fut('"foo"'), 'foo')
+
+    def test_unicode(self):
+        self.assertEqual(self._call_fut('u"foo"'), u'foo')
+
+    def test_list(self):
+        self.assertEqual(self._call_fut('[1, 2, 3]'), [1, 2, 3])
+
+    def test_tuple(self):
+        a, b, c = 1, 2, 3
+        self.assertEqual(self._call_fut('(a, b, c)'), (1, 2, 3))
 
     def test_eq(self):
         from repoze.catalog.query import Eq
@@ -40,17 +57,19 @@ class Test_generate_query(unittest.TestCase):
 
     def test_lt(self):
         from repoze.catalog.query import Lt
-        lt = self._call_fut("a < foo", foo=6)
+        foo = 6
+        lt = self._call_fut("a < foo")
         self.failUnless(isinstance(lt, Lt))
         self.assertEqual(lt.index_name, 'a')
         self.assertEqual(lt.value, 6)
 
     def test_le(self):
         from repoze.catalog.query import Le
-        le = self._call_fut("a <= foo", foo=6)
+        foo = 6
+        le = self._call_fut("a <= 4")
         self.failUnless(isinstance(le, Le))
         self.assertEqual(le.index_name, 'a')
-        self.assertEqual(le.value, 6)
+        self.assertEqual(le.value, 4)
 
     def test_gt(self):
         from repoze.catalog.query import Gt
@@ -61,7 +80,7 @@ class Test_generate_query(unittest.TestCase):
 
     def test_ge(self):
         from repoze.catalog.query import Ge
-        ge = self._call_fut("a >= foo", foo=6)
+        ge = self._call_fut("a >= 5")
         self.failUnless(isinstance(ge, Ge))
         self.assertEqual(ge.index_name, 'a')
-        self.assertEqual(ge.value, 6)
+        self.assertEqual(ge.value, 5)
