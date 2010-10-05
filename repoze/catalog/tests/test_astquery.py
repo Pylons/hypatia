@@ -25,6 +25,9 @@ class Test_generate_query(unittest.TestCase):
         self.assertRaises(ValueError, self._call_fut, '(a == 1) | 2')
         self.assertRaises(ValueError, self._call_fut, '1 | (b == 2)')
 
+    def test_bad_operand_for_bool_operation(self):
+        self.assertRaises(ValueError, self._call_fut, '1 or 2')
+
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
         self.assertEqual(self._call_fut('1.1'), 1.1)
@@ -105,9 +108,23 @@ class Test_generate_query(unittest.TestCase):
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
 
+    def test_union_with_bool_syntax(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Union
+        op = self._call_fut("a == 1 or b == 2")
+        self.failUnless(isinstance(op, Union))
+        query = op.left
+        self.failUnless(isinstance(query, Eq))
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 1)
+        query = op.right
+        self.failUnless(isinstance(query, Eq))
+        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.value, 2)
+
     def test_any(self):
         from repoze.catalog.query import Any
-        op = self._call_fut("(a == 1) | (a == 2) | (a == 3)")
+        op = self._call_fut("a == 1 or a == 2 or a == 3")
         self.failUnless(isinstance(op, Any), op)
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])
@@ -126,9 +143,23 @@ class Test_generate_query(unittest.TestCase):
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
 
+    def test_intersection_with_bool_syntax(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Intersection
+        op = self._call_fut("a == 1 and b == 2")
+        self.failUnless(isinstance(op, Intersection))
+        query = op.left
+        self.failUnless(isinstance(query, Eq))
+        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.value, 1)
+        query = op.right
+        self.failUnless(isinstance(query, Eq))
+        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.value, 2)
+
     def test_all(self):
         from repoze.catalog.query import All
-        op = self._call_fut("(a == 1) & (a == 2) & (a == 3)")
+        op = self._call_fut("a == 1 and a == 2 and a == 3")
         self.failUnless(isinstance(op, All), op)
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])

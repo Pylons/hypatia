@@ -80,19 +80,6 @@ class _AstQuery(object):
             return operator(self._index_name(operand2), self._value(operand1))
         return operator(self._index_name(operand1), self._value(operand2))
 
-    def _index_name(self, node):
-        if not isinstance(node, ast.Name):
-            raise ValueError("Index name must be a name.")
-        return node.id
-
-    def _value(self, node):
-        if isinstance(node, ast.Name):
-            try:
-                return self.names[node.id]
-            except:
-                raise NameError(node.id)
-        return node
-
     def process_BitOr(self, node, children):
         return query.Union
 
@@ -106,14 +93,47 @@ class _AstQuery(object):
         left, operator, right = children
         if not isinstance(left, (query.Query, query.Operator)):
             raise ValueError(
-                "Bad expression: left operand for union must be a result set.",
-                left
+                "Bad expression: left operand for %s must be a result set." %
+                operator.__name__
             )
         if not isinstance(right, (query.Query, query.Operator)):
             raise ValueError(
-                "Bad expression: right operand for union must be a result set."
+                "Bad expression: right operand for %s must be a result set." %
+                operator.__name__
             )
         return operator(left, right)
+
+    def process_Or(self, node, children):
+        return query.Union
+
+    def process_And(self, node, children):
+        return query.Intersection
+
+    def process_BoolOp(self, node, children):
+        operator = children.pop(0)
+        for child in children:
+            if not isinstance(child, (query.Query, query.Operator)):
+                raise ValueError(
+                    "Bad expression: All operands for %s must be result sets."
+                    % operator.__name__)
+
+        op = operator(children.pop(0), children.pop(0))
+        while children:
+            op = operator(op, children.pop(0))
+        return op
+
+    def _index_name(self, node):
+        if not isinstance(node, ast.Name):
+            raise ValueError("Index name must be a name.")
+        return node.id
+
+    def _value(self, node):
+        if isinstance(node, ast.Name):
+            try:
+                return self.names[node.id]
+            except:
+                raise NameError(node.id)
+        return node
 
 def _group_any_and_all(tree):
     def group(node, index_name, values):

@@ -23,10 +23,10 @@ class TestFunctional(unittest.TestCase):
         catalog.index_doc(6, Content('name6', 'title6', 'body six',['d']))
 
         query = parse_query(
-            "((allowed == 'a') & (allowed == 'b') &"
-            "((name == 'name1') | (name == 'name2') | (name == 'name3') |"
-            "(name == 'name4') | (name == 'name5')) - (title == 'title3')) &"
-            "('body' in text)"
+            "(allowed == 'a' and allowed == 'b' and "
+            "(name == 'name1' or name == 'name2' or name == 'name3' or "
+            "name == 'name4' or name == 'name5') - (title == 'title3')) and "
+            "'body' in text"
         )
         numdocs, result = catalog.query(query).apply(
             sort_index='name', limit=5)
