@@ -54,3 +54,6 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
     def applyContains(self, value):
         return self.apply(value)
+
+    applyEq = applyContains
+    
