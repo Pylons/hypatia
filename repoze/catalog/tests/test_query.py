@@ -98,30 +98,6 @@ class TestLe(QueryTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.le, 'val')
 
-class TestIn(QueryTestBase):
-    def _getTargetClass(self):
-        from repoze.catalog.query import In
-        return In
-
-    def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst.apply(catalog)
-        self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.In, 'val')
-
-class TestAny(QueryTestBase):
-    def _getTargetClass(self):
-        from repoze.catalog.query import Any
-        return Any
-
-    def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst.apply(catalog)
-        self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.any, 'val')
-
 class TestAll(QueryTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import All
@@ -144,11 +120,11 @@ class DummyCatalog(object):
         return self.index
 
 class DummyIndex(object):
-    
+
     def applyContains(self, value):
         self.contains = value
         return value
-    
+
     def applyEq(self, value):
         self.eq = value
         return value
@@ -184,4 +160,4 @@ class DummyIndex(object):
     def applyAll(self, value):
         self.all = value
         return value
-    
+

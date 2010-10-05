@@ -11,8 +11,8 @@ class Test_generate_query(unittest.TestCase):
     def test_multiple_expressions(self):
         self.assertRaises(ValueError, self._call_fut, 'a == 1\nb == 2\n')
 
-    def test_unhandled_expression(self):
-        self.assertRaises(ValueError, self._call_fut, 'a | b')
+    def test_unhandled_operator(self):
+        self.assertRaises(ValueError, self._call_fut, 'a ^ b')
 
     def test_non_string_index_name(self):
         # == is not commutative in this context, sorry.
@@ -21,16 +21,9 @@ class Test_generate_query(unittest.TestCase):
     def test_bad_value_name(self):
         self.assertRaises(NameError, self._call_fut, 'a == b')
 
-    def test_bad_boolean_op(self):
-        self.assertRaises(ValueError, self._call_fut, '1 or 2')
-
-    def test_or_not(self):
-        self.assertRaises(
-            ValueError, self._call_fut, "a == 1 or not(b == 2 and c== 3)")
-
-    def test_bad_not(self):
-        self.assertRaises(
-            ValueError, self._call_fut, "not 1")
+    def test_bad_operand_for_set_operation(self):
+        self.assertRaises(ValueError, self._call_fut, '(a == 1) | 2')
+        self.assertRaises(ValueError, self._call_fut, '1 | (b == 2)')
 
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
@@ -99,115 +92,44 @@ class Test_generate_query(unittest.TestCase):
         self.assertEqual(contains.index_name, 'a')
         self.assertEqual(contains.value, 6)
 
-    def test_or(self):
+    def test_union(self):
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Or
-        op = self._call_fut("a == 1 or b == 2")
-        self.failUnless(isinstance(op, Or))
-        self.assertEqual(len(op.queries), 2)
-        query = op.queries[0]
+        from repoze.catalog.query import Union
+        op = self._call_fut("(a == 1) | (b == 2)")
+        self.failUnless(isinstance(op, Union))
+        query = op.left
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'a')
         self.assertEqual(query.value, 1)
-        query = op.queries[1]
-        self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'b')
-        self.assertEqual(query.value, 2)
-
-    def test_and(self):
-        from repoze.catalog.query import Eq
-        from repoze.catalog.query import And
-        op = self._call_fut("a == 1 and b == 2")
-        self.failUnless(isinstance(op, And))
-        self.assertEqual(len(op.queries), 2)
-        query = op.queries[0]
-        self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'a')
-        self.assertEqual(query.value, 1)
-        query = op.queries[1]
+        query = op.right
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
 
-    def test_any(self):
-        from repoze.catalog.query import Any
-        op = self._call_fut("a == 1 or a == 2")
-        self.failUnless(isinstance(op, Any))
-        self.assertEqual(op.index_name, 'a')
-        self.assertEqual(op.value, [1, 2])
-
-    def test_all(self):
-        from repoze.catalog.query import All
-        op = self._call_fut("a == 1 and a == 2") # Could be keyword index
-        self.failUnless(isinstance(op, All))
-        self.assertEqual(op.index_name, 'a')
-        self.assertEqual(op.value, [1, 2])
-
-    def test_nested_bool(self):
-        from repoze.catalog.query import And
-        from repoze.catalog.query import Or
+    def test_intersection(self):
         from repoze.catalog.query import Eq
-        op = self._call_fut("a == 1 and b == 2 or c == 3")
-        self.failUnless(isinstance(op, Or))
-        self.assertEqual(len(op.queries), 2)
-        subop = op.queries[0]
-        self.failUnless(isinstance(subop, And))
-        self.assertEqual(len(subop.queries), 2)
-        query = subop.queries[0]
+        from repoze.catalog.query import Intersection
+        op = self._call_fut("(a == 1) & (b == 2)")
+        self.failUnless(isinstance(op, Intersection))
+        query = op.left
+        self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'a')
         self.assertEqual(query.value, 1)
-        query = subop.queries[1]
+        query = op.right
+        self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
-        query = op.queries[1]
-        self.assertEqual(query.index_name, 'c')
-        self.assertEqual(query.value, 3)
 
-    def test_and_not(self):
-        from repoze.catalog.query import And
-        from repoze.catalog.query import Not
-        from repoze.catalog.query import Or
+    def test_difference(self):
         from repoze.catalog.query import Eq
-        op = self._call_fut("a == 1 and not(b == 2 or c == 3)")
-        self.failUnless(isinstance(op, And))
-        self.assertEqual(len(op.queries), 2)
-        query = op.queries[0]
+        from repoze.catalog.query import Difference
+        op = self._call_fut("(a == 1) - (b == 2)")
+        self.failUnless(isinstance(op, Difference))
+        query = op.left
+        self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'a')
         self.assertEqual(query.value, 1)
-        subop = op.queries[1]
-        self.failUnless(isinstance(subop, Not))
-        subop = subop.query
-        self.failUnless(isinstance(subop, Or))
-        self.assertEqual(len(subop.queries), 2)
-        query = subop.queries[0]
+        query = op.right
+        self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
-        query = subop.queries[1]
-        self.assertEqual(query.index_name, 'c')
-        self.assertEqual(query.value, 3)
-
-    def test_move_nots_to_end(self):
-        from repoze.catalog.query import And
-        from repoze.catalog.query import Not
-        from repoze.catalog.query import Or
-        from repoze.catalog.query import Eq
-        op = self._call_fut("not(b == 2 or c == 3) and a == 1")
-        self.failUnless(isinstance(op, And))
-        self.assertEqual(len(op.queries), 2)
-        query = op.queries[0]
-        self.assertEqual(query.index_name, 'a')
-        self.assertEqual(query.value, 1)
-        subop = op.queries[1]
-        self.failUnless(isinstance(subop, Not))
-        subop = subop.query
-        self.failUnless(isinstance(subop, Or))
-        self.assertEqual(len(subop.queries), 2)
-        query = subop.queries[0]
-        self.assertEqual(query.index_name, 'b')
-        self.assertEqual(query.value, 2)
-        query = subop.queries[1]
-        self.assertEqual(query.index_name, 'c')
-        self.assertEqual(query.value, 3)
-
-
-

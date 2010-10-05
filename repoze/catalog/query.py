@@ -121,38 +121,31 @@ class Operator(object):
     """
     family = BTrees.family32
 
-    def __init__(self, queries):
-        self.queries = queries
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
 
-class Or(Operator):
-    """Or operator on queries."""
+class Union(Operator):
+    """Union of two result sets."""
     def apply(self, catalog):
         # Untested, should look something like this:
-        results = self.queries[0].apply(catalog)
-        for query in self.queries[1:]:
-            _, results = self.family.IF.weightedUnion(
-                query.apply(catalog), results)
+        _, results = self.family.IF.weightedUnion(
+            self.left.apply(catalog), self.right.apply(catalog))
         return results
 
-class And(Operator):
-    """And operator on queries."""
+class Intersection(Operator):
+    """Intersection of two result sets."""
     def apply(self, catalog):
         # Untested, should look something like this:
-        results = self.queries[0].apply(catalog)
-        for query in self.queries[1:]:
-            if isinstance(query, Not):
-                results = self.family.IF.difference(
-                    results, query.query.apply(catalog))
-            else:
-                _, results = self.family.IF.weightedIntersection(
-                    query.apply(catalog), results)
+        _, results = self.family.IF.weightedIntersection(
+            self.left.apply(catalog), self.right.apply(catalog))
         return results
 
-class Not(object):
-    """An instruction to And to subtract the result set from this query
-       from its result set."""
-    def __init__(self, query):
-        self.query = query
+class Difference(Operator):
+    """Difference between two sets."""
+    def apply(self, catalog):
+        self.family.IF.difference(
+            self.left.apply(catalog), self.right.apply(catalog))
 
 class SearchQuery(object):
     """Chainable query processor.
