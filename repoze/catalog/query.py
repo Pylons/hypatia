@@ -28,6 +28,9 @@ class Query(object):
         self.index_name = index_name
         self.value = value
 
+    def get_index(self, catalog):
+        return catalog[self.index_name]
+
 class Contains(Query):
     """Contains query.
 
@@ -35,7 +38,7 @@ class Contains(Query):
     """
 
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyContains(self.value)
 
 class Eq(Query):
@@ -44,7 +47,7 @@ class Eq(Query):
     AST hint:  index == 'foo'
     """
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyEq(self.value)
 
 
@@ -55,7 +58,7 @@ class NotEq(Query):
     """
 
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyNotEq(self.value)
 
 class Gt(Query):
@@ -64,7 +67,7 @@ class Gt(Query):
     AST hint: index > 'foo'
     """
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyGt(self.value)
 
 class Lt(Query):
@@ -73,7 +76,7 @@ class Lt(Query):
     AST hint: index < 'foo'
     """
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyLt(self.value)
 
 class Ge(Query):
@@ -83,7 +86,7 @@ class Ge(Query):
     """
 
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyGe(self.value)
 
 
@@ -94,7 +97,7 @@ class Le(Query):
     """
 
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyLe(self.value)
 
 class In(Query):
@@ -104,7 +107,7 @@ class In(Query):
     """
 
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyIn(self.value)
 
 class Any(Query):
@@ -114,7 +117,7 @@ class Any(Query):
     """
 
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyAny(self.value)
 
 class All(Query):
@@ -123,7 +126,7 @@ class All(Query):
     AST hint: all(['a', 'b', 'c']) in index
     """
     def apply(self, catalog):
-        index = catalog[self.index_name]
+        index = self.get_index(catalog)
         return index.applyAll(self.value)
 
 class SearchQuery(object):
