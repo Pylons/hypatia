@@ -69,12 +69,17 @@ class _AstQuery(object):
     def process_Gt(self, node, children):
         return query.Gt
 
-    def process_GtE(self,node, children):
+    def process_GtE(self, node, children):
         return query.Ge
 
+    def process_In(self, node, children):
+        return query.Contains
+
     def process_Compare(self, node, children):
-        index, operator, value = children
-        return operator(self._index_name(index), self._value(value))
+        operand1, operator, operand2 = children
+        if operator is query.Contains:
+            return operator(self._index_name(operand2), self._value(operand1))
+        return operator(self._index_name(operand1), self._value(operand2))
 
     def _index_name(self, node):
         if not isinstance(node, ast.Name):

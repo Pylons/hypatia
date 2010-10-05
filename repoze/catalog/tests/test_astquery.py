@@ -84,3 +84,11 @@ class Test_generate_query(unittest.TestCase):
         self.failUnless(isinstance(ge, Ge))
         self.assertEqual(ge.index_name, 'a')
         self.assertEqual(ge.value, 5)
+
+    def test_contains(self):
+        from repoze.catalog.query import Contains
+        contains = self._call_fut("6 in a")
+        self.failUnless(isinstance(contains, Contains))
+        self.assertEqual(contains.index_name, 'a')
+        self.assertEqual(contains.value, 6)
+

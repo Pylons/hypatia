@@ -96,16 +96,6 @@ class Le(Query):
         index = self.get_index(catalog)
         return index.applyLe(self.value)
 
-class In(Query):
-    """In query.
-
-    AST hint: index in 'foo'
-    """
-
-    def apply(self, catalog):
-        index = self.get_index(catalog)
-        return index.applyIn(self.value)
-
 class Any(Query):
     """Any of query.
 
