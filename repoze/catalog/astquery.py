@@ -84,6 +84,9 @@ class _AstQuery(object):
     def process_Or(self, node, children):
         return query.Or
 
+    def process_And(self, node, children):
+        return query.And
+
     def process_BoolOp(self, node, children):
         operator = children.pop(0)
         for subquery in children:
