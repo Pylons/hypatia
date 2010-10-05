@@ -134,6 +134,16 @@ class Or(Operator):
                 query.apply(catalog), results)
         return results
 
+class And(Operator):
+    """And operator on queries."""
+    def apply(self, catalog):
+        # Untested, should look something like this:
+        results = self.queries[0].apply(catalog)
+        for query in self.queries[1:]:
+            _, results = self.family.IF.weightedIntersection(
+                query.apply(catalog), results)
+        return results
+
 class SearchQuery(object):
     """Chainable query processor.
 
