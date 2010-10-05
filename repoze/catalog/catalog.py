@@ -84,7 +84,7 @@ class Catalog(PersistentMapping):
                     raise ValueError('No such index %s' % index_name)
                 r = index.apply(index_query)
                 if not r:
-                    # empty results
+                    # empty results, bail early; intersect will be null
                     return 0, r
 
                 results.append((len(r), r))

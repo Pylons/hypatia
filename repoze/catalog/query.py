@@ -11,10 +11,6 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""
-$Id:$
-"""
-__docformat__ = "reStructuredText"
 
 import zope.interface
 import zope.component
@@ -144,7 +140,7 @@ class SearchQuery(object):
       appleQuery = Text('textIndex', 'Apple')
       houseQuery = Text('textIndex', 'House')
       towerQuery = Text('textIndex', 'Tower')
-      SearchQuery(appleQuery).And(houseQuery).Or(towerQuery).apply(catalog)
+      SearchQuery(catalog, appleQuery).And(houseQuery).Or(towerQuery).apply()
     """
 
     zope.interface.implements(interfaces.ISearchQuery)
@@ -160,8 +156,7 @@ class SearchQuery(object):
             res = query.apply(self.catalog)
         if family is not None:
             self.family = family
-        if res is not None:
-            self.results = self.family.IF.Set(res)
+        self.results = res
 
     @apply
     def results():
@@ -190,9 +185,10 @@ class SearchQuery(object):
         if res:
             if len(self.results) == 0:
                 # setup our first result if query=None was used in __init__
-                self.results = self.family.IF.Set(res)
+                self.results = res
             else:
-                self.results = self.family.IF.union(self.results, res)
+                _, self.results = self.family.IF.weightedUnion(
+                    self.results, res)
         return self
 
     def And(self, query):
@@ -207,7 +203,8 @@ class SearchQuery(object):
 
         res = query.apply(self.catalog)
         if res:
-            self.results = self.family.IF.intersection(self.results, res)
+            _, self.results = self.family.IF.weightedIntersection(
+                self.results, res)
         # if given query is empty, means we have to return a empty result too!
         else:
             self.results = self.family.IF.Set()
