@@ -115,7 +115,7 @@ class Any(Query):
 
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.applyAnyOf(self.value)
+        return index.applyAny(self.value)
 
 class All(Query):
     """Any of query.
@@ -124,7 +124,7 @@ class All(Query):
     """
     def apply(self, catalog):
         index = catalog[self.index_name]
-        return index.applyAllOf(self.value)
+        return index.applyAll(self.value)
 
 class SearchQuery(object):
     """Chainable query processor.

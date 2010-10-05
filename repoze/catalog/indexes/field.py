@@ -259,7 +259,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         queries = list(values)
         return self.search(queries, operator='or')
 
-    applyAnyOf = applyIn
+    applyAny = applyIn
 
 def nsort(docids, rev_index):
     for docid in docids:

@@ -20,12 +20,12 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
-    def applyAnyOf(self, values):
+    def applyAny(self, values):
         return self.apply({'query': values, 'operator':'or'})
 
-    applyIn = applyAnyOf
+    applyIn = applyAny
 
-    def applyAllOf(self, values):
+    def applyAll(self, values):
         return self.apply({'query': values, 'operator':'and'})
 
     def applyEq(self, value):
