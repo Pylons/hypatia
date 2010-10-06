@@ -12,6 +12,8 @@
 #
 ##############################################################################
 
+import ast
+
 import zope.interface
 import zope.component
 
@@ -154,24 +156,44 @@ class Operator(Query):
 class Union(Operator):
     """Union of two result sets."""
     def apply(self, catalog):
-        # Untested, should look something like this:
-        _, results = self.family.IF.weightedUnion(
-            self.left.apply(catalog), self.right.apply(catalog))
+        left = self.left.apply(catalog)
+        if len(left) == 0:
+            results = self.family.IF.Set()
+        else:
+            right = self.right.apply(catalog)
+            if len(right) == 0:
+                results = self.family.IF.Set()
+            else:
+                _, results = self.family.IF.weightedUnion(left, right)
         return results
 
 class Intersection(Operator):
     """Intersection of two result sets."""
     def apply(self, catalog):
-        # Untested, should look something like this:
-        _, results = self.family.IF.weightedIntersection(
-            self.left.apply(catalog), self.right.apply(catalog))
+        left = self.left.apply(catalog)
+        if len(left) == 0:
+            results = self.family.IF.Set()
+        else:
+            right = self.right.apply(catalog)
+            if len(right) == 0:
+                results = self.family.IF.Set()
+            else:
+                _, results = self.family.IF.weightedIntersection(left, right)
         return results
 
 class Difference(Operator):
     """Difference between two sets."""
     def apply(self, catalog):
-        self.family.IF.difference(
-            self.left.apply(catalog), self.right.apply(catalog))
+        left = self.left.apply(catalog)
+        if len(left) == 0:
+            results = self.family.IF.Set()
+        else:
+            right = self.right.apply(catalog)
+            if len(right) == 0:
+                results = self.family.IF.Set()
+            else:
+                results = self.family.IF.difference(left, right)
+        return results
 
 class SearchQuery(object):
     """Chainable query processor.
@@ -276,3 +298,170 @@ class SearchQuery(object):
         if res:
             self.results = self.family.IF.difference(self.results, res)
         return self
+
+class _AstQuery(object):
+    def __init__(self, expr, names):
+        self.names = names
+        statements = ast.parse(expr).body
+        if len(statements) > 1 :
+            raise ValueError(
+                "Can only process single expression."
+            )
+        expr_tree = statements[0]
+        if not isinstance(expr_tree, ast.Expr):
+            raise ValueError(
+                "Not an expression."
+            )
+
+        self.query = self.walk(expr_tree.value)
+
+    def walk(self, tree):
+        def visit(node):
+            children = [visit(child) for child in ast.iter_child_nodes(node)]
+            name = 'process_%s' % node.__class__.__name__
+            processor = getattr(self, name, None)
+            if processor is None:
+                raise ValueError(
+                    "Unable to parse expression.  Unhandled expression "
+                    "element: %s" % node.__class__.__name__
+                )
+            return processor(node, children)
+        return visit(tree)
+
+    def process_Load(self, node, children):
+        pass
+
+    def process_Name(self, node, children):
+        return node
+
+    def process_Str(self, node, children):
+        return node.s
+
+    def process_Num(self, node, children):
+        return node.n
+
+    def process_List(self, node, children):
+        l = list(children[:-1])
+        for i in xrange(len(l)):
+            if isinstance(l[i], ast.Name):
+                l[i] = self._value(l[i])
+        return l
+
+    def process_Tuple(self, node, children):
+        return tuple(self.process_List(node, children))
+
+    def process_Eq(self, node, children):
+        return Eq
+
+    def process_NotEq(self, node, children):
+        return NotEq
+
+    def process_Lt(self, node, children):
+        return Lt
+
+    def process_LtE(self, node, children):
+        return Le
+
+    def process_Gt(self, node, children):
+        return Gt
+
+    def process_GtE(self, node, children):
+        return Ge
+
+    def process_In(self, node, children):
+        return Contains
+
+    def process_Compare(self, node, children):
+        operand1, operator, operand2 = children
+        if operator is Contains:
+            return operator(self._index_name(operand2), self._value(operand1))
+        return operator(self._index_name(operand1), self._value(operand2))
+
+    def process_BitOr(self, node, children):
+        return Union
+
+    def process_BitAnd(self, node, children):
+        return Intersection
+
+    def process_Sub(self, node, children):
+        return Difference
+
+    def process_BinOp(self, node, children):
+        left, operator, right = children
+        if not isinstance(left, Query):
+            raise ValueError(
+                "Bad expression: left operand for %s must be a result set." %
+                operator.__name__
+            )
+        if not isinstance(right, Query):
+            raise ValueError(
+                "Bad expression: right operand for %s must be a result set." %
+                operator.__name__
+            )
+        return operator(left, right)
+
+    def process_Or(self, node, children):
+        return Union
+
+    def process_And(self, node, children):
+        return Intersection
+
+    def process_BoolOp(self, node, children):
+        operator = children.pop(0)
+        for child in children:
+            if not isinstance(child, Query):
+                raise ValueError(
+                    "Bad expression: All operands for %s must be result sets."
+                    % operator.__name__)
+
+        op = operator(children.pop(0), children.pop(0))
+        while children:
+            op = operator(op, children.pop(0))
+        return op
+
+    def _index_name(self, node):
+        if not isinstance(node, ast.Name):
+            raise ValueError("Index name must be a name.")
+        return node.id
+
+    def _value(self, node):
+        if isinstance(node, ast.Name):
+            try:
+                return self.names[node.id]
+            except:
+                raise NameError(node.id)
+        return node
+
+def _group_any_and_all(tree):
+    def group(node, index_name, values):
+        if len(values) > 1:
+            if isinstance(node, Intersection):
+                return All(index_name, values)
+            elif isinstance(node, Union):
+                return Any(index_name, values)
+        return node
+
+    def visit(node):
+        if isinstance(node, Operator):
+            left_index, left_values = visit(node.left)
+            right_index, right_values = visit(node.right)
+            if left_index != right_index:
+                node.left = group(node.left, left_index, left_values)
+                node.right = group(node.right, right_index, right_values)
+                return None, []
+            return left_index, left_values + right_values
+        elif isinstance(node, Eq):
+            return node.index_name, [node.value]
+        return None, []
+
+    index, values = visit(tree)
+    return group(tree, index, values)
+
+def parse_query(expr, names=None):
+    """
+    Parses the given expression string into a catalog query.  The `names` dict
+    provides local variable names that can be used in the expression.
+    """
+    if names is None:
+        names = {}
+    return _group_any_and_all(_AstQuery(expr, names).query)

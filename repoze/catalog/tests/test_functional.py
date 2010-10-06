@@ -6,7 +6,7 @@ class TestFunctional(unittest.TestCase):
         from repoze.catalog.indexes.field import CatalogFieldIndex
         from repoze.catalog.indexes.keyword import CatalogKeywordIndex
         from repoze.catalog.indexes.text import CatalogTextIndex
-        from repoze.catalog.astquery import parse_query
+        from repoze.catalog.query import parse_query
 
         catalog = Catalog()
         catalog['name'] = CatalogFieldIndex('name')
