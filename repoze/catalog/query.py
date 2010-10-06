@@ -184,7 +184,7 @@ class Difference(Operator):
         else:
             right = self.right.apply(catalog)
             if len(right) == 0:
-                results = self.family.IF.Set()
+                results = left
             else:
                 results = self.family.IF.difference(left, right)
         return results
