@@ -6,7 +6,7 @@ from zope.interface import implements
 
 from repoze.catalog.interfaces import ICatalog
 from repoze.catalog.interfaces import ICatalogIndex
-from repoze.catalog.query import SearchQuery
+from repoze.catalog.query import parse_query
 
 class Catalog(PersistentMapping):
 
@@ -133,8 +133,12 @@ class Catalog(PersistentMapping):
         else:
             return numdocs, result
 
-    def query(self, queryobject):
-        return SearchQuery(self, queryobject)
+    def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
+              reverse=False):
+        if isinstance(queryobject, basestring):
+            query = parse_query(queryobject)
+        results = query.apply(self)
+        return self.sort_result(results, sort_index, limit, sort_type, reverse)
 
     def apply(self, query):
         return self.search(**query)

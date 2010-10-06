@@ -6,7 +6,6 @@ class TestFunctional(unittest.TestCase):
         from repoze.catalog.indexes.field import CatalogFieldIndex
         from repoze.catalog.indexes.keyword import CatalogKeywordIndex
         from repoze.catalog.indexes.text import CatalogTextIndex
-        from repoze.catalog.query import parse_query
 
         catalog = Catalog()
         catalog['name'] = CatalogFieldIndex('name')
@@ -22,14 +21,13 @@ class TestFunctional(unittest.TestCase):
                                      ['a', 'b', 'c']))
         catalog.index_doc(6, Content('name6', 'title6', 'body six',['d']))
 
-        query = parse_query(
+        query = (
             "(allowed == 'a' and allowed == 'b' and "
             "(name == 'name1' or name == 'name2' or name == 'name3' or "
             "name == 'name4' or name == 'name5') - (title == 'title3')) and "
             "'body' in text"
         )
-        numdocs, result = catalog.query(query).apply(
-            sort_index='name', limit=5)
+        numdocs, result = catalog.query(query, sort_index='name', limit=5)
 ##        numdocs, result = catalog.query(
 ##            query.All('allowed', ['a', 'b'])
 ##            ).And(
