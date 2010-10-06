@@ -157,14 +157,8 @@ class Union(Operator):
     """Union of two result sets."""
     def apply(self, catalog):
         left = self.left.apply(catalog)
-        if len(left) == 0:
-            results = self.family.IF.Set()
-        else:
-            right = self.right.apply(catalog)
-            if len(right) == 0:
-                results = self.family.IF.Set()
-            else:
-                _, results = self.family.IF.weightedUnion(left, right)
+        right = self.right.apply(catalog)
+        _, results = self.family.IF.weightedUnion(left, right)
         return results
 
 class Intersection(Operator):
