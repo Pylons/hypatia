@@ -158,7 +158,12 @@ class Union(Operator):
     def apply(self, catalog):
         left = self.left.apply(catalog)
         right = self.right.apply(catalog)
-        _, results = self.family.IF.weightedUnion(left, right)
+        if len(left) == 0:
+            results = right
+        elif len(right) == 0:
+            results = left
+        else:
+            _, results = self.family.IF.weightedUnion(left, right)
         return results
 
 class Intersection(Operator):
