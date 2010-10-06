@@ -136,8 +136,8 @@ class Catalog(PersistentMapping):
     def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
               reverse=False):
         if isinstance(queryobject, basestring):
-            query = parse_query(queryobject)
-        results = query.apply(self)
+            queryobject = parse_query(queryobject)
+        results = queryobject.apply(self)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
 
     def apply(self, query):
