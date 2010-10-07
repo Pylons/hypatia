@@ -441,11 +441,17 @@ class Test_parse_query(unittest.TestCase):
         a, b, c = 1, 2, 3
         self.assertEqual(self._call_fut('(a, b, c)', locals()), (1, 2, 3))
 
+    def test_dotted_name(self):
+        self.assertEqual(self._call_fut('a.foo').id, 'a.foo')
+
+    def test_dotted_names(self):
+        self.assertEqual(self._call_fut('a.foo.bar').id, 'a.foo.bar')
+
     def test_eq(self):
         from repoze.catalog.query import Eq
-        eq = self._call_fut('a == 1')
+        eq = self._call_fut('a.foo == 1')
         self.failUnless(isinstance(eq, Eq))
-        self.assertEqual(eq.index_name, 'a')
+        self.assertEqual(eq.index_name, 'a.foo')
         self.assertEqual(eq.value, 1)
 
     def test_not_eq(self):

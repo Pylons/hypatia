@@ -283,6 +283,12 @@ class _AstQuery(object):
     def process_Name(self, node, children):
         return node
 
+    def process_Attribute(self, node, children):
+        name = children[0]
+        dotted_name = ast.Name()
+        dotted_name.id = '.'.join((name.id, node.attr))
+        return dotted_name
+
     def process_Str(self, node, children):
         return node.s
 
