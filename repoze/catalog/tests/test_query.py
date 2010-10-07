@@ -228,6 +228,40 @@ class TestAny(ComparatorTestBase):
         inst = self._makeOne('index', [1, 2, 3])
         self.assertEqual(str(inst), "index any [1, 2, 3]")
 
+class TestRange(ComparatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import Range
+        return Range
+
+    def _makeOne(self, index, begin, end,
+                 begin_exclusive=False, end_exclusive=False):
+        return self._getTargetClass()(
+            index, begin, end, begin_exclusive, end_exclusive)
+
+    def test_apply(self):
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', 'begin', 'end')
+        result = inst.apply(catalog)
+        self.assertEqual(result, ('begin', 'end', False, False))
+        self.assertEqual(
+            catalog.index.range, ('begin', 'end', False, False))
+
+    def test_apply_exclusive(self):
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', 'begin', 'end', True, True)
+        result = inst.apply(catalog)
+        self.assertEqual(result, ('begin', 'end', True, True))
+        self.assertEqual(
+            catalog.index.range, ('begin', 'end', True, True))
+
+    def test_to_str(self):
+        inst = self._makeOne('index', 0, 5)
+        self.assertEqual(str(inst), "0 <= index <= 5")
+
+    def test_to_str_exclusive(self):
+        inst = self._makeOne('index', 0, 5, True, True)
+        self.assertEqual(str(inst), "0 < index < 5")
+
 class OperatorTestBase(unittest.TestCase):
     def _makeOne(self, left, right):
         return self._getTargetClass()(left, right)
@@ -386,6 +420,10 @@ class Test_parse_query(unittest.TestCase):
     def test_bad_operand_for_bool_operation(self):
         self.assertRaises(ValueError, self._call_fut, '1 or 2')
 
+    def test_bad_comparator_chaining(self):
+        self.assertRaises(ValueError, self._call_fut, '1 < 2 > 3')
+        self.assertRaises(ValueError, self._call_fut, 'x == y == z')
+
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
         self.assertEqual(self._call_fut('1.1'), 1.1)
@@ -451,6 +489,46 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(contains, Contains))
         self.assertEqual(contains.index_name, 'a')
         self.assertEqual(contains.value, 6)
+
+    def test_range_exclusive_exclusive(self):
+        from repoze.catalog.query import Range
+        comp = self._call_fut("0 < a < 5")
+        self.failUnless(isinstance(comp, Range))
+        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.start, 0)
+        self.assertEqual(comp.end, 5)
+        self.failUnless(comp.start_exclusive)
+        self.failUnless(comp.end_exclusive)
+
+    def test_range_exclusive_inclusive(self):
+        from repoze.catalog.query import Range
+        comp = self._call_fut("0 < a <= 5")
+        self.failUnless(isinstance(comp, Range))
+        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.start, 0)
+        self.assertEqual(comp.end, 5)
+        self.failUnless(comp.start_exclusive)
+        self.failIf(comp.end_exclusive)
+
+    def test_range_inclusive_exclusive(self):
+        from repoze.catalog.query import Range
+        comp = self._call_fut("0 <= a < 5")
+        self.failUnless(isinstance(comp, Range))
+        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.start, 0)
+        self.assertEqual(comp.end, 5)
+        self.failIf(comp.start_exclusive)
+        self.failUnless(comp.end_exclusive)
+
+    def test_range_inclusive_inclusive(self):
+        from repoze.catalog.query import Range
+        comp = self._call_fut("0 <= a <= 5")
+        self.failUnless(isinstance(comp, Range))
+        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.start, 0)
+        self.assertEqual(comp.end, 5)
+        self.failIf(comp.start_exclusive)
+        self.failIf(comp.end_exclusive)
 
     def test_union(self):
         from repoze.catalog.query import Eq
@@ -582,6 +660,10 @@ class DummyIndex(object):
     def applyAll(self, value):
         self.all = value
         return value
+
+    def applyRange(self, start, end, start_exclusive, end_exclusive):
+        self.range = (start, end, start_exclusive, end_exclusive)
+        return self.range
 
 class DummyFamily(object):
     union = None

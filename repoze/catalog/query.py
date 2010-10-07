@@ -160,6 +160,36 @@ class All(Comparator):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
 
+class Range(Comparator):
+    """ Index value falls within a range. """
+    def __init__(self, index_name, start, end,
+                 start_exclusive=False, end_exclusive=False):
+        self.index_name = index_name
+        self.start = start
+        self.end = end
+        self.start_exclusive = start_exclusive
+        self.end_exclusive = end_exclusive
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyRange(
+            self.start, self.end, self.start_exclusive, self.end_exclusive
+        )
+
+    def __str__(self):
+        s = [repr(self.start)]
+        if self.start_exclusive:
+            s.append('<')
+        else:
+            s.append('<=')
+        s.append(self.index_name)
+        if self.end_exclusive:
+            s.append('<')
+        else:
+            s.append('<=')
+        s.append(repr(self.end))
+        return ' '.join(s)
+
 class Operator(Query):
     """
     Base class for operators.
@@ -291,10 +321,45 @@ class _AstQuery(object):
         return Contains
 
     def process_Compare(self, node, children):
-        operand1, operator, operand2 = children
-        if operator is Contains:
-            return operator(self._index_name(operand2), self._value(operand1))
-        return operator(self._index_name(operand1), self._value(operand2))
+        # Python allows arbitrary chaining of comparisons, ie:
+        #   x == y == z != abc
+        #   x < y >= z
+        #
+        # For our purposes, though, we are only interested in two basic forms:
+        #   index_name <comparison_operator> value
+        # or
+        #   start [<|<=] index_name [<|<=] end
+        #
+        # Where the second form maps to a Range comparator and the first
+        # form matches any of the other comparators.  Arbitrary chaining as
+        # shown above is not supported.
+        if len(children) == 3:
+            # Simple binary form
+            operand1, operator, operand2 = children
+            if operator is Contains:
+                return operator(self._index_name(operand2),
+                                self._value(operand1))
+            return operator(self._index_name(operand1), self._value(operand2))
+        elif len(children) == 5:
+            # Range expression
+            start, op1, op2, index_name, end = children
+            if op1 in (Lt, Le) and op2 in (Lt, Le):
+                if op1 is Lt:
+                    start_exclusive = True
+                else:
+                    start_exclusive = False
+                if op2 is Lt:
+                    end_exclusive = True
+                else:
+                    end_exclusive = False
+                return Range(self._index_name(index_name),
+                             self._value(start),
+                             self._value(end),
+                             start_exclusive,
+                             end_exclusive)
+        raise ValueError(
+            "Bad expression: unsupported chaining of comparators."
+        )
 
     def process_BitOr(self, node, children):
         return Union
