@@ -48,6 +48,32 @@ class TestQuery(unittest.TestCase):
         a = self._makeOne()
         self.assertRaises(TypeError, a.__sub__, 2)
 
+    def test_iter_children(self):
+        a = self._makeOne()
+        self.assertEqual(a.iter_children(), ())
+
+    def test_print_tree(self):
+        from repoze.catalog.query import Query
+        class Derived(Query):
+            def __init__(self, name):
+                self.name = name
+                self.children = []
+            def __str__(self):
+                return self.name
+            def iter_children(self):
+                return self.children
+
+        from StringIO import StringIO
+        a = Derived('A')
+        b = Derived('B')
+        c = Derived('C')
+        a.children.append(b)
+        a.children.append(c)
+
+        buf = StringIO()
+        a.print_tree(buf)
+        self.assertEqual(buf.getvalue(), 'A\n  B\n  C\n')
+
 class TestComparator(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Comparator
@@ -70,6 +96,10 @@ class TestContains(ComparatorTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.contains, 'val')
 
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "'val' in index")
+
 class TestEq(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Eq
@@ -81,6 +111,10 @@ class TestEq(ComparatorTestBase):
         result = inst.apply(catalog)
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.eq, 'val')
+
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "index == 'val'")
 
 class TestNotEq(ComparatorTestBase):
     def _getTargetClass(self):
@@ -94,6 +128,10 @@ class TestNotEq(ComparatorTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.not_eq, 'val')
 
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "index != 'val'")
+
 class TestGt(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Gt
@@ -106,7 +144,11 @@ class TestGt(ComparatorTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.gt, 'val')
 
-class TestGt(ComparatorTestBase):
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "index > 'val'")
+
+class TestLt(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Lt
         return Lt
@@ -117,6 +159,10 @@ class TestGt(ComparatorTestBase):
         result = inst.apply(catalog)
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.lt, 'val')
+
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "index < 'val'")
 
 class TestGe(ComparatorTestBase):
     def _getTargetClass(self):
@@ -130,6 +176,10 @@ class TestGe(ComparatorTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.ge, 'val')
 
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "index >= 'val'")
+
 class TestLe(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Le
@@ -141,6 +191,10 @@ class TestLe(ComparatorTestBase):
         result = inst.apply(catalog)
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.le, 'val')
+
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "index <= 'val'")
 
 class TestAll(ComparatorTestBase):
     def _getTargetClass(self):
@@ -154,58 +208,157 @@ class TestAll(ComparatorTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.all, 'val')
 
-class DummyCatalog(object):
-    def __init__(self, index=None):
-        if index is None:
-            index = DummyIndex()
-        self.index = index
+    def test_to_str(self):
+        inst = self._makeOne('index', [1, 2, 3])
+        self.assertEqual(str(inst), "index all [1, 2, 3]")
 
-    def __getitem__(self, name):
-        return self.index
+class TestAny(ComparatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import Any
+        return Any
 
-class DummyIndex(object):
+    def test_apply(self):
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', 'val')
+        result = inst.apply(catalog)
+        self.assertEqual(result, 'val')
+        self.assertEqual(catalog.index.any, 'val')
 
-    def applyContains(self, value):
-        self.contains = value
-        return value
+    def test_to_str(self):
+        inst = self._makeOne('index', [1, 2, 3])
+        self.assertEqual(str(inst), "index any [1, 2, 3]")
 
-    def applyEq(self, value):
-        self.eq = value
-        return value
+class OperatorTestBase(unittest.TestCase):
+    def _makeOne(self, left, right):
+        return self._getTargetClass()(left, right)
 
-    def applyNotEq(self, value):
-        self.not_eq = value
-        return value
+class TestOperator(OperatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import Operator as cls
+        return cls
 
-    def applyGt(self, value):
-        self.gt = value
-        return value
+    def test_iter_children(self):
+        o = self._makeOne('left', 'right')
+        self.assertEqual(list(o.iter_children()), ['left', 'right'])
 
-    def applyLt(self, value):
-        self.lt = value
-        return value
+class TestUnion(OperatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import Union as cls
+        return cls
 
-    def applyGe(self, value):
-        self.ge = value
-        return value
+    def test_to_str(self):
+        o = self._makeOne(None, None)
+        self.assertEqual(str(o), 'Union')
 
-    def applyLe(self, value):
-        self.le = value
-        return value
+    def test_apply(self):
+        left = DummyQuery(set([1, 2]))
+        right = DummyQuery(set([3, 4]))
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set([1, 2, 3, 4]))
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.union, (left.results, right.results))
 
-    def applyIn(self, value):
-        self.In = value
-        return value
+    def test_apply_left_empty(self):
+        left = DummyQuery(set())
+        right = DummyQuery(set([3, 4]))
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set([3, 4]))
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.union, None)
 
-    def applyAny(self, value):
-        self.any = value
-        return value
+    def test_apply_right_empty(self):
+        left = DummyQuery(set([1, 2]))
+        right = DummyQuery(set())
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set([1, 2]))
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.union, None)
 
-    def applyAll(self, value):
-        self.all = value
-        return value
+class TestIntersection(OperatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import Intersection as cls
+        return cls
 
-class Test_generate_query(unittest.TestCase):
+    def test_to_str(self):
+        o = self._makeOne(None, None)
+        self.assertEqual(str(o), 'Intersection')
+
+    def test_apply(self):
+        left = DummyQuery(set([1, 2, 3]))
+        right = DummyQuery(set([3, 4, 5]))
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set([3]))
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.intersection, (left.results, right.results))
+
+    def test_apply_left_empty(self):
+        left = DummyQuery(set([]))
+        right = DummyQuery(set([3, 4, 5]))
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set())
+        self.failUnless(left.applied)
+        self.failIf(right.applied)
+        self.assertEqual(o.family.intersection, None)
+
+    def test_apply_right_empty(self):
+        left = DummyQuery(set([1, 2, 3]))
+        right = DummyQuery(set())
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set())
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.intersection, None)
+
+class TestDifference(OperatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import Difference as cls
+        return cls
+
+    def test_to_str(self):
+        o = self._makeOne(None, None)
+        self.assertEqual(str(o), 'Difference')
+
+    def test_apply(self):
+        left = DummyQuery(set([1, 2, 3]))
+        right = DummyQuery(set([3, 4, 5]))
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set([1, 2]))
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.diff, (left.results, right.results))
+
+    def test_apply_left_empty(self):
+        left = DummyQuery(set([]))
+        right = DummyQuery(set([3, 4, 5]))
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set())
+        self.failUnless(left.applied)
+        self.failIf(right.applied)
+        self.assertEqual(o.family.diff, None)
+
+    def test_right_empty(self):
+        left = DummyQuery(set([1, 2, 3]))
+        right = DummyQuery(set())
+        o = self._makeOne(left, right)
+        o.family = DummyFamily()
+        self.assertEqual(o.apply(None), set([1, 2, 3]))
+        self.failUnless(left.applied)
+        self.failUnless(right.applied)
+        self.assertEqual(o.family.diff, None)
+
+class Test_parse_query(unittest.TestCase):
     def _call_fut(self, expr, names=None):
         from repoze.catalog.query import parse_query as fut
         return fut(expr, names)
@@ -382,3 +535,85 @@ class Test_generate_query(unittest.TestCase):
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
+
+class DummyCatalog(object):
+    def __init__(self, index=None):
+        if index is None:
+            index = DummyIndex()
+        self.index = index
+
+    def __getitem__(self, name):
+        return self.index
+
+class DummyIndex(object):
+
+    def applyContains(self, value):
+        self.contains = value
+        return value
+
+    def applyEq(self, value):
+        self.eq = value
+        return value
+
+    def applyNotEq(self, value):
+        self.not_eq = value
+        return value
+
+    def applyGt(self, value):
+        self.gt = value
+        return value
+
+    def applyLt(self, value):
+        self.lt = value
+        return value
+
+    def applyGe(self, value):
+        self.ge = value
+        return value
+
+    def applyLe(self, value):
+        self.le = value
+        return value
+
+    def applyAny(self, value):
+        self.any = value
+        return value
+
+    def applyAll(self, value):
+        self.all = value
+        return value
+
+class DummyFamily(object):
+    union = None
+    intersection = None
+    diff = None
+
+    @property
+    def IF(self):
+        return self
+
+    def weightedUnion(self, left, right):
+        self.union = (left, right)
+        return None, left | right
+
+    def weightedIntersection(self, left, right):
+        self.intersection = (left, right)
+        return None, left & right
+
+    def difference(self, left, right):
+        self.diff = (left, right)
+        return left - right
+
+    def Set(self):
+        return set()
+
+class DummyQuery(object):
+    applied = False
+
+    def __init__(self, results):
+        self.results = results
+
+    def apply(self, catalog):
+        self.applied = True
+        return self.results
+

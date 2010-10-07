@@ -14,6 +14,7 @@
 
 import ast
 import BTrees
+import sys
 
 class Query(object):
     """
@@ -38,6 +39,14 @@ class Query(object):
                 (operator, type(self), type(operand))
             )
 
+    def iter_children(self):
+        return ()
+
+    def print_tree(self, out=sys.stdout, level=0):
+        print >>out, '  ' * level + str(self)
+        for child in self.iter_children():
+            child.print_tree(out, level+1)
+
 class Comparator(Query):
     """
     Base class for all comparators used in queries.
@@ -49,6 +58,9 @@ class Comparator(Query):
     def get_index(self, catalog):
         return catalog[self.index_name]
 
+    def __str__(self):
+        return ' '.join((self.index_name, self.operator, repr(self.value)))
+
 class Contains(Comparator):
     """Contains query.
 
@@ -59,11 +71,16 @@ class Contains(Comparator):
         index = self.get_index(catalog)
         return index.applyContains(self.value)
 
+    def __str__(self):
+        return '%s in %s' % (repr(self.value), self.index_name)
+
 class Eq(Comparator):
     """Equals query.
 
     AST hint:  index == 'foo'
     """
+    operator = '=='
+
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyEq(self.value)
@@ -74,6 +91,7 @@ class NotEq(Comparator):
 
     AST hint: index != 'foo'
     """
+    operator = '!='
 
     def apply(self, catalog):
         index = self.get_index(catalog)
@@ -84,6 +102,8 @@ class Gt(Comparator):
 
     AST hint: index > 'foo'
     """
+    operator = '>'
+
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyGt(self.value)
@@ -93,6 +113,8 @@ class Lt(Comparator):
 
     AST hint: index < 'foo'
     """
+    operator = '<'
+
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyLt(self.value)
@@ -102,6 +124,7 @@ class Ge(Comparator):
 
     AST hint: index >= 'foo'
     """
+    operator = '>='
 
     def apply(self, catalog):
         index = self.get_index(catalog)
@@ -113,6 +136,7 @@ class Le(Comparator):
 
     AST hint: index <= 'foo
     """
+    operator = '<='
 
     def apply(self, catalog):
         index = self.get_index(catalog)
@@ -120,9 +144,8 @@ class Le(Comparator):
 
 class Any(Comparator):
     """Any of query.
-
-    AST hint: any(['a', 'b', 'c']) in index
     """
+    operator = 'any'
 
     def apply(self, catalog):
         index = self.get_index(catalog)
@@ -130,9 +153,9 @@ class Any(Comparator):
 
 class All(Comparator):
     """Any of query.
-
-    AST hint: all(['a', 'b', 'c']) in index
     """
+    operator = 'all'
+
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
@@ -146,6 +169,13 @@ class Operator(Query):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+
+    def __str__(self):
+        return type(self).__name__
+
+    def iter_children(self):
+        yield self.left
+        yield self.right
 
 class Union(Operator):
     """Union of two result sets."""
@@ -175,7 +205,7 @@ class Intersection(Operator):
         return results
 
 class Difference(Operator):
-    """Difference between two sets."""
+    """Difference between two result sets."""
     def apply(self, catalog):
         left = self.left.apply(catalog)
         if len(left) == 0:
@@ -345,6 +375,17 @@ def _group_any_and_all(tree):
 
     index, values = visit(tree)
     return group(tree, index, values)
+
+def _print_ast(expr): #pragma NO COVERAGE
+    """
+    Useful method for visualizing AST trees while debugging.
+    """
+    tree = ast.parse(expr)
+    def visit(node, level):
+        print '  ' * level + str(node)
+        for child in ast.iter_child_nodes(node):
+            visit(child, level + 1)
+    visit(tree, 0)
 
 def parse_query(expr, names=None):
     """
