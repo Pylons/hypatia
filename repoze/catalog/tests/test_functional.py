@@ -28,16 +28,6 @@ class TestFunctional(unittest.TestCase):
             "'body' in text"
         )
         numdocs, result = catalog.query(query, sort_index='name', limit=5)
-##        numdocs, result = catalog.query(
-##            query.All('allowed', ['a', 'b'])
-##            ).And(
-##            query.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5'])
-##            ).Not(
-##            query.Eq('title', 'title3')
-##            ).And(
-##            query.Contains('text', 'body')
-##            ).apply(sort_index='name', limit=5)
-
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
 
