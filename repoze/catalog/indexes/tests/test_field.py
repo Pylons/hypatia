@@ -361,8 +361,8 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        from repoze.catalog import Range
-        result = index.search([Range(1,1)])
+        from repoze.catalog import RangeValue
+        result = index.search([RangeValue(1,1)])
         result = sorted(list(result))
         self.assertEqual(result, [5, 50])
 
@@ -370,8 +370,8 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        from repoze.catalog import Range
-        result = index.search([Range(1,1), Range(1,2)])
+        from repoze.catalog import RangeValue
+        result = index.search([RangeValue(1,1), RangeValue(1,2)])
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
 
@@ -379,8 +379,8 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        from repoze.catalog import Range
-        result = index.search([Range(1,1), Range(1,2)], 'and')
+        from repoze.catalog import RangeValue
+        result = index.search([RangeValue(1,1), RangeValue(1,2)], 'and')
         result = sorted(list(result))
         self.assertEqual(result, [5, 50])
 
@@ -410,40 +410,40 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_apply_dict_single_range(self):
-        from repoze.catalog import Range
+        from repoze.catalog import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.apply({'query': Range(1,2)})
+        result = index.apply({'query': RangeValue(1,2)})
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
 
     def test_apply_dict_operator_or_with_ranges(self):
-        from repoze.catalog import Range
+        from repoze.catalog import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.apply({'query':[Range(1,1), Range(1,2)],
+        result = index.apply({'query':[RangeValue(1,1), RangeValue(1,2)],
                               'operator':'or'})
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
 
     def test_apply_dict_operator_and_with_ranges_and(self):
-        from repoze.catalog import Range
+        from repoze.catalog import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.apply({'query':[Range(1,1), Range(1,2)],
+        result = index.apply({'query':[RangeValue(1,1), RangeValue(1,2)],
                               'operator':'and'})
         result = sorted(list(result))
         self.assertEqual(result, [5, 50])
 
     def test_apply_dict_operator_and_with_ranges_or(self):
-        from repoze.catalog import Range
+        from repoze.catalog import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.apply({'query':[Range(1,1), Range(1,2)],
+        result = index.apply({'query':[RangeValue(1,1), RangeValue(1,2)],
                               'operator':'or'})
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
@@ -474,20 +474,20 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_apply_dict_operator_or_with_int_and_range_or(self):
-        from repoze.catalog import Range
+        from repoze.catalog import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.apply({'query':[1, Range(1,2)], 'operator':'or'})
+        result = index.apply({'query':[1, RangeValue(1,2)], 'operator':'or'})
         result = sorted(list(result))
         self.assertEqual(result, [2,5,50])
 
     def test_apply_dict_operator_or_with_int_and_range_and(self):
-        from repoze.catalog import Range
+        from repoze.catalog import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.apply({'query':[1, Range(1,2)], 'operator':'and'})
+        result = index.apply({'query':[1, RangeValue(1,2)], 'operator':'and'})
         result = sorted(list(result))
         self.assertEqual(result, [5,50])
 

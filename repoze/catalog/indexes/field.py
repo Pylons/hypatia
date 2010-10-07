@@ -8,7 +8,7 @@ from zope.index.field import FieldIndex
 
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
-from repoze.catalog import Range
+from repoze.catalog import RangeValue
 
 _marker = []
 
@@ -201,7 +201,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def search(self, queries, operator='or'):
         sets = []
         for query in queries:
-            if isinstance(query, Range):
+            if isinstance(query, RangeValue):
                 query = query.as_tuple()
             else:
                 query = (query, query)
@@ -224,7 +224,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def apply(self, query):
         if isinstance(query, dict):
             val = query['query']
-            if isinstance(val, Range):
+            if isinstance(val, RangeValue):
                 val = [val]
             elif not isinstance(val, (list, tuple)):
                 val = [val]
@@ -233,7 +233,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         else:
             if isinstance(query, tuple) and len(query) == 2:
                 # b/w compat stupidity; this needs to die
-                query = Range(*query)
+                query = RangeValue(*query)
                 query = [query]
             elif not isinstance(query, (list, tuple)):
                 query = [query]
@@ -245,15 +245,15 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         return self.apply(value)
 
     def applyNotEq(self, not_value):
-        all = self.apply(Range(None, None))
+        all = self.apply(RangeValue(None, None))
         r = self.apply((not_value, not_value))
         return self.family.IF.difference(all, r)
 
     def applyGe(self, min_value):
-        return self.apply(Range(min_value, None))
+        return self.apply(RangeValue(min_value, None))
 
     def applyLe(self, max_value):
-        return self.apply(Range(None, max_value))
+        return self.apply(RangeValue(None, max_value))
 
     def applyIn(self, values):
         queries = list(values)
