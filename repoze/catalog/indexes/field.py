@@ -261,6 +261,12 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     applyAny = applyIn
 
+    def applyRange(self, start, end, excludemin=False, excludemax=False):
+        return self.family.IF.multiunion(
+            self._fwd_index.values(
+                start, end, excludemin=excludemin, excludemax=excludemax)
+        )
+
 def nsort(docids, rev_index):
     for docid in docids:
         try:

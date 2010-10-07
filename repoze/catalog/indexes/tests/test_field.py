@@ -563,6 +563,34 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [])
 
+    def test_applyRange_inclusive_inclusive(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyRange(3, 7)
+        result = sorted(list(result))
+        self.assertEqual(result, [1, 3, 4, 8, 9])
+
+    def test_applyRange_inclusive_exclusive(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyRange(3, 7, excludemax=True)
+        result = sorted(list(result))
+        self.assertEqual(result, [1, 3, 4, 8])
+
+    def test_applyRange_exclusive_inclusive(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyRange(3, 7, excludemin=True)
+        result = sorted(list(result))
+        self.assertEqual(result, [3, 4, 8, 9])
+
+    def test_applyRange_exclusive_exclusive(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyRange(3, 7, excludemin=True, excludemax=True)
+        result = sorted(list(result))
+        self.assertEqual(result, [3, 4, 8])
+
 class Test_fwscan_wins(unittest.TestCase):
 
     def _callFUT(self, limit, rlen, numdocs):
