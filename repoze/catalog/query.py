@@ -20,6 +20,9 @@ class Query(object):
     """
     Base class for all elements that make up queries.
     """
+    __parent__ = None
+    __name__ = None
+
     def __and__(self, right):
         self._check_type("set intersection", right)
         return Intersection(self, right)
@@ -130,7 +133,6 @@ class Ge(Comparator):
         index = self.get_index(catalog)
         return index.applyGe(self.value)
 
-
 class Le(Comparator):
     """Less (or equal) query.
 
@@ -162,6 +164,24 @@ class All(Comparator):
 
 class Range(Comparator):
     """ Index value falls within a range. """
+    @classmethod
+    def fromGTLT(self, start, end):
+        assert isinstance(start, (Gt, Ge))
+        if isinstance(start, Gt):
+            start_exclusive = True
+        else:
+            start_exclusive = False
+
+        assert isinstance(end, (Lt, Le))
+        if isinstance(end, Lt):
+            end_exclusive = True
+        else:
+            end_exclusive = False
+
+        assert start.index_name == end.index_name
+        return Range(start.index_name, start.value, end.value,
+                     start_exclusive, end_exclusive)
+
     def __init__(self, index_name, start, end,
                  start_exclusive=False, end_exclusive=False):
         self.index_name = index_name
@@ -200,12 +220,34 @@ class Operator(Query):
         self.left = left
         self.right = right
 
+    def _set_left(self, left):
+        if left is not None:
+            left.__parent__ = self
+            left.__name__ = 'left'
+        self._left = left
+
+    def _get_left(self):
+        return self._left
+
+    left = property(_get_left, _set_left)
+
+    def _set_right(self, right):
+        if right is not None:
+            right.__parent__ = self
+            right.__name__ = 'right'
+        self._right = right
+
+    def _get_right(self):
+        return self._right
+
+    right = property(_get_right, _set_right)
+
     def __str__(self):
         return type(self).__name__
 
     def iter_children(self):
-        yield self.left
-        yield self.right
+        yield self._left
+        yield self._right
 
 class Union(Operator):
     """Union of two result sets."""
@@ -447,6 +489,74 @@ def _group_any_and_all(tree):
     index, values = visit(tree)
     return group(tree, index, values)
 
+def _make_ranges(tree):
+    starts = {}
+    ends = {}
+    def visit(node):
+        if isinstance(node, (Gt, Ge)):
+            starts[node.index_name] = node
+            return node
+        elif isinstance(node, (Lt, Le)):
+            ends[node.index_name] = node
+            return node
+        elif not isinstance(node, Operator):
+            return node
+
+        is_intersection = isinstance(node, Intersection)
+
+        node.left = visit(node.left)
+        if not is_intersection:
+            starts.clear()
+            ends.clear()
+
+        node.right = visit(node.right)
+        if not is_intersection:
+            starts.clear()
+            ends.clear()
+            return node
+
+        for index_name in starts:
+            if index_name not in ends:
+                continue
+            start = starts.pop(index_name)
+            end = ends.pop(index_name)
+            gtlt = Range.fromGTLT(start, end)
+
+            if start.__parent__ is end.__parent__ is node:
+                return gtlt
+
+            if start.__parent__ is node:
+                child = start
+                nephew = end
+            else:
+                child = end
+                nephew = start
+
+            if child.__name__ == 'left':
+                node.left = gtlt
+            else:
+                node.right = gtlt
+
+            brother = nephew.__parent__
+            if nephew.__name__ == 'left':
+                other_nephew = brother.right
+            else:
+                other_nephew = brother.left
+            setattr(brother.__parent__, brother.__name__, other_nephew)
+
+            # Since we check each time, at most there can be only one new
+            # match
+            break
+
+        return node
+
+    return visit(tree)
+
+def _optimize_query(tree):
+    tree = _group_any_and_all(tree)
+    tree = _make_ranges(tree)
+    return tree
+
 def _print_ast(expr): #pragma NO COVERAGE
     """
     Useful method for visualizing AST trees while debugging.
@@ -465,4 +575,4 @@ def parse_query(expr, names=None):
     """
     if names is None:
         names = {}
-    return _group_any_and_all(_AstQuery(expr, names).query)
+    return _optimize_query(_AstQuery(expr, names).query)

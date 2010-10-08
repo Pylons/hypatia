@@ -262,6 +262,22 @@ class TestRange(ComparatorTestBase):
         inst = self._makeOne('index', 0, 5, True, True)
         self.assertEqual(str(inst), "0 < index < 5")
 
+    def test_from_gtlt(self):
+        from repoze.catalog.query import Ge
+        from repoze.catalog.query import Le
+        gt = Ge('index', 0)
+        lt = Le('index', 5)
+        inst = self._getTargetClass().fromGTLT(gt, lt)
+        self.assertEqual(str(inst), "0 <= index <= 5")
+
+    def test_from_gtlt_exclusive(self):
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Lt
+        gt = Gt('index', 0)
+        lt = Lt('index', 5)
+        inst = self._getTargetClass().fromGTLT(gt, lt)
+        self.assertEqual(str(inst), "0 < index < 5")
+
 class OperatorTestBase(unittest.TestCase):
     def _makeOne(self, left, right):
         return self._getTargetClass()(left, right)
@@ -272,8 +288,11 @@ class TestOperator(OperatorTestBase):
         return cls
 
     def test_iter_children(self):
-        o = self._makeOne('left', 'right')
-        self.assertEqual(list(o.iter_children()), ['left', 'right'])
+        class Dummy(object):
+            pass
+        left, right = Dummy(), Dummy()
+        o = self._makeOne(left, right)
+        self.assertEqual(list(o.iter_children()), [left, right])
 
 class TestUnion(OperatorTestBase):
     def _getTargetClass(self):
@@ -619,6 +638,74 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
+
+    def test_convert_gtlt_to_range(self):
+        from repoze.catalog.query import Range
+        op = self._call_fut("a < 1 and a > 0")
+        self.failUnless(isinstance(op, Range))
+        self.assertEqual(op.start, 0)
+        self.assertEqual(op.end, 1)
+        self.assertEqual(op.start_exclusive, True)
+        self.assertEqual(op.end_exclusive, True)
+
+    def test_convert_gtlt_to_range_spread_out(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Range
+        op = self._call_fut("a <= 1 and b == 2 and c > 3 and a >= -1")
+        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.right, Range))
+        self.failUnless(isinstance(op.left, Intersection))
+        self.failUnless(isinstance(op.left.left, Eq))
+        self.failUnless(isinstance(op.left.right, Gt))
+
+    def test_convert_gtlt_to_range_spread_out2(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Range
+        op = self._call_fut("a > 1 and b == 2 and a <= -1 and c > 3")
+        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.right, Gt))
+        self.failUnless(isinstance(op.left, Intersection))
+        self.failUnless(isinstance(op.left.right, Range))
+        self.failUnless(isinstance(op.left.left, Eq))
+
+    def test_convert_gtlt_to_range_spread_out3(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Range
+        op = self._call_fut("b == 2 and a > -1 and (a <= 1 and c > 3)")
+        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.right, Intersection))
+        self.failUnless(isinstance(op.right.left, Range))
+        self.failUnless(isinstance(op.right.right, Gt))
+        self.failUnless(isinstance(op.left, Eq))
+
+    def test_dont_convert_gtlt_to_range_with_or(self):
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Lt
+        from repoze.catalog.query import Union
+        op = self._call_fut("a > 0 or a < 5")
+        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op.left, Gt))
+        self.failUnless(isinstance(op.right, Lt))
+
+    def test_dont_convert_gtlt_to_range_with_or_spread_out(self):
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Lt
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Union
+        op = self._call_fut("a > 0 and b > 0 or a < 5 and b < 5")
+        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op.left, Intersection))
+        self.failUnless(isinstance(op.left.left, Gt))
+        self.failUnless(isinstance(op.left.right, Gt))
+        self.failUnless(isinstance(op.right, Intersection))
+        self.failUnless(isinstance(op.right.left, Lt))
+        self.failUnless(isinstance(op.right.right, Lt))
 
 class DummyCatalog(object):
     def __init__(self, index=None):
