@@ -133,11 +133,11 @@ class Catalog(PersistentMapping):
             return numdocs, result
 
     def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
-              reverse=False):
+              reverse=False, names=None):
         try:
             from repoze.catalog.query import parse_query
             if isinstance(queryobject, basestring):
-                queryobject = parse_query(queryobject)
+                queryobject = parse_query(queryobject, names)
         except ImportError: #pragma NO COVERAGE
             pass
         results = queryobject.apply(self)

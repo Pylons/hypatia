@@ -25,9 +25,10 @@ class TestQueryWithDSL(unittest.TestCase):
             "(allowed == 'a' and allowed == 'b' and "
             "(name == 'name1' or name == 'name2' or name == 'name3' or "
             "name == 'name4' or name == 'name5') - (title == 'title3')) and "
-            "'body' in text"
+            "body in text"
         )
-        numdocs, result = catalog.query(query, sort_index='name', limit=5)
+        numdocs, result = catalog.query(
+            query, sort_index='name', limit=5, names=dict(body='body'))
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
 
