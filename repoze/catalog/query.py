@@ -12,7 +12,6 @@
 #
 ##############################################################################
 
-import ast
 import BTrees
 import sys
 
@@ -289,6 +288,15 @@ class Difference(Operator):
             else:
                 results = self.family.IF.difference(left, right)
         return results
+
+def parse_query(expr, names=None):
+    """
+    Parses the given expression string into a catalog query.  The `names` dict
+    provides local variable names that can be used in the expression.
+    """
+    if names is None:
+        names = {}
+    return _optimize_query(_AstQuery(expr, names).query)
 
 class _AstQuery(object):
     def __init__(self, expr, names):
@@ -568,11 +576,7 @@ def _print_ast(expr): #pragma NO COVERAGE
             visit(child, level + 1)
     visit(tree, 0)
 
-def parse_query(expr, names=None):
-    """
-    Parses the given expression string into a catalog query.  The `names` dict
-    provides local variable names that can be used in the expression.
-    """
-    if names is None:
-        names = {}
-    return _optimize_query(_AstQuery(expr, names).query)
+try:
+    import ast
+except ImportError:
+    del parse_query, _AstQuery, _optimize_query, _print_ast

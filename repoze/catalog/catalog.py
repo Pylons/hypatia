@@ -6,7 +6,6 @@ from zope.interface import implements
 
 from repoze.catalog.interfaces import ICatalog
 from repoze.catalog.interfaces import ICatalogIndex
-from repoze.catalog.query import parse_query
 
 class Catalog(PersistentMapping):
 
@@ -74,7 +73,7 @@ class Catalog(PersistentMapping):
             sort_type = query.pop('sort_type')
         if 'index_query_order' in query:
             index_query_order = query.pop('index_query_order')
-            
+
         if index_query_order is None:
             # unordered query (use apply)
             results = []
@@ -135,8 +134,12 @@ class Catalog(PersistentMapping):
 
     def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
               reverse=False):
-        if isinstance(queryobject, basestring):
-            queryobject = parse_query(queryobject)
+        try:
+            from repoze.catalog.query import parse_query
+            if isinstance(queryobject, basestring):
+                queryobject = parse_query(queryobject)
+        except ImportError:
+            pass
         results = queryobject.apply(self)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
 
@@ -168,7 +171,7 @@ class FileStorageCatalogFactory(CatalogFactory):
 
     def __del__(self):
         self.db.close()
-        
+
 class ConnectionManager(object):
     def __call__(self, conn):
         self.conn = conn

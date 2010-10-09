@@ -1,6 +1,6 @@
 import unittest
 
-class TestFunctional(unittest.TestCase):
+class TestQueryWithDSL(unittest.TestCase):
     def test_it(self):
         from repoze.catalog.catalog import Catalog
         from repoze.catalog.indexes.field import CatalogFieldIndex
@@ -30,6 +30,11 @@ class TestFunctional(unittest.TestCase):
         numdocs, result = catalog.query(query, sort_index='name', limit=5)
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
+
+try:
+    import ast
+except ImportError:
+    del TestQueryWithDSL
 
 class Content(object):
     def __init__(self, name, title, text, allowed):

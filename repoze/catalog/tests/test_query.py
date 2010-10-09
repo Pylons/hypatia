@@ -707,6 +707,11 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op.right.left, Lt))
         self.failUnless(isinstance(op.right.right, Lt))
 
+try:
+    import ast
+except ImportError:
+    del Test_parse_query
+
 class DummyCatalog(object):
     def __init__(self, index=None):
         if index is None:
