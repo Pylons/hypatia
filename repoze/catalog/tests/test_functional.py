@@ -33,7 +33,7 @@ class TestQueryWithDSL(unittest.TestCase):
 
 try:
     import ast
-except ImportError:
+except ImportError: #pragma NO COVERAGE
     del TestQueryWithDSL
 
 class Content(object):

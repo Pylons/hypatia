@@ -709,7 +709,7 @@ class Test_parse_query(unittest.TestCase):
 
 try:
     import ast
-except ImportError:
+except ImportError: #pragma NO COVERAGE
     del Test_parse_query
 
 class DummyCatalog(object):

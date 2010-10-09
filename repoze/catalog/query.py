@@ -578,5 +578,5 @@ def _print_ast(expr): #pragma NO COVERAGE
 
 try:
     import ast
-except ImportError:
+except ImportError: #pragma NO COVERAGE
     del parse_query, _AstQuery, _optimize_query, _print_ast

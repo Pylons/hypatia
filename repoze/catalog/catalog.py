@@ -138,7 +138,7 @@ class Catalog(PersistentMapping):
             from repoze.catalog.query import parse_query
             if isinstance(queryobject, basestring):
                 queryobject = parse_query(queryobject)
-        except ImportError:
+        except ImportError: #pragma NO COVERAGE
             pass
         results = queryobject.apply(self)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
