@@ -640,67 +640,323 @@ def _group_any_and_all(tree):
     return group(tree, index, values)
 
 def _make_ranges(tree):
-    starts = {}
-    ends = {}
-    def visit(node):
+    """
+    This is a query optimization which looks for pairs of Gt/Ge and Lt/Le
+    queries for the same index, joined by intersection. So, for example, this
+    query:
+
+      Ge(a, 0) & Le(a, 5)
+
+    Can be rewritten as:
+
+      Range(a, 0, 5, False, False)
+
+    Here we take what would be two seperate index queries and an intersection
+    and replace with a single range query on that index.
+
+    The start and end queries for a pair do not have to be immediately
+    adjacent to each other, they need only be in the same grouping of
+    intersections. For example this query:
+
+      Ge(a, 0) & Eq(b, 7) & Lt(a, 5)
+
+    Will be rewritten as:
+
+      Eq(b, 7) & Range(a, 0, 5, False, True)
+
+    This query will not be rewritten because the start and end queries are
+    separated by a union operator:
+
+      Ge(a, 0) | Eq(b, 7) & Lt(a, 5)
+
+    Potential range boundaries are discovered by performing a depth first
+    traversal of the query tree.  At each node, there is a check to see if
+    the current node could potentially form half of a range query.  Range
+    boundaries are collected by index_name and stored in `starts` and `ends`
+    dictionaries that will be accessible at higher nodes.  Whenever an operator
+    node other than an intersection is traversed, potential range boundaries
+    are forgotten since we only want to create ranges from subqueries that are
+    connected to each other via intersection operations.
+
+    At each node intersection node, after potential range boundaries have been
+    collected from the left and right subtrees, the potential boundaries are
+    checked for any matching pairs.  A matching pair is comprised of Gt or Ge
+    and a Lt or Le which are for the same index.  When a matching pair is found
+    then the tree must be transformed.  There are three potential cases which
+    must be handled each in a different way.
+
+    In the first and easier case, the range boundary pair nodes are the
+    immediate left and right children of the current node.  In this case, the
+    current node can simply be replaced by a range.  For example, this query:
+
+        >>> expr = "A > 0 and A < 5 and B ==7"
+        >>> _AstParser(expr, {}).query.print_tree()
+        Intersection
+          Intersection
+            A > 0
+            A < 5
+          B == 7
+
+    Is transformed to:
+
+        >>> expr = "A > 0 and A < 5 and B ==7"
+        >>> parse_query(expr).print_tree()
+        Intersection
+          0 < A < 5
+          B == 7
+
+    The nested Intersection was replaced with the range query.
+
+    In the second, somewhat more complicated case, one of the pair is a
+    descendant of the current node but not an immediate child. We refer to the
+    descendant node half of the pair as the nephew and that node's parent,
+    which we know must be an intersection node, as the brother. Don't worry if
+    the nephew/brother nomenclature doesn't make complete sense. We need to
+    refer to them as something. We could have called them Fre and Barney. To
+    help visualize, consider this unoptimized query tree:
+
+        >>> expr = "A > 0 and (A < 5 and B == 7)"
+        >>> _AstQuery(expr, {}).query.print_tree()
+        Intersection
+          A > 0           <-- child
+          Intersection    <-- brother
+            A < 5         <-- nephew
+            B == 7        <-- other_nephew
+
+    When the match is found between the child and nephew, we now need to
+    transform the tree in such a way that the expression remains equivalent but
+    with two fewer nodes since we are trading one intersection two comparisons
+    for a single range query.  In this case we can replace the child with the
+    new range query and then promote the other_nephew up to replace the
+    Intersection of which he was one half, since the other half of the
+    intersection has been absorbed into the range query.  The transformed tree
+    looks like this:
+
+        >>> parse_query(expr).print_tree()
+        Intersection
+          0 < A < 5
+          B == 7
+
+    The third, trickiest case is when neither bound is a child of the current
+    node, but both lie further down in the tree.  We know that one bound is in
+    the left subtree and one bound is in the right subtree, otherwise we would
+    have matched them before getting to the current node.  As an example, let's
+    take a look at this unoptimized tree:
+
+        >>> expr = "(A > 0 and B == 2) and (A < 5 and C == 3)"
+        >>> _AstParser(expr, {}).query.print_tree()
+        Intersection
+          Intersection
+            A > 0       <-- start
+            B == 2      <-- siblings[0]
+          Intersection
+            A < 5       <-- end
+            C == 3      <-- siblings[1]
+
+    In this case, we are not going to find the match between start and end
+    until we process the root node of our tree. Both bounds are in subtrees of
+    the root node, but are not immediate children. We need to be a bit more
+    drastic in how we rearrange the tree. To solve this problem, we group
+    together the bounds' siblings and combine them in a new intersection. We
+    then replace the parent of start with the new range and we replace the
+    parent of end with the intersection of the two siblings. (In this example,
+    both start and end share the same grandparent node, but this does not have
+    to be the case generally.)  The transformed tree looks like this:
+
+        >>> parse_query(expr).print_tree()
+        Intersection
+          0 < A < 5
+          Intersection
+            B == 2
+            C == 3
+
+    One other complication remains.  To illustrate, consider this expression:
+
+        >>> expr = "(A > 0 and B > 0 and C > 0) and (A < 5 and B < 5 and C < 5)"
+        >>> _AstParser(expr, {}).query.print_tree()
+        Intersection
+          Intersection
+            Intersection
+              A > 0
+              B > 0
+            C > 0
+          Intersection
+            Intersection
+              A < 5
+              B < 5
+            C < 5
+
+    In this case, ranges for A, B, and C are all going to be found at the root
+    node and not before.  The order the ranges are processed in depends on dict
+    ordering, but let's presume for a moment that we end up processing A first.
+    Our tree, after making the range for A now looks like:
+
+        Intersection
+          Intersection
+            0 < A < 5
+            C > 0
+          Intersection
+            Intersection  <-- nearest common ancestor to bounds of B
+              B > 0
+              B < 5
+            C < 5
+
+    You can see that the lower bound for B has now been moved over to a
+    completely different branch of the tree. Had this tree looked like this
+    initially, range B would have been processed as the first case, described
+    above, long before we ever got to the current node.. Code which now tries
+    to process range B as the third case will break because the relationship
+    between the bounds has changed. We can detect this case, though, by
+    computing the nearest common ancestor of our bounds before attempting to
+    perform any transformations. If the nearest common ancestor is not the
+    current node, we know that a transformation performed for another range,
+    in this case A, has rearranged the tree.  In that case, we can bypass the
+    current processing and start a new traversal at the nearest common
+    ancestor, replacing the nearest common ancestor with the result of the
+    traversal.  In the example, above, then, assuming that B is processed next,
+    we see that processing the nearest common ancestor to the bounds of B will
+    lead us to C the first case, where both bounds are immediate children of
+    the node being processed.  After performing the transformation for range B,
+    our tree now looks like:
+
+        Intersection
+          Intersection
+            0 < A < 5
+            C > 0
+          Intersection
+            0 < B < 5
+            C < 5
+
+    We can see now that when we go to process range C, the nearest common
+    ancestor of the bounds of C is going to be the root node, so C will be
+    processed using the third case where neither bound is an immediate child
+    of the node being processed.  The final optimized tree looks like:
+
+        >>> parse_query(expr).print_tree()
+        Intersection
+          0 < C < 5
+          Intersection
+            0 < A < 5
+            0 < B < 5
+
+    """
+    def visit(node, starts, ends):
+        # Are those nodes potential matches?
         if isinstance(node, (Gt, Ge)):
             starts[node.index_name] = node
             return node
         elif isinstance(node, (Lt, Le)):
             ends[node.index_name] = node
             return node
+
+        # If a leaf node and not an upper or lower bound, nothing to do.
         elif not isinstance(node, Operator):
             return node
 
-        is_intersection = isinstance(node, Intersection)
+        # Left and right subtrees shouldn't know about each other's potential
+        # matches, because we always want to process matches at the nearest
+        # common ancestor to both nodes.
+        left_starts = starts.copy()
+        left_ends = ends.copy()
+        node.left = visit(node.left, left_starts, left_ends)
 
-        node.left = visit(node.left)
-        if not is_intersection:
-            starts.clear()
-            ends.clear()
+        right_starts = starts.copy()
+        right_ends = ends.copy()
+        node.right = visit(node.right, right_starts, right_ends)
 
-        node.right = visit(node.right)
-        if not is_intersection:
+        if not isinstance(node, Intersection):
             starts.clear()
             ends.clear()
             return node
 
-        for index_name in starts:
+        # Combine potential matches from left and right subtrees so we can
+        # look for matches.
+        starts.update(left_starts)
+        starts.update(right_starts)
+        ends.update(left_ends)
+        ends.update(right_ends)
+        for index_name in starts.keys():
             if index_name not in ends:
                 continue
+
+            # Found a match
             start = starts.pop(index_name)
             end = ends.pop(index_name)
+
+            # Tree may have gotten rearranged such that current node is no
+            # longer the nearest common ancestor of these nodes. If this is
+            # the case, process the subtree rooted at the nearest common
+            # ancestor of the matching nodes and replace nce with the result.
+            nce = _nearest_common_ancestor(start, end)
+            if nce is not node:
+                setattr(nce.__parent__, nce.__name__, visit(nce, {}, {}))
+                continue
+
             gtlt = Range.fromGTLT(start, end)
 
+            # Case 1: Both bounds are immediate children of this node
             if start.__parent__ is end.__parent__ is node:
                 return gtlt
 
-            if start.__parent__ is node:
-                child = start
-                nephew = end
-            else:
-                child = end
-                nephew = start
+            # Case 2: One bound is an immediate child of this node, and one
+            # child is a descendent
+            elif start.__parent__ is node or end.__parent__ is node:
+                if start.__parent__ is node:
+                    child = start
+                    nephew = end
+                else:
+                    child = end
+                    nephew = start
 
-            if child.__name__ == 'left':
-                node.left = gtlt
-            else:
-                node.right = gtlt
+                if child.__name__ == 'left':
+                    node.left = gtlt
+                else:
+                    node.right = gtlt
 
-            brother = nephew.__parent__
-            if nephew.__name__ == 'left':
-                other_nephew = brother.right
-            else:
-                other_nephew = brother.left
-            setattr(brother.__parent__, brother.__name__, other_nephew)
+                brother = nephew.__parent__
+                if nephew.__name__ == 'left':
+                    other_nephew = brother.right
+                else:
+                    other_nephew = brother.left
+                setattr(brother.__parent__, brother.__name__, other_nephew)
 
-            # Since we check each time, at most there can be only one new
-            # match
-            break
+            # Case 3: Neither bound is an immediate child of this node
+            else:
+                siblings = []
+                for bound in start, end:
+                    if bound.__name__ == 'left':
+                        siblings.append(bound.__parent__.right)
+                    else:
+                        siblings.append(bound.__parent__.left)
+                gtlt = Range.fromGTLT(start, end)
+                other = Intersection(*siblings)
+                start_parent = start.__parent__
+                end_parent = end.__parent__
+                setattr(start_parent.__parent__, start_parent.__name__, gtlt)
+                setattr(end_parent.__parent__, end_parent.__name__, other)
 
         return node
 
-    return visit(tree)
+    return visit(tree, {}, {})
+
+def _nearest_common_ancestor(n1, n2):
+    n1_ancestors = set([n1])
+    n2_ancestors = set([n2])
+    while n1.__parent__ is not None or n2.__parent__ is not None:
+        if n1 in n2_ancestors:
+            return n1
+        elif n2 in n1_ancestors:
+            return n2
+
+        if n1.__parent__ is not None:
+            n1 = n1.__parent__
+            n1_ancestors.add(n1)
+
+        if n2.__parent__ is not None:
+            n2 = n2.__parent__
+            n2_ancestors.add(n2)
+    assert n1 is n2, "Nodes are not part of same tree."
+    return n1
 
 def _optimize_query(tree):
     tree = _group_any_and_all(tree)

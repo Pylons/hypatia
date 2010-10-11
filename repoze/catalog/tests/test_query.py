@@ -663,41 +663,58 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.start_exclusive, True)
         self.assertEqual(op.end_exclusive, True)
 
-    def test_convert_gtlt_to_range_spread_out(self):
+    def test_convert_gtlt_child_left_nephew_left(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Range
+        op = self._call_fut("a > 0 and (a < 5 and b == 7)")
+        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.left, Range))
+        self.failUnless(isinstance(op.right, Eq))
+
+    def test_strange_gtlt_child_left_nephew_right(self):
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Range
+        op = self._call_fut("a > 0 and (b == 7 and a < 5)")
+        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.left, Range))
+        self.failUnless(isinstance(op.right, Eq))
+
+    def test_convert_gtlt_child_right_nephew_left(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Gt
         from repoze.catalog.query import Intersection
         from repoze.catalog.query import Range
-        op = self._call_fut("a <= 1 and b == 2 and c > 3 and a >= -1")
+        op = self._call_fut("a >= -1 and b == 2 and c > 3 and a <= 1")
         self.failUnless(isinstance(op, Intersection))
         self.failUnless(isinstance(op.right, Range))
         self.failUnless(isinstance(op.left, Intersection))
         self.failUnless(isinstance(op.left.left, Eq))
         self.failUnless(isinstance(op.left.right, Gt))
 
-    def test_convert_gtlt_to_range_spread_out2(self):
-        from repoze.catalog.query import Eq
-        from repoze.catalog.query import Gt
-        from repoze.catalog.query import Intersection
-        from repoze.catalog.query import Range
-        op = self._call_fut("a > 1 and b == 2 and a <= -1 and c > 3")
-        self.failUnless(isinstance(op, Intersection))
-        self.failUnless(isinstance(op.right, Gt))
-        self.failUnless(isinstance(op.left, Intersection))
-        self.failUnless(isinstance(op.left.right, Range))
-        self.failUnless(isinstance(op.left.left, Eq))
-
-    def test_convert_gtlt_to_range_spread_out3(self):
+    def test_convert_gtlt_both_descendants(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Gt
         from repoze.catalog.query import Intersection
         from repoze.catalog.query import Range
         op = self._call_fut("b == 2 and a > -1 and (a <= 1 and c > 3)")
         self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.left, Range))
+        self.failUnless(isinstance(op.right, Intersection))
+        self.failUnless(isinstance(op.right.left, Eq))
+        self.failUnless(isinstance(op.right.right, Gt))
+
+    def test_convert_gtlt_both_descendants_multiple_times(self):
+        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import Range
+        op = self._call_fut(
+            "(a > 0 and b > 0 and c > 0) and (a < 5 and b < 5 and c < 5)")
+        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op.left, Range))
         self.failUnless(isinstance(op.right, Intersection))
         self.failUnless(isinstance(op.right.left, Range))
-        self.failUnless(isinstance(op.right.right, Gt))
-        self.failUnless(isinstance(op.left, Eq))
+        self.failUnless(isinstance(op.right.right, Range))
 
     def test_dont_convert_gtlt_to_range_with_or(self):
         from repoze.catalog.query import Gt
@@ -722,10 +739,44 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op.right.left, Lt))
         self.failUnless(isinstance(op.right.right, Lt))
 
+class Test_nearest_common_ancestor(unittest.TestCase):
+    def _call_fut(self, n1, n2):
+        from repoze.catalog.query import _nearest_common_ancestor as fut
+        return fut(n1, n2)
+
+    def test_same_node(self):
+        o = Dummy()
+        self.assertEqual(self._call_fut(o, o), o)
+
+    def test_both_children(self):
+        root = Dummy()
+        a = Dummy()
+        a.__parent__ = root
+        b = Dummy()
+        b.__parent__ = root
+        self.assertEqual(self._call_fut(a, b), root)
+        self.assertEqual(self._call_fut(b, a), root)
+
+    def test_one_child_one_descendant_not_root(self):
+        root = Dummy()
+        a = Dummy()
+        a.__parent__ = root
+        b = Dummy()
+        b.__parent__ = a
+        c = Dummy()
+        c.__parent__ = a
+        d = Dummy()
+        d.__parent__ = c
+        self.assertEqual(self._call_fut(b, d), a)
+        self.assertEqual(self._call_fut(d, b), a)
+
 try:
     import ast
 except ImportError: #pragma NO COVERAGE
     del Test_parse_query
+
+class Dummy(object):
+    __parent__ = None
 
 class DummyCatalog(object):
     def __init__(self, index=None):
