@@ -219,27 +219,31 @@ class Operator(Query):
         self.left = left
         self.right = right
 
-    def _set_left(self, left):
-        if left is not None:
-            left.__parent__ = self
-            left.__name__ = 'left'
-        self._left = left
+    @apply
+    def left():
+        def _set_left(self, left):
+            if left is not None:
+                left.__parent__ = self
+                left.__name__ = 'left'
+            self._left = left
 
-    def _get_left(self):
-        return self._left
+        def _get_left(self):
+            return self._left
 
-    left = property(_get_left, _set_left)
+        return property(_get_left, _set_left)
 
-    def _set_right(self, right):
-        if right is not None:
-            right.__parent__ = self
-            right.__name__ = 'right'
-        self._right = right
+    @apply
+    def right():
+        def _set_right(self, right):
+            if right is not None:
+                right.__parent__ = self
+                right.__name__ = 'right'
+            self._right = right
 
-    def _get_right(self):
-        return self._right
+        def _get_right(self):
+            return self._right
 
-    right = property(_get_right, _set_right)
+        return property(_get_right, _set_right)
 
     def __str__(self):
         return type(self).__name__
