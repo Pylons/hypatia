@@ -625,6 +625,21 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])
 
+    def test_all_with_union(self):
+        # Regression test for earlier bug where:
+        #   a == 1 or a == 2 and a == 3
+        # was transformed into:
+        #   a any [1, 2, 3]
+        from repoze.catalog.query import All
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Union
+        op = self._call_fut("a == 1 or a == 2 and a == 3")
+        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op.left, Eq))
+        self.failUnless(isinstance(op.right, All))
+        self.assertEqual(op.right.index_name, 'a')
+        self.assertEqual(op.right.value, [2, 3])
+
     def test_difference(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Difference

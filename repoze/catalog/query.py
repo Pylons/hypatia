@@ -296,9 +296,56 @@ def parse_query(expr, names=None):
     """
     if names is None:
         names = {}
-    return _optimize_query(_AstQuery(expr, names).query)
+    return _optimize_query(_AstParser(expr, names).query)
 
-class _AstQuery(object):
+class _AstParser(object):
+    """
+    Uses Python's ast module to parse an expression into an abstract syntax
+    tree.  It then walks the tree and constructs a tree of Query objects.  Take
+    the following query:
+
+        >>> expr = "a == 1 or (b == 2 or b == 3)"
+
+    The ast for this expression looks like this:
+
+        >>> _print_ast(expr)
+        <_ast.Module object at 0xb7377d4c>
+          <_ast.Expr object at 0xb737e44c>
+            <_ast.BoolOp object at 0x88f13cc>
+              <_ast.And object at 0x88ec0ac>
+              <_ast.Compare object at 0x88f13ac>
+                <_ast.Name object at 0x88f13ec>
+                  <_ast.Load object at 0x88ea86c>
+                <_ast.Eq object at 0x88ece2c>
+                <_ast.Num object at 0x88f14cc>
+              <_ast.BoolOp object at 0x88f14ec>
+                <_ast.Or object at 0x88ec14c>
+                <_ast.Compare object at 0x88f154c>
+                  <_ast.Name object at 0x88f15ac>
+                    <_ast.Load object at 0x88ea86c>
+                  <_ast.Eq object at 0x88ece2c>
+                  <_ast.Num object at 0x88f15cc>
+                <_ast.Compare object at 0x88f162c>
+                  <_ast.Name object at 0x88f168c>
+                    <_ast.Load object at 0x88ea86c>
+                  <_ast.Eq object at 0x88ece2c>
+                  <_ast.Num object at 0x88f16ac>
+
+    _ast.Module is always the root of any tree returned by the ast parser. It
+    is a requirement for _AstParser that the _ast.Module node contain only a
+    single child node of type _ast.Expr, which represents the expression we
+    are trying to transform into a query. The _ast.Expr node will always only
+    have a single child which is the root of the expression tree, ie
+    _ast.BoolOp in the above example.
+
+    The walk method is the driver for constructing the query tree.  It performs
+    a depth first traversal of the ast.  For each node in the ast it checks to
+    see if we have a method for processing that node type.  Node processors are
+    all named 'process_NodeType' where NodeType is the name of the class of the
+    ast node, ie type(node).__name__.  Each processor method is passed the
+    current node and it's children which have already been processed.  In this
+    way the query tree is built from the ast from the bottom up.
+    """
     def __init__(self, expr, names):
         self.names = names
         statements = ast.parse(expr).body
@@ -317,12 +364,12 @@ class _AstQuery(object):
     def walk(self, tree):
         def visit(node):
             children = [visit(child) for child in ast.iter_child_nodes(node)]
-            name = 'process_%s' % node.__class__.__name__
+            name = 'process_%s' % type(node).__name__
             processor = getattr(self, name, None)
             if processor is None:
                 raise ValueError(
                     "Unable to parse expression.  Unhandled expression "
-                    "element: %s" % node.__class__.__name__
+                    "element: %s" % type(node).__name__
                 )
             return processor(node, children)
         return visit(tree)
@@ -473,7 +520,66 @@ class _AstQuery(object):
         return node
 
 def _group_any_and_all(tree):
+    """
+    This is a query optimization which looks for subtrees of two or more
+    Eq queries for the same index all joined by union or intersection:
+
+        Eq(a, 1) | Eq(a, 2) | etc...
+
+    or:
+
+        Eq(a, 1) & Eq(a, 2) & etc...
+
+    In these cases, instead of performing N individual Eq queries and combining
+    the result sets along the way via union or intersection operations, we can
+    rewrite these subexpressions as:
+
+        Any(a, [1, 2])
+
+    or:
+
+        All(a, [1, 2])
+
+    Take, for example, the expression:
+
+        >>> expr = "(a == 1 or a == 2 or a == 3) and b == 1"
+
+    Before optimization the query tree looks like this:
+
+        >>> query._AstParser(expr, {}).query.print_tree()
+        Intersection
+          Union
+            Union
+              a == 1
+              a == 2
+            a == 3
+          b == 1
+
+    And after optimization:
+
+        >>> query.parse_query(expr).print_tree()
+        Intersection
+          a any [1, 2, 3]
+          b == 1
+
+    So we've taken three separate index queries for index a, joined by two
+    set union operations, and replaced this with a single Any query for the
+    same index.
+
+    Note that tree transformations are done in place.  The root node of the
+    tree is returned since there is a chance that the root node needs to be
+    replaced.
+    """
     def group(node, index_name, values):
+        """
+        Called on each node in the tree which might be replaceable.  `node` is
+        the candidate for replacement.  `index_name` is the name of the index
+        for all descendant Eq queries and `values` is a list of the values for
+        the descendant Eq queries.  If there is more than one value and the
+        type of the current node is Union or Intersection, then we can replace
+        the subexpression represented by this node with a single Any or All
+        query.
+        """
         if len(values) > 1:
             if isinstance(node, Intersection):
                 return All(index_name, values)
@@ -482,19 +588,55 @@ def _group_any_and_all(tree):
         return node
 
     def visit(node):
+        """
+        Performs a recursive depth first tree traversal attempting to collect
+        values for Eq comparators which are joined together by unions or
+        intersections. Returns a tuple: (op_type, index_name, values) where
+        `op_type` is the type of all operators in the subexpression
+        represented by the visited node, `index_name` is the name of the index
+        used in all Eq queries in the subexpression represented by the visited
+        node, and `values` is the collection of values for each Eq query in
+        the subexpression. If the subexpression contains mixed operators,
+        comparators other than Eq or mixed index_names, the return value will
+        be (None, None, []), meaning that no grouping could be done.
+
+        If a visited node is an Eq comparator, then we start a new potential
+        grouping by returning (None, node.index_name, node.value).  `op_type`
+        is None because we don't know, yet, what, if any, operator contains the
+        current node.  This will be filled in at higher level operator nodes.
+
+        If the visited node is an operator node, then we recursively visit the
+        left and right subtrees and look at the results.  If visiting a subtree
+        returns None for `op_type` then we fill in the current operation type
+        for the subtree.  If `index_name` and `op_type` match for both subtrees
+        and if both subtree op_types match the current node's op_type, then we
+        may group both subtrees together and return the common `op_type`,
+        `index_name` and the values collected from any Eq nodes in either
+        subtree.  Otherwise, if not able to group the two subtrees together,
+        `group` is called on each subtree, attempting to replace each subtree
+        with an Any or All query if possible.
+        """
         if isinstance(node, Operator):
-            left_index, left_values = visit(node.left)
-            right_index, right_values = visit(node.right)
-            if left_index != right_index:
+            this_op = type(node)
+            left_op, left_index, left_values = visit(node.left)
+            if left_op is None:
+                left_op = this_op
+            right_op, right_index, right_values = visit(node.right)
+            if right_op is None:
+                right_op = this_op
+            if left_index != right_index or not (
+                left_op == right_op == this_op):
                 node.left = group(node.left, left_index, left_values)
                 node.right = group(node.right, right_index, right_values)
-                return None, []
-            return left_index, left_values + right_values
+                return None, None, []
+            return this_op, left_index, left_values + right_values
         elif isinstance(node, Eq):
-            return node.index_name, [node.value]
-        return None, []
+            return None, node.index_name, [node.value]
+        return None, None, []
 
-    index, values = visit(tree)
+    # Must call group on the root node, in case the root node needs to be
+    # replaced.
+    op, index, values = visit(tree)
     return group(tree, index, values)
 
 def _make_ranges(tree):
@@ -579,4 +721,4 @@ def _print_ast(expr): #pragma NO COVERAGE
 try:
     import ast
 except ImportError: #pragma NO COVERAGE
-    del parse_query, _AstQuery, _optimize_query, _print_ast
+    del parse_query, _AstParser, _optimize_query, _print_ast
