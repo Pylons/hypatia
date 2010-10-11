@@ -932,7 +932,6 @@ def _make_ranges(tree):
                         siblings.append(bound.__parent__.right)
                     else:
                         siblings.append(bound.__parent__.left)
-                gtlt = Range.fromGTLT(start, end)
                 other = Intersection(*siblings)
                 start_parent = start.__parent__
                 end_parent = end.__parent__
