@@ -1,19 +1,122 @@
 """
-"""
-##############################################################################
-#
-# Copyright (c) 2008 Zope Foundation and Contributors.
-# All Rights Reserved.
-#
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-#
-##############################################################################
+This module provides a means of constructing query objects which can be used to
+query a catalog.  Query objects can be composed programmatically or can be
+parsed from a string using a Pythonic DSL.
 
+Query objects are of two types: comparators and operators.  A comparator
+performs a single query on a single index.  Operators allow results from
+individual queries to be combined using set operations.  For example::
+
+    query = Intersection(Eq('author', 'crossi'), Contains('body', 'biscuits'))
+
+This will query two indexes, author and body, and then return all documents
+which satisfy both queries. All query objects may be combined using supported
+set operators, so the above query could also have been written::
+
+    query = Eq('author', 'crossi') & Contains('body', 'biscuits')
+
+Query objects may also be created by parsing a query string.  The query parser
+uses Python's internal code parser to parse query expression strings, so the
+syntax is just like Python::
+
+    query = parse_query("author == 'crossi' and 'biscuits' in body")
+
+The query parser allows name substitution in expressions.  Names are resolved
+using a dict passed into `parse_query`::
+
+    author = request.params.get("author")
+    word = request.params.get("search_term")
+    query = parse_query("author == author and word in body", names=locals())
+
+Unlike true Python expressions, the name of the index must always be on the
+left side of a comparator, except for with `in`, in which case the index name
+must be on the right side.  The following, for example, would raise an
+exception::
+
+    query = parse_query("'crossi' == author")
+
+Note that not all index types support all comparators. An attempt to perform
+a query using a comparator that is not supported by the index being queried
+will result in a NotImplementedError being raised when the query is performed.
+
+Comparators
+===========
+
+The supported comparators are as follows:
+
+Equal To
+--------
+Python: Eq(index_name, value)
+DSL: index_name == value
+
+Not Equal To
+------------
+Python: NotEq(index_name, value)
+DSL: index_name != value
+
+Greater Than
+------------
+Python: Gt(index_name, value)
+DSL: index_name > value
+
+Less Than
+---------
+Python: Lt(index_name, value)
+DSL: index_name < value
+
+Greater Than Or Equal To
+------------------------
+Python: Ge(index_name, value)
+DSL: index_name >= value
+
+Less Than Or Equal To
+---------------------
+Python: Le(index_name, value)
+DSL: index_name <= value
+
+Any
+---
+Python: Any(index_name, [value1, value2, ...])
+DSL: index_name == value1 or index_name == value2 or etc...
+
+All
+---
+Python: All(index_name, [value1, value2, ...])
+DSL: index_name == value1 and index_name == value2 and etc...
+
+Within Range
+------------
+Python: Range(index_name, start, end,
+              start_exclusive=False, end_exclusive=False)
+DSL: start <= index_name <= end
+     start < index_name < end
+
+Operators
+=========
+
+The following set operations are allowed in queries:
+
+Intersection
+------------
+Python: Intersection(query1, query2)
+        query1 & query2
+DSL: query1 and query2
+     query1 & query2
+
+Union
+-----
+Python: Union(query1, query2)
+        query1 | query2
+DSL: query1 or query2
+     query1 | query2
+
+Difference
+----------
+Python: Difference(query1, query2)
+        query1 - query2
+DSL: query1 - query2
+
+"""
 import BTrees
 import sys
 
@@ -675,6 +778,11 @@ def _make_ranges(tree):
     separated by a union operator:
 
       Ge(a, 0) | Eq(b, 7) & Lt(a, 5)
+
+
+    Note that tree transformations are done in place.  The root node of the
+    tree is returned since there is a chance that the root node needs to be
+    replaced.
 
     Potential range boundaries are discovered by performing a depth first
     traversal of the query tree.  At each node, there is a check to see if
