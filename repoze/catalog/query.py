@@ -1,3 +1,5 @@
+"""
+"""
 ##############################################################################
 #
 # Copyright (c) 2008 Zope Foundation and Contributors.
@@ -339,7 +341,7 @@ class _AstParser(object):
     is a requirement for _AstParser that the _ast.Module node contain only a
     single child node of type _ast.Expr, which represents the expression we
     are trying to transform into a query. The _ast.Expr node will always only
-    have a single child which is the root of the expression tree, ie
+    have a single child which is the root of the expression tree,
     _ast.BoolOp in the above example.
 
     The walk method is the driver for constructing the query tree.  It performs
@@ -347,7 +349,7 @@ class _AstParser(object):
     see if we have a method for processing that node type.  Node processors are
     all named 'process_NodeType' where NodeType is the name of the class of the
     ast node, ie type(node).__name__.  Each processor method is passed the
-    current node and it's children which have already been processed.  In this
+    current node and its children which have already been processed.  In this
     way the query tree is built from the ast from the bottom up.
     """
     def __init__(self, expr, names):
@@ -582,7 +584,7 @@ def _group_any_and_all(tree):
         the descendant Eq queries.  If there is more than one value and the
         type of the current node is Union or Intersection, then we can replace
         the subexpression represented by this node with a single Any or All
-        query.
+        query.  Returns either the node or its replacement.
         """
         if len(values) > 1:
             if isinstance(node, Intersection):
@@ -593,7 +595,7 @@ def _group_any_and_all(tree):
 
     def visit(node):
         """
-        Performs a recursive depth first tree traversal attempting to collect
+        Performs a recursive depth first traversal attempting to collect
         values for Eq comparators which are joined together by unions or
         intersections. Returns a tuple: (op_type, index_name, values) where
         `op_type` is the type of all operators in the subexpression
@@ -605,18 +607,19 @@ def _group_any_and_all(tree):
         be (None, None, []), meaning that no grouping could be done.
 
         If a visited node is an Eq comparator, then we start a new potential
-        grouping by returning (None, node.index_name, node.value).  `op_type`
-        is None because we don't know, yet, what, if any, operator contains the
-        current node.  This will be filled in at higher level operator nodes.
+        grouping by returning (None, node.index_name, node.value). `op_type`
+        is None because we don't know yet what, if any, operator contains the
+        current node. This will be filled in at the Eq node's parent, which
+        will be an operator node.
 
         If the visited node is an operator node, then we recursively visit the
-        left and right subtrees and look at the results.  If visiting a subtree
+        left and right subtrees and look at the results. If visiting a subtree
         returns None for `op_type` then we fill in the current operation type
-        for the subtree.  If `index_name` and `op_type` match for both subtrees
+        for the subtree. If `index_name` and `op_type` match for both subtrees
         and if both subtree op_types match the current node's op_type, then we
         may group both subtrees together and return the common `op_type`,
         `index_name` and the values collected from any Eq nodes in either
-        subtree.  Otherwise, if not able to group the two subtrees together,
+        subtree. Otherwise, if not able to group the two subtrees together,
         `group` is called on each subtree, attempting to replace each subtree
         with an Any or All query if possible.
         """
@@ -655,11 +658,11 @@ def _make_ranges(tree):
 
       Range(a, 0, 5, False, False)
 
-    Here we take what would be two seperate index queries and an intersection
+    Here we take what would be two separate index queries and an intersection
     and replace with a single range query on that index.
 
     The start and end queries for a pair do not have to be immediately
-    adjacent to each other, they need only be in the same grouping of
+    adjacent to each other--they need only be in the same grouping of
     intersections. For example this query:
 
       Ge(a, 0) & Eq(b, 7) & Lt(a, 5)
@@ -682,11 +685,11 @@ def _make_ranges(tree):
     are forgotten since we only want to create ranges from subqueries that are
     connected to each other via intersection operations.
 
-    At each node intersection node, after potential range boundaries have been
+    At each intersection node, after potential range boundaries have been
     collected from the left and right subtrees, the potential boundaries are
-    checked for any matching pairs.  A matching pair is comprised of Gt or Ge
-    and a Lt or Le which are for the same index.  When a matching pair is found
-    then the tree must be transformed.  There are three potential cases which
+    checked for any matching pairs. A matching pair is comprised of a Gt or Ge
+    and an Lt or Le which are for the same index. When a matching pair is
+    found, the tree must be transformed. There are three potential cases which
     must be handled each in a different way.
 
     In the first and easier case, the range boundary pair nodes are the
@@ -716,7 +719,7 @@ def _make_ranges(tree):
     descendant node half of the pair as the nephew and that node's parent,
     which we know must be an intersection node, as the brother. Don't worry if
     the nephew/brother nomenclature doesn't make complete sense. We need to
-    refer to them as something. We could have called them Fre and Barney. To
+    refer to them as something. We could have called them Fred and Barney. To
     help visualize, consider this unoptimized query tree:
 
         >>> expr = "A > 0 and (A < 5 and B == 7)"
@@ -728,13 +731,12 @@ def _make_ranges(tree):
             B == 7        <-- other_nephew
 
     When the match is found between the child and nephew, we now need to
-    transform the tree in such a way that the expression remains equivalent but
-    with two fewer nodes since we are trading one intersection two comparisons
-    for a single range query.  In this case we can replace the child with the
-    new range query and then promote the other_nephew up to replace the
-    Intersection of which he was one half, since the other half of the
-    intersection has been absorbed into the range query.  The transformed tree
-    looks like this:
+    transform the tree in such a way that the expression remains equivalent
+    but with two fewer nodes since we are trading one intersection and two
+    comparisons for a single range query. In this case we can replace the
+    child with the new range query and then promote the other_nephew up to
+    replace the brother (an intersection node), since the nephew has been
+    absorbed into the range query. The transformed tree looks like this:
 
         >>> parse_query(expr).print_tree()
         Intersection
@@ -791,9 +793,9 @@ def _make_ranges(tree):
             C < 5
 
     In this case, ranges for A, B, and C are all going to be found at the root
-    node and not before.  The order the ranges are processed in depends on dict
-    ordering, but let's presume for a moment that we end up processing A first.
-    Our tree, after making the range for A now looks like:
+    node and not before. The order the ranges are processed in depends on dict
+    key ordering, but let's presume for a moment that we end up processing A
+    first. Our tree after processing A now looks like:
 
         Intersection
           Intersection
@@ -814,14 +816,14 @@ def _make_ranges(tree):
     computing the nearest common ancestor of our bounds before attempting to
     perform any transformations. If the nearest common ancestor is not the
     current node, we know that a transformation performed for another range,
-    in this case A, has rearranged the tree.  In that case, we can bypass the
+    in this case A, has rearranged the tree. In that case, we can bypass the
     current processing and start a new traversal at the nearest common
     ancestor, replacing the nearest common ancestor with the result of the
-    traversal.  In the example, above, then, assuming that B is processed next,
+    traversal. In the example, above, then, assuming that B is processed next,
     we see that processing the nearest common ancestor to the bounds of B will
-    lead us to C the first case, where both bounds are immediate children of
-    the node being processed.  After performing the transformation for range B,
-    our tree now looks like:
+    lead us to the first case, where both bounds are immediate children of the
+    node being processed. After performing the transformation for range B, our
+    tree now looks like:
 
         Intersection
           Intersection
@@ -845,7 +847,7 @@ def _make_ranges(tree):
 
     """
     def visit(node, starts, ends):
-        # Are those nodes potential matches?
+        # Is this node potentially one half of a range query?
         if isinstance(node, (Gt, Ge)):
             starts[node.index_name] = node
             return node
@@ -888,7 +890,7 @@ def _make_ranges(tree):
             end = ends.pop(index_name)
 
             # Tree may have gotten rearranged such that current node is no
-            # longer the nearest common ancestor of these nodes. If this is
+            # longer the nearest common ancestor of start and end. If this is
             # the case, process the subtree rooted at the nearest common
             # ancestor of the matching nodes and replace nce with the result.
             nce = _nearest_common_ancestor(start, end)
@@ -896,11 +898,11 @@ def _make_ranges(tree):
                 setattr(nce.__parent__, nce.__name__, visit(nce, {}, {}))
                 continue
 
-            gtlt = Range.fromGTLT(start, end)
+            range_query = Range.fromGTLT(start, end)
 
             # Case 1: Both bounds are immediate children of this node
             if start.__parent__ is end.__parent__ is node:
-                return gtlt
+                return range_query
 
             # Case 2: One bound is an immediate child of this node, and one
             # child is a descendent
@@ -913,9 +915,9 @@ def _make_ranges(tree):
                     nephew = start
 
                 if child.__name__ == 'left':
-                    node.left = gtlt
+                    node.left = range_query
                 else:
-                    node.right = gtlt
+                    node.right = range_query
 
                 brother = nephew.__parent__
                 if nephew.__name__ == 'left':
@@ -935,7 +937,8 @@ def _make_ranges(tree):
                 other = Intersection(*siblings)
                 start_parent = start.__parent__
                 end_parent = end.__parent__
-                setattr(start_parent.__parent__, start_parent.__name__, gtlt)
+                setattr(start_parent.__parent__, start_parent.__name__,
+                        range_query)
                 setattr(end_parent.__parent__, end_parent.__name__, other)
 
         return node
