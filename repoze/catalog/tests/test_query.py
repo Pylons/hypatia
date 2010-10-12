@@ -443,6 +443,12 @@ class Test_parse_query(unittest.TestCase):
         self.assertRaises(ValueError, self._call_fut, '1 < 2 > 3')
         self.assertRaises(ValueError, self._call_fut, 'x == y == z')
 
+    def test_bad_func_call(self):
+        self.assertRaises(ValueError, self._call_fut, 'a in foo(bar)')
+
+    def test_wrong_number_or_args_for_any(self):
+        self.assertRaises(ValueError, self._call_fut, 'a in any(1, 2)')
+
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
         self.assertEqual(self._call_fut('1.1'), 1.1)
@@ -590,6 +596,13 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])
 
+    def test_better_any(self):
+        from repoze.catalog.query import Any
+        op = self._call_fut("a in any([1, 2, 3])")
+        self.failUnless(isinstance(op, Any), op)
+        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.value, [1, 2, 3])
+
     def test_intersection(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Intersection
@@ -621,6 +634,13 @@ class Test_parse_query(unittest.TestCase):
     def test_all(self):
         from repoze.catalog.query import All
         op = self._call_fut("a == 1 and a == 2 and a == 3")
+        self.failUnless(isinstance(op, All), op)
+        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.value, [1, 2, 3])
+
+    def test_better_all(self):
+        from repoze.catalog.query import All
+        op = self._call_fut("a in all([1, 2, 3])")
         self.failUnless(isinstance(op, All), op)
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])

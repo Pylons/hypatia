@@ -28,10 +28,9 @@ using a dict passed into `parse_query`::
     word = request.params.get("search_term")
     query = parse_query("author == author and word in body", names=locals())
 
-Unlike true Python expressions, the name of the index must always be on the
-left side of a comparator, except for with `in`, in which case the index name
-must be on the right side.  The following, for example, would raise an
-exception::
+Unlike true Python expressions, ordering of the terms is important for
+comparators. For most comparators the index_name must be written on the left.
+The following, for example, would raise an exception::
 
     query = parse_query("'crossi' == author")
 
@@ -78,11 +77,16 @@ Any
 ---
 Python: Any(index_name, [value1, value2, ...])
 DSL: index_name == value1 or index_name == value2 or etc...
+     index_name in any([value1, value2, ...])
+     index_name in any(values)
 
 All
 ---
 Python: All(index_name, [value1, value2, ...])
 DSL: index_name == value1 and index_name == value2 and etc...
+     index_name in all([value1, value2, ...])
+     index_name in all(values)
+
 
 Within Range
 ------------
@@ -407,6 +411,15 @@ def parse_query(expr, names=None):
         names = {}
     return _optimize_query(_AstParser(expr, names).query)
 
+def _comparator_factory(method):
+    def wrapper(self, node, children):
+        cls = method(self, node, children)
+        def factory(left, right):
+            return cls(self._index_name(left), self._value(right))
+        factory.type = cls
+        return factory
+    return wrapper
+
 class _AstParser(object):
     """
     Uses Python's ast module to parse an expression into an abstract syntax
@@ -511,26 +524,38 @@ class _AstParser(object):
     def process_Tuple(self, node, children):
         return tuple(self.process_List(node, children))
 
+    @_comparator_factory
     def process_Eq(self, node, children):
         return Eq
 
+    @_comparator_factory
     def process_NotEq(self, node, children):
         return NotEq
 
+    @_comparator_factory
     def process_Lt(self, node, children):
         return Lt
 
+    @_comparator_factory
     def process_LtE(self, node, children):
         return Le
 
+    @_comparator_factory
     def process_Gt(self, node, children):
         return Gt
 
+    @_comparator_factory
     def process_GtE(self, node, children):
         return Ge
 
     def process_In(self, node, children):
-        return Contains
+        def factory(left, right):
+            if callable(right): # any or all, see process_Call
+                return right(self._index_name(left))
+            return Contains(self._index_name(right), self._value(left))
+        factory.type = Contains
+        return factory
+
 
     def process_Compare(self, node, children):
         # Python allows arbitrary chaining of comparisons, ie:
@@ -547,14 +572,12 @@ class _AstParser(object):
         # shown above is not supported.
         if len(children) == 3:
             # Simple binary form
-            operand1, operator, operand2 = children
-            if operator is Contains:
-                return operator(self._index_name(operand2),
-                                self._value(operand1))
-            return operator(self._index_name(operand1), self._value(operand2))
+            left, factory, right = children
+            return factory(left, right)
         elif len(children) == 5:
             # Range expression
-            start, op1, op2, index_name, end = children
+            start, f1, f2, index_name, end = children
+            op1, op2 = f1.type, f2.type
             if op1 in (Lt, Le) and op2 in (Lt, Le):
                 if op1 is Lt:
                     start_exclusive = True
@@ -614,6 +637,26 @@ class _AstParser(object):
         while children:
             op = operator(op, children.pop(0))
         return op
+
+    def process_Call(self, node, children):
+        func = children.pop(0)
+        name = getattr(func, 'id', str(node.func))
+        if name not in ('any', 'all'):
+            raise ValueError(
+                "Bad expression: Illegal function call in expression: %s" %
+                name)
+        if len(children) != 1:
+            raise ValueError(
+                "Bad expression: Wrong number of arguments to %s" % name)
+
+        values = children[0]
+        if name == 'any':
+            comparator = Any
+        else:
+            comparator = All
+        def factory(index_name):
+            return comparator(index_name, values)
+        return factory
 
     def _index_name(self, node):
         if not isinstance(node, ast.Name):
