@@ -49,4 +49,10 @@ Glossary
     packages are used on a particular project by cloning your main
     Python.  `virtualenv <http://pypi.python.org/pypi/virtualenv>`_
     was created by Ian Bicking.
+  CQE
+    A string representing a Python-like domain-specific-language
+    expression which is used to generate a query object.
+  Query Object
+    An object used as an argument to the :meth:`repoze.catalog.Catalog.query` 
+    method's ``queryobject`` parameter.
 

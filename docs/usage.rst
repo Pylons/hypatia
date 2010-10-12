@@ -53,9 +53,386 @@ Searching
 ---------
 
 Searching for values from a previously indexed corpus of content is
-significantly easier than indexing.  We pass a query into our
-catalog's ``search`` method, which is composed of the name of our
-index and a value we'd like to find a document for.
+significantly easier than indexing.  There are a number of ways to
+perform searches.
+
+Search Using the :meth:`repoze.catalog.Catalog.query` Method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The suggested way to perform searches is to use the
+:meth:`repoze.catalog.Catalog.query` method.  This method accepts a
+number of arguments:
+
+``queryobject``
+   A query object or a string representing the query.
+
+``sort_index``
+   The name of the index used to sort the results.
+
+``limit``
+   Limit the number of results returned to this argument, which should be 
+   an integer.  This is only used if ``sort_index`` is also specified.
+
+``reverse``
+   Reverse the order of the result sequence if this is ``True``.  Only used 
+   if ``sort_index`` is also specified.
+
+For example::
+
+   from repoze.catalog.catalog import FileStorageCatalogFactory
+   from repoze.catalog.catalog import ConnectionManager
+   from repoze.catalog.query import Eq
+
+   factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
+   manager = ConnectionManager()
+   catalog = factory(manager)
+   numdocs, results = catalog.query(Eq('flavors', 'peach'))
+   print (numdocs, [ x for x in results ])
+
+The results of the above search will search the corpus for documents
+which have a result in the ``flavor`` index that matches the value
+``peach``.  
+
+The :meth:`repoze.catalog.Catalog.query` method will return a
+two-tuple, with the first element in the sequence being the length of
+the result set, and the second element being the result set
+itself.  Our above example will print:
+
+  (1, [1])
+
+The first element in the tuple is the length of the result set (the
+integer ``1``, in this case).
+
+The second element in the tuple is the result set.  It has one item.
+This item is the document id for the content we indexed.  Your
+application is responsible for resolving this document identifier back
+to its constituent content.
+
+.. warning:: The result set is only guaranteed to be an iterable.  It
+   will always be of a particular type, and *not* always sliceable;
+   for example it may be a generator.
+
+You can also pass combine query objects to search multiple indexes:
+
+.. code-block:: python
+   :linenos:
+
+   from repoze.catalog.catalog import FileStorageCatalogFactory
+   from repoze.catalog.catalog import ConnectionManager
+
+   factory = FileStorageCatalogFactory('catalog.db', 'mycatalog')
+   manager = ConnectionManager()
+   catalog = factory(manager)
+   numdocs, results = catalog.query(
+                     Intersection(Eq('flavors', 'peach'), Eq('texts', 'nutty')))
+   print (numdocs, [ x for x in results ])
+
+The results of the above search will return the following:
+
+   (0, [])
+
+This is because no results in our index match a document which has
+both a flavor of ``peach`` and text which contains the word ``nutty``.
+
+You can sort the result set using ``sort_index``.  The value of
+``sort_index`` should be the name of an index which supports being
+used as a sort index::
+
+   from repoze.catalog.query import Range
+
+   numdocs, results = catalog.query(
+                  Range('flavors', 'peach', 'pistachio'), 
+                  sort_index='flavors')
+   print (numdocs, [ x for x in results ])
+
+Would result in::
+
+   (2, [1, 2])
+
+The default sort order is ascending.  You can reverse the sort using
+``reverse``::
+
+   from repoze.catalog.query import Range
+
+   numdocs, results = catalog.query(
+                  Range('flavors', 'peach', 'pistachio'), 
+                  sort_index='flavors',
+                  reverse=True)
+   print (numdocs, [ x for x in results ])
+
+Would result in::
+
+   (2, [2, 1])
+
+Query Objects
+!!!!!!!!!!!!!
+
+The value passed as the ``queryobject`` argument to
+:meth:`repoze.catalog.Catalog.query` may be one of two distinct types:
+
+- a "raw" :term:`query object`
+
+- a "CQE" string representing a domain-specific-language expression
+  which will be used to *generate* a :term:`query object`.  "CQE"
+  stands for "catalog query expression".
+
+For example, you can construct a raw query object using Python, and
+pass it as ``queryobject`` to the :meth:`repoze.catalog.Catalog.query`
+method:
+
+.. code-block:: python
+   :linenos:
+
+   from repoze.catalog.query import Eq
+   results = catalog.query(Eq('index_name', 'value'))
+
+Or you can allow repoze.catalog to construct a query object on your
+behalf by passing a *string* as ``queryobject``.
+
+.. code-block:: python
+   :linenos:
+
+   from repoze.catalog.query import Eq
+   catalog.query('index_name == "value"')
+
+The above string is a CQE.  A "CQE" is a string representing a Python
+expression which uses index names and values.  It is parsed by the
+catalog to create a query object.
+
+Whether a query object is used directly or query objects are generated
+as the result of a CQE, an individual query object will be one of two
+types: a comparator or a set operator.  A comparator performs a single
+query on a single index.  A set operator allows results from
+individual queries to be combined using set operations.  For example:
+
+.. code-block:: python
+   :linenos:
+
+    from repoze.catalog.query import Intersection, Eq, Contains
+    query = Intersection(Eq('author', 'crossi'), Contains('body', 'biscuits'))
+
+In the above example, ``Intersection`` is a set operator, and both
+``Eq`` and ``Contains`` are comparison operators.  The resulting query
+will search two indexes, ``author`` and ``body``, and, because the
+individual comparators are passed as arguments to the ``Intersection``
+set operator, then return all documents which satisfy *both*
+comparators.
+
+All query objects may be combined using supported set operators, so
+the above query could also have been written:
+
+.. code-block:: python
+   :linenos:
+
+    query = Eq('author', 'crossi') & Contains('body', 'biscuits')
+
+Query objects may also be created by parsing a :term:`CQE` string.
+The query parser uses Python's internal code parser to parse CQE query
+expression strings, so the syntax is just like Python::
+
+    query = parse_query("author == 'crossi' and 'biscuits' in body")
+
+The query parser allows name substitution in expressions.  Names are
+resolved using a dict passed into `parse_query`::
+
+    author = request.params.get("author")
+    word = request.params.get("search_term")
+    query = parse_query("author == author and word in body", names=locals())
+
+Unlike true Python expressions, ordering of the terms is important for
+comparators. For most comparators the index_name must be written on the left.
+The following, for example, would raise an exception::
+
+    query = parse_query("'crossi' == author")
+
+Note that not all index types support all comparators. An attempt to perform
+a query using a comparator that is not supported by the index being queried
+will result in a NotImplementedError being raised when the query is performed.
+
+Comparators
+!!!!!!!!!!!
+
+The supported comparator operators are as follows:
+
+Equal To
+########
+
+Python::
+
+   from repoze.catalog.query import Eq
+   Eq(index_name, value)
+
+CQE::
+
+   index_name == value
+
+Not Equal To
+############
+
+Python::
+
+   from repoze.catalog.query import NotEq
+   NotEq(index_name, value)
+
+CQE::
+
+   index_name != value
+
+Greater Than
+############
+
+Python::
+
+   from repoze.catalog.query import Gt
+   Gt(index_name, value)
+
+CQE::
+
+   index_name > value
+
+Less Than
+#########
+
+Python::
+
+   from repoze.catalog.query import Lt
+   Lt(index_name, value)
+
+CQE::
+
+   index_name < value
+
+Greater Than Or Equal To
+########################
+
+Python::
+
+   from repoze.catalog.query import Ge
+   Ge(index_name, value)
+
+CQE::
+
+   index_name >= value
+
+Less Than Or Equal To
+#####################
+
+Python::
+
+   from repoze.catalog.query import Ge
+   Le(index_name, value)
+
+CQE::
+
+   index_name <= value
+
+Any
+###
+
+Python::
+
+   from repoze.catalog.query import Any
+   Any(index_name, [value1, value2, ...])
+
+CQE::
+
+   index_name == value1 or index_name == value2 or etc...
+   index_name in any([value1, value2, ...])
+   index_name in any(values)
+
+All
+###
+
+Python::
+
+   from repoze.catalog.query import All
+   All(index_name, [value1, value2, ...])
+
+CQE::
+
+   index_name == value1 and index_name == value2 and etc...
+   index_name in all([value1, value2, ...])
+   index_name in all(values)
+
+Within Range
+############
+
+Python::
+
+   from repoze.catalog.query import Range
+   Range(index_name, start, end,
+         start_exclusive=False, end_exclusive=False)
+
+CQE::
+
+   start <= index_name <= end
+   start < index_name < end
+
+Set Operators
+!!!!!!!!!!!!!
+
+The following set operators are allowed in queries:
+
+Intersection
+############
+
+Python (explicit)::
+
+   from repoze.catalog.query import Intersection
+   Intersection(query1, query2)
+
+Python (implicit)::
+
+   query1 & query2
+
+CQE::
+
+    query1 and query2
+    query1 & query2
+
+Union
+#####
+
+Python (explicit)::
+
+   from repoze.catalog.query import Union
+   Union(query1, query2)
+
+Python (implicit)::
+
+   query1 | query2
+
+CQE::
+
+    query1 or query2
+    query1 | query2
+
+Difference
+##########
+
+Python (explicit)::
+
+   from repoze.catalog.query import Difference
+   Difference(query1, query2)
+
+Python (implicit)::
+
+   query1 - query2
+
+CQE::
+
+   query1 - query2
+
+Search Using the :meth:`repoze.catalog.Catalog.search` Method (Deprecated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning:: The :meth:`repoze.catalog.Catalog.search` method is
+   deprecated as of :mod:`repoze.catalog` 0.8.  Use
+   :meth:`repoze.catalog.Catalog.query` instead.
+
+We can pass a query into our catalog's ``search`` method, which is
+composed of the name of our index and a value we'd like to find a
+document for.
 
 .. code-block:: python
    :linenos:
@@ -75,19 +452,6 @@ which have a result in the ``flavor`` index that matches the value
 are a "range" search: you can read ``('peach', 'peach')`` as "from
 peach to peach".  You could say ``('peach', 'pistachio')`` to find all
 documents that are in the "range" from peach to pistachio.
-
-This particular query will return a two-tuple, with the first element
-in the sequence being the length of the result set, and the second
-element being the result set itself, which is only guaranteed to be an
-interable (not any particular type, and *not* always sliceable; it may
-be a generator).  Our above example would print.
-
-  (1, [1])
-
-The second element is the result set.  It has one item.  This item is
-the document id for the content we indexed in the above step with
-``peach`` as a ``flavors`` value.  Your application is responsible for
-resolving this unique identifier back to its constituent content.
 
 You can also pass compound search parameters for multiple indexes.
 The results are intersected to provide a result:
@@ -164,33 +528,6 @@ exists within the ``repoze.bfg.document.DocumentMap`` class.  A
 document map allows you to map document ids to "addresses" (e.g. paths
 or unique identifiers).  See :ref:`api_document_section` in the API
 documentation chapter for more information.
-
-Index Query/Merge Order
------------------------
-
-You may specify the order in which individual indexes in the catalog
-are queried by using the ``index_query_order`` parameter to the
-``search`` method.  If this parameter is specified, the indexes will
-be queried and search results will be merged in this order.  This
-argument should be a sequence of index names, e.g. ``['mytextindex',
-'myfieldindex']``.  If any index name supplied in
-``index_query_order`` is not also supplied in the query arguments
-supplied to ``search``, no error is raised; instead the index will be
-silently omitted from the search.
-
-Using this feature can provide an opportunity for better performance
-when you know, for instance, that searching a particular index tends
-to more freqently return zero results than any other index for the
-query you're using, you should put this index first in the query
-order; if this index returns no results, processing will stop and the
-empty set will be returned; no further indexes will be queried.
-
-A specialized index may also take advantage of this feature by acting
-as a "filter index": these sorts of indexes can make use of the set of
-docids passed to it (the intersection of the queries of all "prior"
-indexes) during normal operation to perform an optimization which
-prevents the index from doing "too much" work.  Usually, these sorts
-of indexes are specified last in the ordering.
 
 Restrictions
 ------------
