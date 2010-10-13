@@ -199,6 +199,8 @@ The above string is a CQE.  A "CQE" is a string representing a Python
 expression which uses index names and values.  It is parsed by the
 catalog to create a query object.
 
+.. warning:: CQE strings are not supported on Python versions < 2.6.
+
 Whether a query object is used directly or query objects are generated
 as the result of a CQE, an individual query object will be one of two
 types: a comparator or a set operator.  A comparator performs a single

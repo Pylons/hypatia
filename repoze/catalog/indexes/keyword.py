@@ -6,6 +6,22 @@ from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
+    """
+    Keyword index.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    - In
+
+    - Any
+
+    - All
+
+    """
     implements(ICatalogIndex)
 
     def __init__(self, discriminator):

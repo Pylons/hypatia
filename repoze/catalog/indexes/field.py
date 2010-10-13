@@ -17,6 +17,25 @@ NBEST = 'nbest'
 TIMSORT = 'timsort'
 
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
+    """ Field indexing.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    - Ge
+
+    - Le
+
+    - In
+
+    - Any
+
+    - Range
+
+    """
     implements(ICatalogIndex)
 
     def __init__(self, discriminator):

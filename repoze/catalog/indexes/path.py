@@ -24,6 +24,12 @@ class CatalogPathIndex(CatalogIndex):
 
     - the value is a mapping 'level of the path component' to
       'all docids with this path component on this level'
+
+
+    Query types supported:
+
+    Eq
+    
     """
     implements(ICatalogIndex)
     useOperator = 'or'
@@ -205,3 +211,5 @@ class CatalogPathIndex(CatalogIndex):
         else:
             return self.family.IF.Set()
 
+    def applyEq(self, query):
+        return self.apply(query)

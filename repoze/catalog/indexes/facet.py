@@ -12,6 +12,20 @@ from repoze.catalog.interfaces import ICatalogIndex
 _marker = ()
 
 class CatalogFacetIndex(CatalogKeywordIndex):
+    """Facet index.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    - In
+
+    - Any
+
+    - All
+    """
     implements(ICatalogIndex)
 
     def __init__(self, discriminator, facets, family=None):

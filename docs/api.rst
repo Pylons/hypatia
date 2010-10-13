@@ -8,6 +8,17 @@
   .. autoclass:: Catalog
      :members:
 
+     .. automethod:: __setitem__
+
+     .. automethod:: __getitem__
+
+        Retrieve an index.
+
+     .. automethod:: get
+
+        Retrieve an index or return failobj.
+
+
 :mod:`repoze.catalog.query`
 ---------------------------
 

@@ -1,0 +1,4 @@
+- Figure out some way of indicating that a particular index supports
+  a certain comparator for documentation purposes.
+
+
