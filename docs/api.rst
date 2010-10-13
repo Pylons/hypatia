@@ -8,6 +8,54 @@
   .. autoclass:: Catalog
      :members:
 
+     .. automethod:: __setitem__
+
+     .. automethod:: __getitem__
+
+        Retrieve an index.
+
+     .. automethod:: get
+
+        Retrieve an index or return failobj.
+
+
+:mod:`repoze.catalog.query`
+---------------------------
+
+.. module:: repoze.catalog.query
+
+Comparators
+~~~~~~~~~~~
+
+   .. autoclass:: Contains
+
+   .. autoclass:: Eq
+
+   .. autoclass:: NotEq
+
+   .. autoclass:: Gt
+
+   .. autoclass:: Lt
+
+   .. autoclass:: Ge
+
+   .. autoclass:: Le
+
+   .. autoclass:: Any
+
+   .. autoclass:: All
+
+   .. autoclass:: Range
+
+Set Operators
+~~~~~~~~~~~~~
+
+   .. autoclass:: Union
+
+   .. autoclass:: Intersection
+
+   .. autoclass:: Difference
+
 .. _api_fieldindex_section:
 
 :mod:`repoze.catalog.indexes.field`

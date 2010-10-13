@@ -36,6 +36,21 @@ class TestCatalogIndex(unittest.TestCase):
             pass
         self.assertRaises(ValueError, Test, None)
 
+    def test_not_implemented_applies_methods(self):
+        index = self._getTargetClass()('foo')
+        for name in [
+            'applyContains',
+            'applyEq',
+            'applyNotEq',
+            'applyGt',
+            'applyLt',
+            'applyGe',
+            'applyLe',
+            'applyAny',
+            'applyAll',
+            'applyRange']:
+            self.assertRaises(NotImplementedError, getattr(index, name))
+
     def test_index_doc_callback_returns_nondefault(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):

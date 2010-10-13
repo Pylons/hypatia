@@ -21,6 +21,11 @@ class CatalogPathIndex2(CatalogIndex):
     relying on this level information may or may not be correct for
     any given tree.  Use of this index is suggested rather than the
     ``path`` index.
+
+    Query types supported:
+
+    Eq
+    
     """
     implements(ICatalogIndex)
     attr_discriminator = None # b/w compat
@@ -355,6 +360,9 @@ class CatalogPathIndex2(CatalogIndex):
             attr_checker = query.get('attr_checker', None)
 
         return self.search(path, depth, include_path, attr_checker)
+
+    def applyEq(self, query):
+        return self.apply(query)
 
 def add_to_closest(sofar, thispath, theset):
     paths = sofar.keys()

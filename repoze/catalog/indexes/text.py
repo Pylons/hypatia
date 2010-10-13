@@ -7,6 +7,15 @@ from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
 class CatalogTextIndex(CatalogIndex, TextIndex):
+    """ Full-text index.
+
+    Query types supported:
+
+    - Contains
+
+    - Eq
+    """
+    
     implements(ICatalogIndex, IIndexSort)
 
     def __init__(self, discriminator, lexicon=None, index=None):
@@ -51,3 +60,9 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
         if limit:
             result = result[:limit]
         return result
+
+    def applyContains(self, value):
+        return self.apply(value)
+
+    applyEq = applyContains
+    

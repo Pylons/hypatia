@@ -56,7 +56,14 @@ class Catalog(PersistentMapping):
     def search(self, **query):
         """ Use the query terms to perform a query.  Return a tuple of
         (num, resultseq) based on the merging of results from
-        individual indexes."""
+        individual indexes.
+
+        .. note:: this method is deprecated as of
+                  :mod:`repoze.catalog` version 0.8.  Use
+                  :meth:`repoze.catalog.Catalog.query` instead.
+
+
+        """
         sort_index = None
         reverse = False
         limit = None
@@ -73,7 +80,7 @@ class Catalog(PersistentMapping):
             sort_type = query.pop('sort_type')
         if 'index_query_order' in query:
             index_query_order = query.pop('index_query_order')
-            
+
         if index_query_order is None:
             # unordered query (use apply)
             results = []
@@ -83,7 +90,7 @@ class Catalog(PersistentMapping):
                     raise ValueError('No such index %s' % index_name)
                 r = index.apply(index_query)
                 if not r:
-                    # empty results
+                    # empty results, bail early; intersect will be null
                     return 0, r
 
                 results.append((len(r), r))
@@ -115,6 +122,11 @@ class Catalog(PersistentMapping):
                     # empty results
                     return 0, result
 
+        return self.sort_result(result, sort_index, limit, sort_type, reverse)
+
+    def sort_result(self, result, sort_index=None, limit=None, sort_type=None,
+                    reverse=False):
+
         numdocs = len(result)
 
         if sort_index:
@@ -126,6 +138,19 @@ class Catalog(PersistentMapping):
             return numdocs, result
         else:
             return numdocs, result
+
+    def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
+              reverse=False, names=None):
+        """ Use the arguments to perform a query.  Return a tuple of
+        (num, resultseq)."""
+        try:
+            from repoze.catalog.query import parse_query
+            if isinstance(queryobject, basestring):
+                queryobject = parse_query(queryobject, names)
+        except ImportError: #pragma NO COVERAGE
+            pass
+        results = queryobject.apply(self)
+        return self.sort_result(results, sort_index, limit, sort_type, reverse)
 
     def apply(self, query):
         return self.search(**query)
@@ -155,7 +180,7 @@ class FileStorageCatalogFactory(CatalogFactory):
 
     def __del__(self):
         self.db.close()
-        
+
 class ConnectionManager(object):
     def __call__(self, conn):
         self.conn = conn

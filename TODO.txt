@@ -1,0 +1,4 @@
+- Extend the querytype methods offered by KeywordIndex (add Gt, Lt, etc).
+
+- Audit indices to see if they can support more query types.
+

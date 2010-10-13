@@ -6,6 +6,22 @@ from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
+    """
+    Keyword index.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    - In
+
+    - Any
+
+    - All
+
+    """
     implements(ICatalogIndex)
 
     def __init__(self, discriminator):
@@ -19,3 +35,20 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     def reindex_doc(self, docid, value):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
+
+    def applyAny(self, values):
+        return self.apply({'query': values, 'operator':'or'})
+
+    applyIn = applyAny
+
+    def applyAll(self, values):
+        return self.apply({'query': values, 'operator':'and'})
+
+    def applyEq(self, value):
+        return self.apply(value)
+
+    def applyNotEq(self, not_value):
+        all = self.family.IF.multiunion(self._fwd_index.values())
+        r = self.apply(not_value)
+        return self.family.IF.difference(all, r)
+

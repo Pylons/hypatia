@@ -34,7 +34,7 @@ class CatalogIndex(object):
         if isinstance(value, Broken):
             raise ValueError('Catalog cannot index broken object %s' %
                              value)
-            
+
 
         return super(CatalogIndex, self).index_doc(docid, value)
 
@@ -49,3 +49,44 @@ class CatalogIndex(object):
         if docids is None:
             return result
         return self.family.IF.weightedIntersection(result, docids)[1]
+
+    def applyContains(self, *args, **kw):
+        raise NotImplementedError(
+            "Contains is not supported for %s" % type(self).__name__)
+
+    def applyEq(self, *args, **kw):
+        raise NotImplementedError(
+            "Eq is not supported for %s" % type(self).__name__)
+
+    def applyNotEq(self, *args, **kw):
+        raise NotImplementedError(
+            "NotEq is not supported for %s" % type(self).__name__)
+
+    def applyGt(self, *args, **kw):
+        raise NotImplementedError(
+            "Gt is not supported for %s" % type(self).__name__)
+
+    def applyLt(self, *args, **kw):
+        raise NotImplementedError(
+            "Lt is not supported for %s" % type(self).__name__)
+
+    def applyGe(self, *args, **kw):
+        raise NotImplementedError(
+            "Ge is not supported for %s" % type(self).__name__)
+
+    def applyLe(self, *args, **kw):
+        raise NotImplementedError(
+            "Le is not supported for %s" % type(self).__name__)
+
+    def applyAny(self, *args, **kw):
+        raise NotImplementedError(
+            "Any is not supported for %s" % type(self).__name__)
+
+    def applyAll(self, *args, **kw):
+        raise NotImplementedError(
+            "All is not supported for %s" % type(self).__name__)
+
+    def applyRange(self, *args, **kw):
+        raise NotImplementedError(
+            "Range is not supported for %s" % type(self).__name__)
+

@@ -484,6 +484,13 @@ class PathIndexTests(unittest.TestCase):
         result = list(index.apply({'query':'/ff/gg'}).keys())
         self.assertEqual(result, [2, 3, 4])
 
+    def test_applyEq(self):
+        index = self._makeOne(VALUES)
+        expected = range(1,19)
+
+        results = list(index.applyEq('/').keys())
+        self.assertEqual(results, expected)
+
 class FakeTreeSet(set):
     def insert(self, thing):
         self.add(thing)

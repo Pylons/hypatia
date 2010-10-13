@@ -8,7 +8,7 @@ from zope.index.field import FieldIndex
 
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
-from repoze.catalog import Range
+from repoze.catalog import RangeValue
 
 _marker = []
 
@@ -17,6 +17,25 @@ NBEST = 'nbest'
 TIMSORT = 'timsort'
 
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
+    """ Field indexing.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    - Ge
+
+    - Le
+
+    - In
+
+    - Any
+
+    - Range
+
+    """
     implements(ICatalogIndex)
 
     def __init__(self, discriminator):
@@ -132,7 +151,6 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def scan_forward(self, docids, limit=None):
         fwd_index = self._fwd_index
 
-        sets = []
         n = 0
         for set in fwd_index.values():
             for docid in set:
@@ -202,7 +220,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def search(self, queries, operator='or'):
         sets = []
         for query in queries:
-            if isinstance(query, Range):
+            if isinstance(query, RangeValue):
                 query = query.as_tuple()
             else:
                 query = (query, query)
@@ -225,7 +243,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def apply(self, query):
         if isinstance(query, dict):
             val = query['query']
-            if isinstance(val, Range):
+            if isinstance(val, RangeValue):
                 val = [val]
             elif not isinstance(val, (list, tuple)):
                 val = [val]
@@ -234,13 +252,39 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         else:
             if isinstance(query, tuple) and len(query) == 2:
                 # b/w compat stupidity; this needs to die
-                query = Range(*query)
+                query = RangeValue(*query)
                 query = [query]
             elif not isinstance(query, (list, tuple)):
                 query = [query]
             result = self.search(query, 'or')
 
         return result
+
+    def applyEq(self, value):
+        return self.apply(value)
+
+    def applyNotEq(self, not_value):
+        all = self.apply(RangeValue(None, None))
+        r = self.apply((not_value, not_value))
+        return self.family.IF.difference(all, r)
+
+    def applyGe(self, min_value):
+        return self.apply(RangeValue(min_value, None))
+
+    def applyLe(self, max_value):
+        return self.apply(RangeValue(None, max_value))
+
+    def applyIn(self, values):
+        queries = list(values)
+        return self.search(queries, operator='or')
+
+    applyAny = applyIn
+
+    def applyRange(self, start, end, excludemin=False, excludemax=False):
+        return self.family.IF.multiunion(
+            self._fwd_index.values(
+                start, end, excludemin=excludemin, excludemax=excludemax)
+        )
 
 def nsort(docids, rev_index):
     for docid in docids:

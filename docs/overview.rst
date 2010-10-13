@@ -99,29 +99,34 @@ Querying
 
 Once you've got some number of documents indexed, you can perform
 queries against an existing catalog.  A query is performed by passing
-keyword arguments to the ``search`` method of the catalog object::
+keyword arguments to the ``query`` method of the catalog object::
 
-   catalog.search(flavor=('peach', 'peach'))
+   from repoze.catalog.query import Eq
+   catalog.query(Eq('flavor', 'peach'))
 
-Each keyword argument passed to ``search`` is either the name of an
-index contained within the catalog or a special value that specifies
-sort ordering and query limiting.  In the above example, we specified
-no particular sort ordering or limit, and we're essentially asking the
-catalog to return us all the documents that match the word 'peach' as
-a field within the field index named ``flavor``.  Each index specifies
-its own query argument style: field indexes specify that the value you
-must pass in be a "range" search, so we pass in the tuple ``('peach',
-'peach')``, which can be read "from peach to peach".  Other types of
-indexes accept different query parameters.  For example, text indexes
-accept only a term::
+The argument passed to ``query`` above is a :term:`query object`.
+This particular query object is a :class:`repoze.catalog.query.Eq`
+object, which is a *comparator* meaning "equals".  The first argument
+to the ``Eq`` object is an index name, the second argument is a value.
+In english, this query represents "a document indexed in the
+``flavor`` index with the value ``peach``".  Other arguments to
+:meth:`repoze.catalog.Catalog.query` may be special values that
+specify sort ordering and query limiting.
 
-  catalog.search(description='nuts')
+In the above example, we specified no particular sort ordering or
+limit, and we're essentially asking the catalog to return us all the
+documents that match the word ``peach`` as a field within the field
+index named ``flavor``.  Other types of indexes can be queried
+similarly::
 
-The result of calling the ``search`` method is a two tuple.  The first
+   from repoze.catalog.query import Contains
+   catalog.query(Contains('description', 'nuts'))
+
+The result of calling the ``query`` method is a two tuple.  The first
 element of the tuple is the number of document ids in the catalog
 which match the query.  The second element is an iterable: each
 iteration over this iterable returns a document id.  The results of
-``catalog.search(description='nuts')`` might return::
+``catalog.query(Contains('description', 'nuts'))`` might return::
 
   (1, [2])
 
@@ -132,7 +137,9 @@ a generator) is a sequence of document ids that match the query.
 
 You can combine search parameters to further limit a query::
 
-  catalog.search(flavor=('peach', 'peach'), description='nuts')
+   from repoze.catalog.query import Contains, Eq, Intersection
+   catalog.query(Intersection(Eq('flavor', 'peach'), 
+                              Contains('description', 'nuts')))
 
 This would return a result representing all the documents indexed
 within the catalog with the flavor of peach and a description of nuts.
