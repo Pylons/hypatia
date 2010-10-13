@@ -111,7 +111,7 @@ to the ``Eq`` object is an index name, the second argument is a value.
 In english, this query represents "a document indexed in the
 ``flavor`` index with the value ``peach``".  Other arguments to
 :meth:`repoze.catalog.Catalog.query` may be special values that
-specifies sort ordering and query limiting.
+specify sort ordering and query limiting.
 
 In the above example, we specified no particular sort ordering or
 limit, and we're essentially asking the catalog to return us all the
