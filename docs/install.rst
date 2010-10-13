@@ -27,7 +27,7 @@ After you've got the requisite dependencies installed, you may install
 :mod:`repoze.catalog` into your Python environment using the following
 command::
 
-  $ easy_install -i http://dist.repoze.org/lemonade/dev/simple repoze.catalog
+  $ easy_install repoze.catalog
 
 What Gets Installed
 -------------------
