@@ -79,7 +79,46 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         result = index.apply(FrozenDict(query))
         self.assertEqual(list(result), [2,3])
         self.assertEqual(query, {'operator':'or', 'query':[5]})
+
+    def test_applyAny(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        index.index_doc(2, [3,4,5])
+        index.index_doc(3, [5,6,7])
+        index.index_doc(4, [7,8,9]) 
+        index.index_doc(5, [9,10])
+        result = index.applyAny([5, 9])
+        self.assertEqual(list(result), [2,3, 4, 5])
         
+    def test_applyAll(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        index.index_doc(2, [3,4,5])
+        index.index_doc(3, [5,6,7])
+        index.index_doc(4, [7,8,9]) 
+        index.index_doc(5, [9,10])
+        result = index.applyAll([5, 9])
+        self.assertEqual(list(result), [])
+
+    def test_applyEq(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        index.index_doc(2, [3,4,5])
+        index.index_doc(3, [5,6,7])
+        index.index_doc(4, [7,8,9]) 
+        index.index_doc(5, [9,10])
+        result = index.applyEq([5, 9])
+        self.assertEqual(list(result), [])
+
+    def test_applyNotEq(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        index.index_doc(2, [3,4,5])
+        index.index_doc(3, [5,6,7])
+        index.index_doc(4, [7,8,9]) 
+        index.index_doc(5, [9,10])
+        result = index.applyNotEq([5])
+        self.assertEqual(list(result), [1,4,5])
 
 class FrozenDict(dict):
     def _forbidden(self, *args, **kw):
