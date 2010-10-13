@@ -56,7 +56,14 @@ class Catalog(PersistentMapping):
     def search(self, **query):
         """ Use the query terms to perform a query.  Return a tuple of
         (num, resultseq) based on the merging of results from
-        individual indexes."""
+        individual indexes.
+
+        .. note:: this method is deprecated as of
+                  :mod:`repoze.catalog` version 0.8.  Use
+                  :meth:`repoze.catalog.Catalog.query` instead.
+
+
+        """
         sort_index = None
         reverse = False
         limit = None
@@ -134,6 +141,8 @@ class Catalog(PersistentMapping):
 
     def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
               reverse=False, names=None):
+        """ Use the arguments to perform a query.  Return a tuple of
+        (num, resultseq)."""
         try:
             from repoze.catalog.query import parse_query
             if isinstance(queryobject, basestring):

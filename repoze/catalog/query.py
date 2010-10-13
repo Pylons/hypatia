@@ -175,7 +175,7 @@ class Comparator(Query):
 class Contains(Comparator):
     """Contains query.
 
-    AST hint: 'foo' in index
+    CQE equivalent: index in all(['foo', 'bar'])
     """
 
     def apply(self, catalog):
@@ -188,7 +188,7 @@ class Contains(Comparator):
 class Eq(Comparator):
     """Equals query.
 
-    AST hint:  index == 'foo'
+    CQE equivalent:  index == 'foo'
     """
     operator = '=='
 
@@ -200,7 +200,7 @@ class Eq(Comparator):
 class NotEq(Comparator):
     """Not equal query.
 
-    AST hint: index != 'foo'
+    CQE eqivalent: index != 'foo'
     """
     operator = '!='
 
@@ -211,7 +211,7 @@ class NotEq(Comparator):
 class Gt(Comparator):
     """ Greater than query.
 
-    AST hint: index > 'foo'
+    CQE equivalent: index > 'foo'
     """
     operator = '>'
 
@@ -222,7 +222,7 @@ class Gt(Comparator):
 class Lt(Comparator):
     """ Less than query.
 
-    AST hint: index < 'foo'
+    CQE equivalent: index < 'foo'
     """
     operator = '<'
 
@@ -233,7 +233,7 @@ class Lt(Comparator):
 class Ge(Comparator):
     """Greater (or equal) query.
 
-    AST hint: index >= 'foo'
+    CQE equivalent: index >= 'foo'
     """
     operator = '>='
 
@@ -244,7 +244,7 @@ class Ge(Comparator):
 class Le(Comparator):
     """Less (or equal) query.
 
-    AST hint: index <= 'foo
+    CQE equivalent: index <= 'foo
     """
     operator = '<='
 
@@ -254,6 +254,8 @@ class Le(Comparator):
 
 class Any(Comparator):
     """Any of query.
+
+    CQE equivalent: ??
     """
     operator = 'any'
 
@@ -262,7 +264,9 @@ class Any(Comparator):
         return index.applyAny(self.value)
 
 class All(Comparator):
-    """Any of query.
+    """All query.
+
+    CQE equivalent: ??
     """
     operator = 'all'
 
@@ -401,15 +405,6 @@ class Difference(Operator):
             else:
                 results = self.family.IF.difference(left, right)
         return results
-
-def parse_query(expr, names=None):
-    """
-    Parses the given expression string into a catalog query.  The `names` dict
-    provides local variable names that can be used in the expression.
-    """
-    if names is None:
-        names = {}
-    return _optimize_query(_AstParser(expr, names).query)
 
 def _comparator_factory(method):
     def wrapper(self, node, children):
@@ -1119,6 +1114,15 @@ def _optimize_query(tree):
     tree = _group_any_and_all(tree)
     tree = _make_ranges(tree)
     return tree
+
+def parse_query(expr, names=None):
+    """
+    Parses the given expression string into a catalog query.  The `names` dict
+    provides local variable names that can be used in the expression.
+    """
+    if names is None:
+        names = {}
+    return _optimize_query(_AstParser(expr, names).query)
 
 def _print_ast(expr): #pragma NO COVERAGE
     """
