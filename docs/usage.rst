@@ -111,7 +111,8 @@ to its constituent content.
    will always be of a particular type, and *not* always sliceable;
    for example it may be a generator.
 
-You can also pass combine query objects to search multiple indexes:
+You can also combine query objects, using set operations, to search
+multiple indexes:
 
 .. code-block:: python
    :linenos:
