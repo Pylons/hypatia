@@ -96,7 +96,7 @@ which have a result in the ``flavor`` index that matches the value
 The :meth:`repoze.catalog.Catalog.query` method will return a
 two-tuple, with the first element in the sequence being the length of
 the result set, and the second element being the result set
-itself.  Our above example will print:
+itself.  Our above example will print::
 
   (1, [1])
 
@@ -127,7 +127,7 @@ You can also pass combine query objects to search multiple indexes:
                      Intersection(Eq('flavors', 'peach'), Eq('texts', 'nutty')))
    print (numdocs, [ x for x in results ])
 
-The results of the above search will return the following:
+The results of the above search will return the following::
 
    (0, [])
 
@@ -230,24 +230,28 @@ Query objects may also be created by parsing a :term:`CQE` string.
 The query parser uses Python's internal code parser to parse CQE query
 expression strings, so the syntax is just like Python::
 
-    query = parse_query("author == 'crossi' and 'biscuits' in body")
+    mycatalog.query("'crossi' and 'biscuits' in body")
 
 The query parser allows name substitution in expressions.  Names are
-resolved using a dict passed into `parse_query`::
+resolved using a dict passed into
+:meth:`repoze.catalog.Catalog.query`::
 
     author = request.params.get("author")
     word = request.params.get("search_term")
-    query = parse_query("author == author and word in body", names=locals())
+    query = mycatalog.query("author == author and word in body", 
+                            names=locals())
 
-Unlike true Python expressions, ordering of the terms is important for
-comparators. For most comparators the index_name must be written on the left.
-The following, for example, would raise an exception::
+Unlike true Python expressions, ordering of the terms in a CQE
+expression is important for comparators. For most comparators the
+``index_name`` must be written on the left.  The following, for
+example, would raise an exception::
 
-    query = parse_query("'crossi' == author")
+    query = mycatalog.query("'crossi' == author")
 
-Note that not all index types support all comparators. An attempt to perform
-a query using a comparator that is not supported by the index being queried
-will result in a NotImplementedError being raised when the query is performed.
+Note that not all index types support all comparators. An attempt to
+perform a query using a comparator that is not supported by the index
+being queried will result in a NotImplementedError being raised when
+the query is performed.
 
 Comparators
 !!!!!!!!!!!
@@ -452,6 +456,21 @@ which have a result in the ``flavor`` index that matches the value
 are a "range" search: you can read ``('peach', 'peach')`` as "from
 peach to peach".  You could say ``('peach', 'pistachio')`` to find all
 documents that are in the "range" from peach to pistachio.
+
+The :meth:`repoze.catalog.Catalog.search` method will return a
+two-tuple, with the first element in the sequence being the length of
+the result set, and the second element being the result set itself.
+Our above example will print:
+
+  (1, [1])
+
+The first element in the tuple is the length of the result set (the
+integer ``1``, in this case).
+
+The second element in the tuple is the result set.  It has one item.
+This item is the document id for the content we indexed.  Your
+application is responsible for resolving this document identifier back
+to its constituent content.
 
 You can also pass compound search parameters for multiple indexes.
 The results are intersected to provide a result:
