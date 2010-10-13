@@ -278,13 +278,13 @@ class TestRange(ComparatorTestBase):
         inst = self._getTargetClass().fromGTLT(gt, lt)
         self.assertEqual(str(inst), "0 < index < 5")
 
-class OperatorTestBase(unittest.TestCase):
+class SetOpTestBase(unittest.TestCase):
     def _makeOne(self, left, right):
         return self._getTargetClass()(left, right)
 
-class TestOperator(OperatorTestBase):
+class TestSetOp(SetOpTestBase):
     def _getTargetClass(self):
-        from repoze.catalog.query import Operator as cls
+        from repoze.catalog.query import SetOp as cls
         return cls
 
     def test_iter_children(self):
@@ -294,7 +294,7 @@ class TestOperator(OperatorTestBase):
         o = self._makeOne(left, right)
         self.assertEqual(list(o.iter_children()), [left, right])
 
-class TestUnion(OperatorTestBase):
+class TestUnion(SetOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Union as cls
         return cls
@@ -333,7 +333,7 @@ class TestUnion(OperatorTestBase):
         self.failUnless(right.applied)
         self.assertEqual(o.family.union, None)
 
-class TestIntersection(OperatorTestBase):
+class TestIntersection(SetOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Intersection as cls
         return cls
@@ -372,7 +372,7 @@ class TestIntersection(OperatorTestBase):
         self.failUnless(right.applied)
         self.assertEqual(o.family.intersection, None)
 
-class TestDifference(OperatorTestBase):
+class TestDifference(SetOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Difference as cls
         return cls

@@ -20,11 +20,11 @@ class Query(object):
         self._check_type("set difference", right)
         return Difference(self, right)
 
-    def _check_type(self, operator, operand):
+    def _check_type(self, setop, operand):
         if not isinstance(operand, Query):
             raise TypeError(
                 "TypeError: unsupported operand types for %s: %s %s" %
-                (operator, type(self), type(operand))
+                (setop, type(self), type(operand))
             )
 
     def iter_children(self):
@@ -199,9 +199,9 @@ class Range(Comparator):
         s.append(repr(self.end))
         return ' '.join(s)
 
-class Operator(Query):
+class SetOp(Query):
     """
-    Base class for operators.
+    Base class for set operators.
     """
     family = BTrees.family32
 
@@ -242,7 +242,7 @@ class Operator(Query):
         yield self._left
         yield self._right
 
-class Union(Operator):
+class Union(SetOp):
     """Union of two result sets."""
     def apply(self, catalog):
         left = self.left.apply(catalog)
@@ -255,7 +255,7 @@ class Union(Operator):
             _, results = self.family.IF.weightedUnion(left, right)
         return results
 
-class Intersection(Operator):
+class Intersection(SetOp):
     """Intersection of two result sets."""
     def apply(self, catalog):
         left = self.left.apply(catalog)
@@ -269,7 +269,7 @@ class Intersection(Operator):
                 _, results = self.family.IF.weightedIntersection(left, right)
         return results
 
-class Difference(Operator):
+class Difference(SetOp):
     """Difference between two result sets."""
     def apply(self, catalog):
         left = self.left.apply(catalog)
@@ -616,32 +616,32 @@ def _group_any_and_all(tree):
         Performs a recursive depth first traversal attempting to collect
         values for Eq comparators which are joined together by unions or
         intersections. Returns a tuple: (op_type, index_name, values) where
-        `op_type` is the type of all operators in the subexpression
+        `op_type` is the type of all set operators in the subexpression
         represented by the visited node, `index_name` is the name of the index
         used in all Eq queries in the subexpression represented by the visited
         node, and `values` is the collection of values for each Eq query in
-        the subexpression. If the subexpression contains mixed operators,
+        the subexpression. If the subexpression contains mixed set operators,
         comparators other than Eq or mixed index_names, the return value will
         be (None, None, []), meaning that no grouping could be done.
 
         If a visited node is an Eq comparator, then we start a new potential
         grouping by returning (None, node.index_name, node.value). `op_type`
-        is None because we don't know yet what, if any, operator contains the
-        current node. This will be filled in at the Eq node's parent, which
-        will be an operator node.
+        is None because we don't know yet what, if any, set operator contains
+        the current node. This will be filled in at the Eq node's parent,
+        which will be an operator node.
 
-        If the visited node is an operator node, then we recursively visit the
-        left and right subtrees and look at the results. If visiting a subtree
-        returns None for `op_type` then we fill in the current operation type
-        for the subtree. If `index_name` and `op_type` match for both subtrees
-        and if both subtree op_types match the current node's op_type, then we
-        may group both subtrees together and return the common `op_type`,
-        `index_name` and the values collected from any Eq nodes in either
-        subtree. Otherwise, if not able to group the two subtrees together,
-        `group` is called on each subtree, attempting to replace each subtree
-        with an Any or All query if possible.
+        If the visited node is a set operator node, then we recursively visit
+        the left and right subtrees and look at the results. If visiting a
+        subtree returns None for `op_type` then we fill in the current
+        operation type for the subtree. If `index_name` and `op_type` match
+        for both subtrees and if both subtree op_types match the current
+        node's op_type, then we may group both subtrees together and return
+        the common `op_type`, `index_name` and the values collected from any
+        Eq nodes in either subtree. Otherwise, if not able to group the two
+        subtrees together, `group` is called on each subtree, attempting to
+        replace each subtree with an Any or All query if possible.
         """
-        if isinstance(node, Operator):
+        if isinstance(node, SetOp):
             this_op = type(node)
             left_op, left_index, left_values = visit(node.left)
             if left_op is None:
@@ -700,13 +700,13 @@ def _make_ranges(tree):
     replaced.
 
     Potential range boundaries are discovered by performing a depth first
-    traversal of the query tree.  At each node, there is a check to see if
-    the current node could potentially form half of a range query.  Range
+    traversal of the query tree. At each node, there is a check to see if the
+    current node could potentially form half of a range query. Range
     boundaries are collected by index_name and stored in `starts` and `ends`
-    dictionaries that will be accessible at higher nodes.  Whenever an operator
-    node other than an intersection is traversed, potential range boundaries
-    are forgotten since we only want to create ranges from subqueries that are
-    connected to each other via intersection operations.
+    dictionaries that will be accessible at higher nodes. Whenever a set
+    operator node other than an intersection is traversed, potential range
+    boundaries are forgotten since we only want to create ranges from
+    subqueries that are connected to each other via intersection operations.
 
     At each intersection node, after potential range boundaries have been
     collected from the left and right subtrees, the potential boundaries are
@@ -879,7 +879,7 @@ def _make_ranges(tree):
             return node
 
         # If a leaf node and not an upper or lower bound, nothing to do.
-        elif not isinstance(node, Operator):
+        elif not isinstance(node, SetOp):
             return node
 
         # Left and right subtrees shouldn't know about each other's potential
