@@ -1,3 +1,9 @@
+Next release (0.8)
+==================
+
+- Deprecated ``.search``-based querying of catalog in favor of newer
+  query language(s) via ``.query``.  See docs for more info.
+
 0.7.3 (2010-08-26)
 ==================
 
