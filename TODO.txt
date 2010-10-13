@@ -1,4 +1,4 @@
-- Figure out some way of indicating that a particular index supports
-  a certain comparator for documentation purposes.
+- Extend the querytype methods offered by KeywordIndex (add Gt, Lt, etc).
 
+- Audit indices to see if they can support more query types.
 
