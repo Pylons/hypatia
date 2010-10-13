@@ -115,7 +115,7 @@ specify sort ordering and query limiting.
 
 In the above example, we specified no particular sort ordering or
 limit, and we're essentially asking the catalog to return us all the
-documents that match the word 'peach' as a field within the field
+documents that match the word ``peach`` as a field within the field
 index named ``flavor``.  Other types of indexes can be queried
 similarly::
 
