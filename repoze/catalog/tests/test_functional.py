@@ -1,6 +1,7 @@
 import unittest
+from repoze.catalog import query as q
 
-class TestQueryWithDSL(unittest.TestCase):
+class TestQueryBase(object):
     def test_it(self):
         from repoze.catalog.catalog import Catalog
         from repoze.catalog.indexes.field import CatalogFieldIndex
@@ -21,21 +22,32 @@ class TestQueryWithDSL(unittest.TestCase):
                                      ['a', 'b', 'c']))
         catalog.index_doc(6, Content('name6', 'title6', 'body six',['d']))
 
-        query = (
-            "(allowed == 'a' and allowed == 'b' and "
-            "(name == 'name1' or name == 'name2' or name == 'name3' or "
-            "name == 'name4' or name == 'name5') - (title == 'title3')) and "
-            "body in text"
-        )
         numdocs, result = catalog.query(
-            query, sort_index='name', limit=5, names=dict(body='body'))
+            self.query, sort_index='name', limit=5, names=dict(body='body'))
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
+
+class TestQueryWithCQL(unittest.TestCase, TestQueryBase):
+    query = (
+        "(allowed == 'a' and allowed == 'b' and "
+        "(name == 'name1' or name == 'name2' or name == 'name3' or "
+        "name == 'name4' or name == 'name5') - (title == 'title3')) and "
+        "body in text"
+        )
+
+class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
+    query = (
+        q.All('allowed', ['a', 'b']) &
+        q.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5']) -
+        q.Eq('title', 'title3') &
+        q.Contains('text', 'body')
+        )
 
 try:
     import ast
 except ImportError: #pragma NO COVERAGE
-    del TestQueryWithDSL
+    del TestQueryWithCQL
+    del TestQueryWithPythonQueryObjects
 
 class Content(object):
     def __init__(self, name, title, text, allowed):
