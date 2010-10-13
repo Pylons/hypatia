@@ -215,9 +215,9 @@ individual queries to be combined using set operations.  For example:
 
 In the above example, ``Intersection`` is a set operator, and both
 ``Eq`` and ``Contains`` are comparison operators.  The resulting query
-will search two indexes, ``author`` and ``body``, and, because the
+will search two indexes, ``author`` and ``body``.  Because the
 individual comparators are passed as arguments to the ``Intersection``
-set operator, then return all documents which satisfy *both*
+set operator, the result becomes all documents which satisfy *both*
 comparators.
 
 All query objects may be combined using supported set operators, so
