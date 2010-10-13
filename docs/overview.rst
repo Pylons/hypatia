@@ -99,7 +99,7 @@ Querying
 
 Once you've got some number of documents indexed, you can perform
 queries against an existing catalog.  A query is performed by passing
-keyword arguments to the ``search`` method of the catalog object::
+keyword arguments to the ``query`` method of the catalog object::
 
    from repoze.catalog.query import Eq
    catalog.query(Eq('flavor', 'peach'))
