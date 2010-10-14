@@ -97,9 +97,10 @@ def do_benchmark(fname, nd, nk1, nk2):
     print "\t# docs: %d" % nd
     print "\t# distinct keys: %d" % nk2
     print ""
-    cost1 = math.log(nk2, 2) + max(float(nd)/nk1, float(nd)/nk2)
-    cost2 = float(nd)/nk1 * math.log(nd, 2)
 
+    cost1 = (math.log(nk1, 2) + math.log(nk2, 2) +
+             max(float(nd)/nk1, float(nd)/nk2))
+    cost2 = math.log(nk1, 2) + float(nd)/nk1 * math.log(nd, 2)
     print "Prediction:"
     if cost1 > cost2:
         print "Algorithm 2 %0.2f times faster than Algorithm 1" % (cost1/cost2)
