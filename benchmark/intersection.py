@@ -69,7 +69,7 @@ class Intersection1(SetOp):
             if len(right) == 0:
                 results = self.family.IF.Set()
             else:
-                _, results = self.family.IF.weightedIntersection(left, right)
+                results = self.family.IF.intersection(left, right)
         return results
 
 class Intersection2(SetOp):
