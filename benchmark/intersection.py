@@ -47,6 +47,7 @@ That's the theory anyway.  Let's see who wins.
 import glob
 import math
 import os
+import random
 import time
 
 from repoze.catalog.catalog import ConnectionManager
@@ -56,6 +57,7 @@ from repoze.catalog.query import Eq
 from repoze.catalog.query import SetOp
 
 _marker = object()
+random.seed()
 
 class Intersection1(SetOp):
     def apply(self, catalog):
@@ -120,12 +122,12 @@ def do_benchmark(fname, nd, nk1, nk2):
     catalog['two'] = CatalogFieldIndex('two')
 
     class Document(object):
-        def __init__(self, i):
-            self.one = str(i % nk1)
-            self.two = str(i % nk2)
+        def __init__(self):
+            self.one = str(random.randrange(nk1))
+            self.two = str(random.randrange(nk2))
 
     for docid in xrange(nd):
-        catalog.index_doc(docid, Document(docid))
+        catalog.index_doc(docid, Document())
     manager.commit()
     manager.close()
 
