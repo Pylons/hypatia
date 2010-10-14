@@ -45,6 +45,7 @@ average it will have a smaller result set.
 That's the theory anyway.  Let's see who wins.
 """
 import glob
+import math
 import os
 import time
 
@@ -96,8 +97,17 @@ def do_benchmark(fname, nd, nk1, nk2):
     print "\t# docs: %d" % nd
     print "\t# distinct keys: %d" % nk2
     print ""
-    print "Setting up indexes..."
+    cost1 = math.log(nk2, 2) + max(float(nd)/nk1, float(nd)/nk2)
+    cost2 = float(nd)/nk1 * math.log(nd, 2)
 
+    print "Prediction:"
+    if cost1 > cost2:
+        print "Algorithm 2 %0.2f times faster than Algorithm 1" % (cost1/cost2)
+    else:
+        print "Algorithm 1 %0.2f times faster than Algorithm 2" % (cost2/cost1)
+
+    print ""
+    print "Setting up indexes..."
     for fn in glob.glob(fname + "*"):
         os.remove(fn)
 
@@ -134,9 +144,19 @@ def do_benchmark(fname, nd, nk1, nk2):
             cumulative2 += time.time() - start
 
     manager.close()
+    for fn in glob.glob(fname + "*"):
+        os.remove(fn)
 
+    print ""
+    print "Result:"
     print "Time for algorithm1: %0.3f s" % cumulative1
     print "Time for algorithm2: %0.3f s" % cumulative2
+    if cumulative1 > cumulative2:
+        print "Algorithm 2 %0.2f times faster than Algorithm 1" % (
+            cumulative1/cumulative2)
+    else:
+        print "Algorithm 1 %0.2f times faster than Algorithm 2" % (
+            cumulative2/cumulative1)
 
 if __name__ == '__main__':
     do_benchmark('benchmark.db', 10000, 1000, 1000)
