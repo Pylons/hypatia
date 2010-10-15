@@ -270,9 +270,9 @@ class TestFileStorageCatalogFactory(unittest.TestCase):
         from repoze.catalog.catalog import FileStorageCatalogFactory
         return FileStorageCatalogFactory
 
-    def _makeOne(self, filename, appname):
+    def _makeOne(self, filename, appname, **kw):
         klass = self._getTargetClass()
-        return klass(filename, appname)
+        return klass(filename, appname, **kw)
 
     def setUp(self):
         import tempfile
@@ -289,6 +289,14 @@ class TestFileStorageCatalogFactory(unittest.TestCase):
         self.failUnless(isinstance(catalog, Catalog))
         factory.db.close()
 
+    def test_with_cache_size(self):
+        factory = self._makeOne(self.tempfile, 'catalog', cache_size=1000)
+        from repoze.catalog.catalog import Catalog
+        catalog = factory()
+        self.failUnless(isinstance(catalog, Catalog))
+        self.assertEqual(factory.db._cache_size, 1000)
+        factory.db.close()
+
     def test_with_conn_handler(self):
         factory = self._makeOne(self.tempfile, 'catalog')
         from repoze.catalog.catalog import Catalog
@@ -300,7 +308,7 @@ class TestFileStorageCatalogFactory(unittest.TestCase):
         self.assertEqual(e['conn']._db, factory.db)
         factory.db.close()
 
-class TestConnectioManager(unittest.TestCase):
+class TestConnectionManager(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.catalog import ConnectionManager
         return ConnectionManager

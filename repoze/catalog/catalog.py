@@ -171,11 +171,23 @@ class CatalogFactory(object):
         return root[self.appname]
 
 class FileStorageCatalogFactory(CatalogFactory):
-    def __init__(self, filename, appname):
+    def __init__(self, filename, appname, **kw):
+        """ ``filename`` is a filename to the FileStorage storage,
+        ``appname`` is a key name in the root of the FileStorage in
+        which to store the catalog, and ``**kw`` is passed as extra
+        keyword arguments to :class:`ZODB.DB.DB` when creating a
+        database.  Note that when we create a :class:`ZODB.DB.DB`
+        instance, if a ``cache_size`` is not passed in ``*kw``, we
+        override the default ``cache_size`` value with ``50000`` in
+        order to provide a more realistic cache size for modern apps"""
+        cache_size = kw.get('cache_size')
+        if cache_size is None:
+            kw['cache_size'] = 50000
+        
         from ZODB.FileStorage.FileStorage import FileStorage
         from ZODB.DB import DB
         f = FileStorage(filename)
-        self.db = DB(f)
+        self.db = DB(f, **kw)
         self.appname = appname
 
     def __del__(self):
