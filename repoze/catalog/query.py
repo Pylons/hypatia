@@ -1,6 +1,7 @@
 import BTrees
 import sys
 
+
 class Query(object):
     """
     Base class for all elements that make up queries.
@@ -33,7 +34,8 @@ class Query(object):
     def print_tree(self, out=sys.stdout, level=0):
         print >>out, '  ' * level + str(self)
         for child in self.iter_children():
-            child.print_tree(out, level+1)
+            child.print_tree(out, level + 1)
+
 
 class Comparator(Query):
     """
@@ -49,6 +51,7 @@ class Comparator(Query):
     def __str__(self):
         return ' '.join((self.index_name, self.operator, repr(self.value)))
 
+
 class Contains(Comparator):
     """Contains query.
 
@@ -61,6 +64,7 @@ class Contains(Comparator):
 
     def __str__(self):
         return '%s in %s' % (repr(self.value), self.index_name)
+
 
 class Eq(Comparator):
     """Equals query.
@@ -85,6 +89,7 @@ class NotEq(Comparator):
         index = self.get_index(catalog)
         return index.applyNotEq(self.value)
 
+
 class Gt(Comparator):
     """ Greater than query.
 
@@ -95,6 +100,7 @@ class Gt(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyGt(self.value)
+
 
 class Lt(Comparator):
     """ Less than query.
@@ -107,6 +113,7 @@ class Lt(Comparator):
         index = self.get_index(catalog)
         return index.applyLt(self.value)
 
+
 class Ge(Comparator):
     """Greater (or equal) query.
 
@@ -117,6 +124,7 @@ class Ge(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyGe(self.value)
+
 
 class Le(Comparator):
     """Less (or equal) query.
@@ -129,6 +137,7 @@ class Le(Comparator):
         index = self.get_index(catalog)
         return index.applyLe(self.value)
 
+
 class Any(Comparator):
     """Any of query.
 
@@ -140,6 +149,7 @@ class Any(Comparator):
         index = self.get_index(catalog)
         return index.applyAny(self.value)
 
+
 class All(Comparator):
     """All query.
 
@@ -150,6 +160,7 @@ class All(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
+
 
 class Range(Comparator):
     """ Index value falls within a range. """
@@ -199,6 +210,7 @@ class Range(Comparator):
         s.append(repr(self.end))
         return ' '.join(s)
 
+
 class SetOp(Query):
     """
     Base class for set operators.
@@ -242,6 +254,7 @@ class SetOp(Query):
         yield self._left
         yield self._right
 
+
 class Union(SetOp):
     """Union of two result sets."""
     def apply(self, catalog):
@@ -254,6 +267,7 @@ class Union(SetOp):
         else:
             _, results = self.family.IF.weightedUnion(left, right)
         return results
+
 
 class Intersection(SetOp):
     """Intersection of two result sets."""
@@ -269,6 +283,7 @@ class Intersection(SetOp):
                 _, results = self.family.IF.weightedIntersection(left, right)
         return results
 
+
 class Difference(SetOp):
     """Difference between two result sets."""
     def apply(self, catalog):
@@ -283,14 +298,17 @@ class Difference(SetOp):
                 results = self.family.IF.difference(left, right)
         return results
 
+
 def _comparator_factory(method):
     def wrapper(self, node, children):
         cls = method(self, node, children)
+
         def factory(left, right):
             return cls(self._index_name(left), self._value(right))
         factory.type = cls
         return factory
     return wrapper
+
 
 class _AstParser(object):
     """
@@ -341,9 +359,12 @@ class _AstParser(object):
     way the query tree is built from the ast from the bottom up.
     """
     def __init__(self, expr, names):
+        self.expr = expr
         self.names = names
-        statements = ast.parse(expr).body
-        if len(statements) > 1 :
+
+    def parse(self):
+        statements = ast.parse(self.expr).body
+        if len(statements) > 1:
             raise ValueError(
                 "Can only process single expression."
             )
@@ -353,7 +374,7 @@ class _AstParser(object):
                 "Not an expression."
             )
 
-        self.query = self.walk(expr_tree.value)
+        return self.walk(expr_tree.value)
 
     def walk(self, tree):
         def visit(node):
@@ -422,12 +443,11 @@ class _AstParser(object):
 
     def process_In(self, node, children):
         def factory(left, right):
-            if callable(right): # any or all, see process_Call
+            if callable(right):  # any or all, see process_Call
                 return right(self._index_name(left))
             return Contains(self._index_name(right), self._value(left))
         factory.type = Contains
         return factory
-
 
     def process_Compare(self, node, children):
         # Python allows arbitrary chaining of comparisons, ie:
@@ -526,8 +546,10 @@ class _AstParser(object):
             comparator = Any
         else:
             comparator = All
+
         def factory(index_name):
             return comparator(index_name, values)
+
         return factory
 
     def _index_name(self, node):
@@ -542,6 +564,7 @@ class _AstParser(object):
             except:
                 raise NameError(node.id)
         return node
+
 
 def _group_any_and_all(tree):
     """
@@ -663,6 +686,7 @@ def _group_any_and_all(tree):
     # replaced.
     op, index, values = visit(tree)
     return group(tree, index, values)
+
 
 def _make_ranges(tree):
     """
@@ -801,7 +825,8 @@ def _make_ranges(tree):
 
     One other complication remains.  To illustrate, consider this expression:
 
-        >>> expr = "(A > 0 and B > 0 and C > 0) and (A < 5 and B < 5 and C < 5)"
+        >>> expr = "(A > 0 and B > 0 and C > 0) and (
+        ...          A < 5 and B < 5 and C < 5)"
         >>> _AstParser(expr, {}).query.print_tree()
         Intersection
           Intersection
@@ -968,6 +993,7 @@ def _make_ranges(tree):
 
     return visit(tree, {}, {})
 
+
 def _nearest_common_ancestor(n1, n2):
     n1_ancestors = set([n1])
     n2_ancestors = set([n2])
@@ -987,10 +1013,12 @@ def _nearest_common_ancestor(n1, n2):
     assert n1 is n2, "Nodes are not part of same tree."
     return n1
 
+
 def _optimize_query(tree):
     tree = _group_any_and_all(tree)
     tree = _make_ranges(tree)
     return tree
+
 
 def parse_query(expr, names=None):
     """
@@ -999,20 +1027,23 @@ def parse_query(expr, names=None):
     """
     if names is None:
         names = {}
-    return _optimize_query(_AstParser(expr, names).query)
+    return _optimize_query(_AstParser(expr, names).parse())
 
-def _print_ast(expr): #pragma NO COVERAGE
+
+def _print_ast(expr):  # pragma NO COVERAGE
     """
     Useful method for visualizing AST trees while debugging.
     """
     tree = ast.parse(expr)
+
     def visit(node, level):
         print '  ' * level + str(node)
         for child in ast.iter_child_nodes(node):
             visit(child, level + 1)
     visit(tree, 0)
 
+
 try:
     import ast
-except ImportError: #pragma NO COVERAGE
+except ImportError:  # pragma NO COVERAGE
     del parse_query, _AstParser, _optimize_query, _print_ast
