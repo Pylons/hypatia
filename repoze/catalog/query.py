@@ -305,17 +305,6 @@ class Difference(SetOp):
         return results
 
 
-def _comparator_factory(method):
-    def wrapper(self, node, children):
-        cls = method(self, node, children)
-
-        def factory(left, right):
-            return cls(self._index_name(left), self._value(right))
-        factory.type = cls
-        return factory
-    return wrapper
-
-
 class _AstParser(object):
     """
     Uses Python's ast module to parse an expression into an abstract syntax
@@ -423,29 +412,29 @@ class _AstParser(object):
     def process_Tuple(self, node, children):
         return tuple(self.process_List(node, children))
 
-    @_comparator_factory
     def process_Eq(self, node, children):
-        return Eq
+        return self.process_comparator(Eq)
 
-    @_comparator_factory
     def process_NotEq(self, node, children):
-        return NotEq
+        return self.process_comparator(NotEq)
 
-    @_comparator_factory
     def process_Lt(self, node, children):
-        return Lt
+        return self.process_comparator(Lt)
 
-    @_comparator_factory
     def process_LtE(self, node, children):
-        return Le
+        return self.process_comparator(Le)
 
-    @_comparator_factory
     def process_Gt(self, node, children):
-        return Gt
+        return self.process_comparator(Gt)
 
-    @_comparator_factory
     def process_GtE(self, node, children):
-        return Ge
+        return self.process_comparator(Ge)
+
+    def process_comparator(self, cls):
+        def factory(left, right):
+            return cls(self._index_name(left), self._value(right))
+        factory.type = cls
+        return factory
 
     def process_In(self, node, children):
         def factory(left, right):
