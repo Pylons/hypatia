@@ -1,8 +1,11 @@
 import unittest
+from repoze.catalog.query import ast_support
+
 
 class ComparatorTestBase(unittest.TestCase):
     def _makeOne(self, index_name, value):
         return self._getTargetClass()(index_name, value)
+
 
 class TestQuery(unittest.TestCase):
     def _makeOne(self):
@@ -54,12 +57,15 @@ class TestQuery(unittest.TestCase):
 
     def test_print_tree(self):
         from repoze.catalog.query import Query
+
         class Derived(Query):
             def __init__(self, name):
                 self.name = name
                 self.children = []
+
             def __str__(self):
                 return self.name
+
             def iter_children(self):
                 return self.children
 
@@ -74,6 +80,7 @@ class TestQuery(unittest.TestCase):
         a.print_tree(buf)
         self.assertEqual(buf.getvalue(), 'A\n  B\n  C\n')
 
+
 class TestComparator(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Comparator
@@ -83,6 +90,7 @@ class TestComparator(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.index_name, 'index')
         self.assertEqual(inst.value, 'val')
+
 
 class TestContains(ComparatorTestBase):
     def _getTargetClass(self):
@@ -100,6 +108,7 @@ class TestContains(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "'val' in index")
 
+
 class TestEq(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Eq
@@ -115,6 +124,7 @@ class TestEq(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index == 'val'")
+
 
 class TestNotEq(ComparatorTestBase):
     def _getTargetClass(self):
@@ -132,6 +142,7 @@ class TestNotEq(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index != 'val'")
 
+
 class TestGt(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Gt
@@ -147,6 +158,7 @@ class TestGt(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index > 'val'")
+
 
 class TestLt(ComparatorTestBase):
     def _getTargetClass(self):
@@ -164,6 +176,7 @@ class TestLt(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index < 'val'")
 
+
 class TestGe(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Ge
@@ -179,6 +192,7 @@ class TestGe(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index >= 'val'")
+
 
 class TestLe(ComparatorTestBase):
     def _getTargetClass(self):
@@ -196,6 +210,7 @@ class TestLe(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index <= 'val'")
 
+
 class TestAll(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import All
@@ -212,6 +227,7 @@ class TestAll(ComparatorTestBase):
         inst = self._makeOne('index', [1, 2, 3])
         self.assertEqual(str(inst), "index all [1, 2, 3]")
 
+
 class TestAny(ComparatorTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Any
@@ -227,6 +243,7 @@ class TestAny(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
         self.assertEqual(str(inst), "index any [1, 2, 3]")
+
 
 class TestRange(ComparatorTestBase):
     def _getTargetClass(self):
@@ -278,9 +295,11 @@ class TestRange(ComparatorTestBase):
         inst = self._getTargetClass().fromGTLT(gt, lt)
         self.assertEqual(str(inst), "0 < index < 5")
 
+
 class SetOpTestBase(unittest.TestCase):
     def _makeOne(self, left, right):
         return self._getTargetClass()(left, right)
+
 
 class TestSetOp(SetOpTestBase):
     def _getTargetClass(self):
@@ -293,6 +312,7 @@ class TestSetOp(SetOpTestBase):
         left, right = Dummy(), Dummy()
         o = self._makeOne(left, right)
         self.assertEqual(list(o.iter_children()), [left, right])
+
 
 class TestUnion(SetOpTestBase):
     def _getTargetClass(self):
@@ -333,6 +353,7 @@ class TestUnion(SetOpTestBase):
         self.failUnless(right.applied)
         self.assertEqual(o.family.union, None)
 
+
 class TestIntersection(SetOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Intersection as cls
@@ -371,6 +392,7 @@ class TestIntersection(SetOpTestBase):
         self.failUnless(left.applied)
         self.failUnless(right.applied)
         self.assertEqual(o.family.intersection, None)
+
 
 class TestDifference(SetOpTestBase):
     def _getTargetClass(self):
@@ -411,7 +433,12 @@ class TestDifference(SetOpTestBase):
         self.failUnless(right.applied)
         self.assertEqual(o.family.diff, None)
 
+
 class Test_parse_query(unittest.TestCase):
+    def tearDown(self):
+        from repoze.catalog import query
+        query.ast_support = True
+
     def _call_fut(self, expr, names=None):
         from repoze.catalog.query import parse_query as fut
         return fut(expr, names)
@@ -448,6 +475,11 @@ class Test_parse_query(unittest.TestCase):
 
     def test_wrong_number_or_args_for_any(self):
         self.assertRaises(ValueError, self._call_fut, 'a in any(1, 2)')
+
+    def test_no_ast_support(self):
+        from repoze.catalog import query
+        query.ast_support = False
+        self.assertRaises(NotImplementedError, self._call_fut, None)
 
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
@@ -759,6 +791,7 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op.right.left, Lt))
         self.failUnless(isinstance(op.right.right, Lt))
 
+
 class Test_nearest_common_ancestor(unittest.TestCase):
     def _call_fut(self, n1, n2):
         from repoze.catalog.query import _nearest_common_ancestor as fut
@@ -790,13 +823,13 @@ class Test_nearest_common_ancestor(unittest.TestCase):
         self.assertEqual(self._call_fut(b, d), a)
         self.assertEqual(self._call_fut(d, b), a)
 
-try:
-    import ast
-except ImportError: #pragma NO COVERAGE
+if not ast_support:  # pragma NO COVERAGE
     del Test_parse_query
+
 
 class Dummy(object):
     __parent__ = None
+
 
 class DummyCatalog(object):
     def __init__(self, index=None):
@@ -806,6 +839,7 @@ class DummyCatalog(object):
 
     def __getitem__(self, name):
         return self.index
+
 
 class DummyIndex(object):
 
@@ -849,6 +883,7 @@ class DummyIndex(object):
         self.range = (start, end, start_exclusive, end_exclusive)
         return self.range
 
+
 class DummyFamily(object):
     union = None
     intersection = None
@@ -873,6 +908,7 @@ class DummyFamily(object):
     def Set(self):
         return set()
 
+
 class DummyQuery(object):
     applied = False
 
@@ -882,4 +918,3 @@ class DummyQuery(object):
     def apply(self, catalog):
         self.applied = True
         return self.results
-

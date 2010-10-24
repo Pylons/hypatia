@@ -1,6 +1,12 @@
 import BTrees
 import sys
 
+try:
+    import ast
+    ast_support = True
+except ImportError:  # pragma NO COVERAGE
+    ast_support = False
+
 
 class Query(object):
     """
@@ -1025,6 +1031,8 @@ def parse_query(expr, names=None):
     Parses the given expression string into a catalog query.  The `names` dict
     provides local variable names that can be used in the expression.
     """
+    if not ast_support:
+        raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")
     if names is None:
         names = {}
     return _optimize_query(_AstParser(expr, names).parse())
@@ -1041,9 +1049,3 @@ def _print_ast(expr):  # pragma NO COVERAGE
         for child in ast.iter_child_nodes(node):
             visit(child, level + 1)
     visit(tree, 0)
-
-
-try:
-    import ast
-except ImportError:  # pragma NO COVERAGE
-    del parse_query, _AstParser, _optimize_query, _print_ast
