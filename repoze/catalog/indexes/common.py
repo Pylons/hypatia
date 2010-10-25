@@ -4,6 +4,7 @@ import BTrees
 
 _marker = ()
 
+
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
 
@@ -34,7 +35,6 @@ class CatalogIndex(object):
         if isinstance(value, Broken):
             raise ValueError('Catalog cannot index broken object %s' %
                              value)
-
 
         return super(CatalogIndex, self).index_doc(docid, value)
 
@@ -90,3 +90,15 @@ class CatalogIndex(object):
         raise NotImplementedError(
             "Range is not supported for %s" % type(self).__name__)
 
+    def avg_result_len_eq(self):
+        return None
+
+    avg_result_len_contains = avg_result_len_eq
+    avg_result_len_not_eq = avg_result_len_eq
+    avg_result_len_gt = avg_result_len_eq
+    avg_result_len_lt = avg_result_len_eq
+    avg_result_len_ge = avg_result_len_eq
+    avg_result_len_le = avg_result_len_eq
+    avg_result_len_any = avg_result_len_eq
+    avg_result_len_all = avg_result_len_eq
+    avg_result_len_range = avg_result_len_eq

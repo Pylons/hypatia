@@ -274,17 +274,18 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def applyLe(self, max_value):
         return self.apply(RangeValue(None, max_value))
 
-    def applyIn(self, values):
+    def applyAny(self, values):
         queries = list(values)
         return self.search(queries, operator='or')
-
-    applyAny = applyIn
 
     def applyRange(self, start, end, excludemin=False, excludemax=False):
         return self.family.IF.multiunion(
             self._fwd_index.values(
                 start, end, excludemin=excludemin, excludemax=excludemax)
         )
+
+    def avg_result_len_eq(self):
+        return float(self.documentCount()) / self.wordCount()
 
 def nsort(docids, rev_index):
     for docid in docids:
