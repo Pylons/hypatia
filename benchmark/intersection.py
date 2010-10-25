@@ -1,6 +1,8 @@
 """
 Thinking about apply_intersection()
 
+oob = 250  (OOBTree DEFAULT_MAX_BTREE_SIZE)
+iob = 500  (IOBTree DEFAULT_MAX_BTREE_SIZE)
 Given two indices: i1, i2
 Number of docs in each index: nd1, nd2
 Number of unique keys in each index: nk1, nk2
@@ -13,21 +15,21 @@ Two algorithms:
 
 1) Perform lookup on i2, yielding r2, then take intersection of r1 and r2.
 
-Lookup is O(log(nk2))
+Lookup is O(log(nk2, oob))
 Intersection is O(max(n1, n2))
-Total cost: O(log(nk2) + max(n1, n2))
+Total cost: O(log(nk2, oob) + max(n1, n2))
 or taking the average for n2, since not yet known,
-Total cost: O(log(nk2) + max(n1, nd2/nk2))
+Total cost: O(log(nk2, oob) + max(n1, nd2/nk2))
 
 2) Iterate over items in r1, use rev_index of i2 to check for each value in i2.
 
-Rev lookup in i2 is O(log(nd2))
+Rev lookup in i2 is O(log(nd2, iob))
 Performed n1 times
-Total cost: O(n1 * log(nd2))
+Total cost: O(n1 * log(nd2, iob))
 
 2) beats 1) when:
 
-  n1 * log(nd2) < log(nk2) + max(n1, nd2/nk2)
+  n1 * log(nd2, iob) < log(nk2, oob) + max(n1, nd2/nk2)
 
 n1   | nd2   | nk2   | n1 log(nd2) | log(nk2) + max(n1, nd2/nk2) | Who wins?
 ----------------------------------------------------------------------------
@@ -60,6 +62,9 @@ _marker = object()
 random.seed()
 
 class Intersection1(SetOp):
+    """
+    Total cost: O(log(nk2, oob) + max(n1, nd2/nk2))
+    """
     def apply(self, catalog):
         left = self.left.apply(catalog)
         if len(left) == 0:
@@ -69,7 +74,7 @@ class Intersection1(SetOp):
             if len(right) == 0:
                 results = self.family.IF.Set()
             else:
-                results = self.family.IF.intersection(left, right)
+                _, results = self.family.IF.weightedIntersection(left, right)
         return results
 
 class Intersection2(SetOp):
@@ -77,6 +82,8 @@ class Intersection2(SetOp):
     Implements algorithm2 above.  In real life we wouldn't do this in the
     Intersection operator--we'd do it in the apply_intersection() of the index
     and wire the Intersection operator to use that.
+
+    Total cost: O(n1 * log(nd2, iob))
     """
     def apply(self, catalog):
         left = self.left.apply(catalog)
@@ -100,9 +107,24 @@ def do_benchmark(fname, nd, nk1, nk2):
     print "\t# distinct keys: %d" % nk2
     print ""
 
-    cost1 = (math.log(nk1, 2) + math.log(nk2, 2) +
-             max(float(nd)/nk1, float(nd)/nk2))
-    cost2 = math.log(nk1, 2) + float(nd)/nk1 * math.log(nd, 2)
+    oob = 250 # OOBTree DEFAULT_MAX_BTREE_SIZE
+    iob = 500 # IOBTree DEFAULT_MAX_BTREE_SIZE
+    L_FWD_LOOKUP_COST = math.log(nk1, oob)
+    R_FWD_LOOKUP_COST = math.log(nk2, oob)
+    L_REV_LOOKUP_COST = math.log(nd, iob)
+    AVG_L_RESULT_SIZE = float(nd)/nk1
+    AVG_R_RESULT_SIZE = float(nd)/nk2
+    LR_INTERSECT_COST = max(AVG_L_RESULT_SIZE, AVG_R_RESULT_SIZE)
+    MAX_INTERSECT_COST = LR_INTERSECT_COST #max(nk1/2, nk2/2)
+
+    # Total cost: O(log(nk2, oob) + max(n1, nd2/nk2))
+    cost1 = L_FWD_LOOKUP_COST + R_FWD_LOOKUP_COST + MAX_INTERSECT_COST
+    # Total cost: O(n1 * log(nd2, iob))
+    cost2 = L_FWD_LOOKUP_COST + (AVG_L_RESULT_SIZE * L_REV_LOOKUP_COST)
+
+    print 'Cost1: %0.2f' % cost1
+    print 'Cost2: %0.2f' % cost2
+    print
     print "Prediction:"
     if cost1 > cost2:
         print "Algorithm 2 %0.2f times faster than Algorithm 1" % (cost1/cost2)
@@ -139,12 +161,17 @@ def do_benchmark(fname, nd, nk1, nk2):
             query2 = Intersection2(Eq('one', str(key1)), Eq('two', str(key2)))
 
             start = time.time()
-            query1.apply(catalog)
+            result1 = query1.apply(catalog)
             cumulative1 += time.time() - start
 
             start = time.time()
-            query2.apply(catalog)
+            result2 = query2.apply(catalog)
             cumulative2 += time.time() - start
+
+            s1 = sorted(list(result1))
+            s2 = sorted(list(result2))
+
+            assert s1==s2, (s1, s2)
 
     manager.close()
     for fn in glob.glob(fname + "*"):
@@ -160,6 +187,28 @@ def do_benchmark(fname, nd, nk1, nk2):
     else:
         print "Algorithm 1 %0.2f times faster than Algorithm 2" % (
             cumulative2/cumulative1)
+
+# profile (unused right now)
+def profile(cmd, globals, locals, sort_order, callers):
+    import profile
+    import pstats
+    import tempfile
+    fd, fn = tempfile.mkstemp()
+    try:
+        if hasattr(profile, 'runctx'):
+            profile.runctx(cmd, globals, locals, fn)
+        else:
+            raise NotImplementedError('No profiling support under Python 2.3')
+        stats = pstats.Stats(fn)
+        stats.strip_dirs()
+        # calls,time,cumulative and cumulative,calls,time are useful
+        stats.sort_stats(*sort_order or ('cumulative', 'calls', 'time'))
+        if callers:
+            stats.print_callers(.3)
+        else:
+            stats.print_stats(.3)
+    finally:
+        os.remove(fn)
 
 if __name__ == '__main__':
     do_benchmark('benchmark.db', 10000, 1000, 1000)
