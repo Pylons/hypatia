@@ -95,6 +95,35 @@ class Intersection2(SetOp):
                 results.add(docid)
         return results
 
+
+def predictions(nd, nk1, nk2):
+    FUDGE = 17.0
+##    oob = 250 # OOBTree DEFAULT_MAX_BTREE_SIZE
+##    iob = 500 # IOBTree DEFAULT_MAX_BTREE_SIZE
+    oob = 125 # OOBTree wag avg bucket size
+    iob = 250 # IOBTree wag avg bucket size
+    L_FWD_LOOKUP_COST = FUDGE * math.log(nk1, oob)
+    R_FWD_LOOKUP_COST = FUDGE * math.log(nk2, oob)
+    L_REV_LOOKUP_COST = math.log(nd, iob)
+    AVG_L_RESULT_SIZE = float(nd)/nk1
+    AVG_R_RESULT_SIZE = float(nd)/nk2
+    MAX_INTERSECT_COST = max(AVG_L_RESULT_SIZE, AVG_R_RESULT_SIZE)
+    AVG_INTERSECT_COST = MAX_INTERSECT_COST / 2.0 #max(nk1/2, nk2/2) / 2
+
+    # Total cost: O(log(nk2, oob) + max(n1, nd2/nk2))
+    cost1 = L_FWD_LOOKUP_COST + R_FWD_LOOKUP_COST + AVG_INTERSECT_COST
+    # Total cost: O(n1 * log(nd2, iob))
+    cost2 = L_FWD_LOOKUP_COST + (AVG_L_RESULT_SIZE * L_REV_LOOKUP_COST)
+
+    return cost1, cost2
+
+##def predictions(nd, nk1, nk2):
+##    s1 = nd / nk1
+##    s2 = nd / nk2
+##    if s1 <= s2 / 2:
+##        return 2.0, 1.0
+##    return 1.0, 2.0
+
 def do_benchmark(fname, nd, nk1, nk2, out=sys.stdout):
     cumulative1 = 0.0
     cumulative2 = 0.0
@@ -107,21 +136,7 @@ def do_benchmark(fname, nd, nk1, nk2, out=sys.stdout):
     print >>out, "\t# distinct keys: %d" % nk2
     print >>out, ""
 
-    FUDGE = 1.5
-    oob = 250 # OOBTree DEFAULT_MAX_BTREE_SIZE
-    iob = 500 # IOBTree DEFAULT_MAX_BTREE_SIZE
-    L_FWD_LOOKUP_COST = FUDGE * math.log(nk1, oob)
-    R_FWD_LOOKUP_COST = FUDGE * math.log(nk2, oob)
-    L_REV_LOOKUP_COST = math.log(nd, iob)
-    AVG_L_RESULT_SIZE = float(nd)/nk1
-    AVG_R_RESULT_SIZE = float(nd)/nk2
-    LR_INTERSECT_COST = max(AVG_L_RESULT_SIZE, AVG_R_RESULT_SIZE)
-    MAX_INTERSECT_COST = LR_INTERSECT_COST #max(nk1/2, nk2/2)
-
-    # Total cost: O(log(nk2, oob) + max(n1, nd2/nk2))
-    cost1 = L_FWD_LOOKUP_COST + R_FWD_LOOKUP_COST + MAX_INTERSECT_COST
-    # Total cost: O(n1 * log(nd2, iob))
-    cost2 = L_FWD_LOOKUP_COST + (AVG_L_RESULT_SIZE * L_REV_LOOKUP_COST)
+    cost1, cost2 = predictions(nd, nk1, nk2)
 
     print >>out, 'Cost1: %0.2f' % cost1
     print >>out, 'Cost2: %0.2f' % cost2
@@ -200,7 +215,7 @@ class Null(object):
 
 def _range_order_of_magnitude(n):
     # Iterate over (at most) 3 orders of magnitude
-    n_magnitude = math.ceil(math.log10(n))
+    n_magnitude = int(math.ceil(math.log10(n)))
     lowest_magnitude = max(0, n_magnitude - 3)
     for magnitude in xrange(lowest_magnitude, n_magnitude):
         for i in xrange(1,10):
@@ -217,7 +232,7 @@ def do_benchmarks(fname):
         for nk1 in _range_order_of_magnitude(nd / 2):
             for nk2 in _range_order_of_magnitude(nd):
                 predicted, actual = do_benchmark(fname, nd, nk1, nk2, out=null)
-                correct = ((predicted > 1 and actual > 1) or
+                correct = ((predicted >= 1 and actual >= 1) or
                            (predicted < 1 and actual < 1))
                 print "%6d | %8d | %8d | %9.2f | %6.2f | %s" % (
                     nd, nk1, nk2,  predicted, actual, correct)
@@ -245,6 +260,42 @@ def profile(cmd, globals, locals, sort_order, callers):
     finally:
         os.remove(fn)
 
+def rerun_predictions(fname):
+    benchmarks = open(fname).xreadlines()
+    benchmarks.next(); benchmarks.next()  # skip header lines
+
+    print "Cost of algorithm 1 / Cost of algorithm 2"
+    print "nd     | nd/nk1   | nd/nk2   | Predicted | Actual | Correct"
+
+    gain = count = n_correct = 0
+    for line in benchmarks:
+        line = line.split('|')
+        nd = int(line[0].strip())
+        nk1 = int(line[1].strip())
+        nk2 = int(line[2].strip())
+        actual = float(line[4].strip())
+        cost1, cost2 = predictions(nd, nk1, nk2)
+        predicted = cost1 / cost2
+        correct = ((predicted >= 1 and actual >= 1) or
+                   (predicted < 1 and actual < 1))
+        print "%6d | %8d | %8d | %9.2f | %6.2f | %s" % (
+            nd, nd/nk1, nd/nk2,  predicted, actual, correct)
+        count += 1
+        if correct:
+            n_correct += 1
+
+        if cost1 < cost2:
+            # I picked algorithm1, so no net loss or gain
+            gain += 1.0
+        else:
+            # I picked algorith2, so note difference in performance
+            gain += actual
+
+    print "-" * 79
+    print "%% correct: %0.1f" % (n_correct * 100.0 / count)
+    print "%% performance gain: %0.1f" % ((gain / count - 1.0) * 100.0)
+
 if __name__ == '__main__':
     #do_benchmark('benchmark.db', 10000, 1000, 1000)
-    do_benchmarks('/dev/shm/benchmark.db')
+    #do_benchmarks('/dev/shm/benchmark.db')
+    rerun_predictions('benchmarks.txt')
