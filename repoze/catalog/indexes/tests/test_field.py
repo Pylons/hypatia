@@ -540,6 +540,14 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [10, 11])
 
+    def test_applyGt(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyGt(10)
+        result = sorted(list(result))
+        self.assertEqual(result, [10])
+
     def test_applyLe(self):
         index = self._makeOne()
         self._populateIndex(index)
@@ -547,6 +555,14 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = index.applyLe(2)
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
+
+    def test_applyLt(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyLt(2)
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
 
     def test_applyAny(self):
         index = self._makeOne()

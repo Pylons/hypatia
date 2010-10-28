@@ -269,10 +269,16 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         return self.family.IF.difference(all, r)
 
     def applyGe(self, min_value):
-        return self.apply(RangeValue(min_value, None))
+        return self.applyRange(min_value, None)
 
     def applyLe(self, max_value):
-        return self.apply(RangeValue(None, max_value))
+        return self.applyRange(None, max_value)
+
+    def applyGt(self, min_value):
+        return self.applyRange(min_value, None, excludemin=True)
+
+    def applyLt(self, max_value):
+        return self.applyRange(None, max_value, excludemax=True)
 
     def applyAny(self, values):
         queries = list(values)
