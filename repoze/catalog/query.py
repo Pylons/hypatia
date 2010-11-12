@@ -42,6 +42,13 @@ class Query(object):
         for child in self.iter_children():
             child.print_tree(out, level + 1)
 
+    def _optimize(self):
+        """
+        If subtree represented by this node can be transformed into a more
+        optimal subtree, return the transformed subtree, otherwise return self.
+        """
+        return self
+
 
 class Comparator(Query):
     """
@@ -227,67 +234,134 @@ class SetOp(Query):
         self.left = left
         self.right = right
 
-    @apply
-    def left():
-        def _set_left(self, left):
-            if left is not None:
-                left.__parent__ = self
-                left.__name__ = 'left'
-            self._left = left
-
-        def _get_left(self):
-            return self._left
-
-        return property(_get_left, _set_left)
-
-    @apply
-    def right():
-        def _set_right(self, right):
-            if right is not None:
-                right.__parent__ = self
-                right.__name__ = 'right'
-            self._right = right
-
-        def _get_right(self):
-            return self._right
-
-        return property(_get_right, _set_right)
-
     def __str__(self):
         return type(self).__name__
 
     def iter_children(self):
-        yield self._left
-        yield self._right
+        yield self.left
+        yield self.right
+
+    def _optimize(self):
+        self.left = self.left._optimize()
+        self.right = self.right._optimize()
+        return self
 
 
-class Union(SetOp):
+class NarySetOp(SetOp):
+    """
+    Base class for Union and Intersection operators which can have N arguments.
+    """
+
+    def __init__(self, *args):
+        arguments = []
+        for arg in args:
+            # If argument is of the same type, can promote its arguments up
+            # to here.
+            if type(arg) == type(self):
+                arguments.extend(arg.arguments)
+            else:
+                arguments.append(arg)
+        self.arguments = arguments
+
+    def iter_children(self):
+        for arg in self.arguments:
+            yield arg
+
+    def _optimize(self):
+        self.arguments = [arg._optimize() for arg in self.arguments]
+
+        # If all arguments are Eq operators for the same index, we can replace
+        # this Intersection or Union with an All or Any node.
+        args = list(self.arguments)
+        arg = args.pop(0)
+        if type(arg) != Eq:
+            return self
+        index_name = arg.index_name
+        values = [arg.value]
+        while args:
+            arg = args.pop(0)
+            if type(arg) != Eq or arg.index_name != index_name:
+                return self
+            values.append(arg.value)
+
+        # All arguments are Eq operators for the same index.
+        if type(self) == Union:
+            return Any(index_name, values)
+        return All(index_name, values)
+
+
+class Union(NarySetOp):
     """Union of two result sets."""
     def apply(self, catalog):
-        left = self.left.apply(catalog)
-        right = self.right.apply(catalog)
-        if len(left) == 0:
-            results = right
-        elif len(right) == 0:
-            results = left
-        else:
-            _, results = self.family.IF.weightedUnion(left, right)
-        return results
+        # XXX Try to figure out when we need weightedUnion and when we can
+        # just use union or multiunion.
+        arguments = self.arguments
+        result = arguments[0].apply(catalog)
+        for arg in arguments[1:]:
+            next_result = arg.apply(catalog)
+            if len(result) == 0:
+                result = next_result
+            elif len(next_result) > 0:
+                _, result = self.family.IF.weightedUnion(result, next_result)
+        return result
 
 
-class Intersection(SetOp):
+class Intersection(NarySetOp):
     """Intersection of two result sets."""
     def apply(self, catalog):
-        left = self.left.apply(catalog)
-        if len(left) == 0:
-            results = self.family.IF.Set()
-        else:
-            right = self.right.apply(catalog)
-            if len(right) == 0:
-                results = self.family.IF.Set()
-            else:
-                _, results = self.family.IF.weightedIntersection(left, right)
-        return results
+        # XXX Try to figure out when we need weightedIntersection and when we
+        # can just use intersection.
+        IF = self.family.IF
+        arguments = self.arguments
+        result = arguments[0].apply(catalog)
+        for arg in arguments[1:]:
+            if len(result) == 0:
+                return IF.Set()
+            next_result = arg.apply(catalog)
+            if len(next_result) == 0:
+                return IF.Set()
+            _, result = IF.weightedIntersection(result, next_result)
+        return result
+
+    def _optimize(self):
+        new_self = NarySetOp._optimize(self)
+        if self != new_self:
+            return new_self
+
+        # There might be a combination of Gt/Ge and Lt/Le operators for the
+        # same index that could be used to compose a Range.
+        uppers = {}
+        lowers = {}
+        args = list(self.arguments)
+
+        def process_range(i_lower, arg_lower, i_upper, arg_upper):
+            args[i_lower] = Range.fromGTLT(arg_lower, arg_upper)
+            args[i_upper] = None
+
+        for i in xrange(len(args)):
+            arg = args[i]
+            if type(arg) in (Gt, Ge):
+                match = uppers.get(arg.index_name)
+                if match is not None:
+                    i_upper, arg_upper = match
+                    process_range(i, arg, i_upper, arg_upper)
+                else:
+                    lowers[arg.index_name] = (i, arg)
+
+            elif type(arg) in (Lt, Le):
+                match = lowers.get(arg.index_name)
+                if match is not None:
+                    i_lower, arg_lower = match
+                    process_range(i_lower, arg_lower, i, arg)
+                else:
+                    uppers[arg.index_name] = (i, arg)
+
+        args = filter(None, args)
+        if len(args) == 1:
+            return args[0]
+
+        self.arguments = args
+        return self
 
 
 class Difference(SetOp):
@@ -369,7 +443,10 @@ class _AstParser(object):
                 "Not an expression."
             )
 
-        return self.walk(expr_tree.value)
+        result = self.walk(expr_tree.value)
+        if isinstance(result, Query):
+            result = result._optimize()
+        return result
 
     def walk(self, tree):
         def visit(node):
@@ -520,10 +597,7 @@ class _AstParser(object):
                     "Bad expression: All operands for %s must be result sets."
                     % operator.__name__)
 
-        op = operator(children.pop(0), children.pop(0))
-        while children:
-            op = operator(op, children.pop(0))
-        return op
+        return operator(*children)
 
     def process_Call(self, node, children):
         func = children.pop(0)
@@ -561,460 +635,6 @@ class _AstParser(object):
         return node
 
 
-def _group_any_and_all(tree):
-    """
-    This is a query optimization which looks for subtrees of two or more
-    Eq queries for the same index all joined by union or intersection:
-
-        Eq(a, 1) | Eq(a, 2) | etc...
-
-    or:
-
-        Eq(a, 1) & Eq(a, 2) & etc...
-
-    In these cases, instead of performing N individual Eq queries and combining
-    the result sets along the way via union or intersection operations, we can
-    rewrite these subexpressions as:
-
-        Any(a, [1, 2])
-
-    or:
-
-        All(a, [1, 2])
-
-    Take, for example, the expression:
-
-        >>> expr = "(a == 1 or a == 2 or a == 3) and b == 1"
-
-    Before optimization the query tree looks like this:
-
-        >>> query._AstParser(expr, {}).query.print_tree()
-        Intersection
-          Union
-            Union
-              a == 1
-              a == 2
-            a == 3
-          b == 1
-
-    And after optimization:
-
-        >>> query.parse_query(expr).print_tree()
-        Intersection
-          a any [1, 2, 3]
-          b == 1
-
-    So we've taken three separate index queries for index a, joined by two
-    set union operations, and replaced this with a single Any query for the
-    same index.
-
-    Note that tree transformations are done in place.  The root node of the
-    tree is returned since there is a chance that the root node needs to be
-    replaced.
-    """
-    def group(node, index_name, values):
-        """
-        Called on each node in the tree which might be replaceable.  `node` is
-        the candidate for replacement.  `index_name` is the name of the index
-        for all descendant Eq queries and `values` is a list of the values for
-        the descendant Eq queries.  If there is more than one value and the
-        type of the current node is Union or Intersection, then we can replace
-        the subexpression represented by this node with a single Any or All
-        query.  Returns either the node or its replacement.
-        """
-        if len(values) > 1:
-            if isinstance(node, Intersection):
-                return All(index_name, values)
-            elif isinstance(node, Union):
-                return Any(index_name, values)
-        return node
-
-    def visit(node):
-        """
-        Performs a recursive depth first traversal attempting to collect
-        values for Eq comparators which are joined together by unions or
-        intersections. Returns a tuple: (op_type, index_name, values) where
-        `op_type` is the type of all set operators in the subexpression
-        represented by the visited node, `index_name` is the name of the index
-        used in all Eq queries in the subexpression represented by the visited
-        node, and `values` is the collection of values for each Eq query in
-        the subexpression. If the subexpression contains mixed set operators,
-        comparators other than Eq or mixed index_names, the return value will
-        be (None, None, []), meaning that no grouping could be done.
-
-        If a visited node is an Eq comparator, then we start a new potential
-        grouping by returning (None, node.index_name, node.value). `op_type`
-        is None because we don't know yet what, if any, set operator contains
-        the current node. This will be filled in at the Eq node's parent,
-        which will be an operator node.
-
-        If the visited node is a set operator node, then we recursively visit
-        the left and right subtrees and look at the results. If visiting a
-        subtree returns None for `op_type` then we fill in the current
-        operation type for the subtree. If `index_name` and `op_type` match
-        for both subtrees and if both subtree op_types match the current
-        node's op_type, then we may group both subtrees together and return
-        the common `op_type`, `index_name` and the values collected from any
-        Eq nodes in either subtree. Otherwise, if not able to group the two
-        subtrees together, `group` is called on each subtree, attempting to
-        replace each subtree with an Any or All query if possible.
-        """
-        if isinstance(node, SetOp):
-            this_op = type(node)
-            left_op, left_index, left_values = visit(node.left)
-            if left_op is None:
-                left_op = this_op
-            right_op, right_index, right_values = visit(node.right)
-            if right_op is None:
-                right_op = this_op
-            if left_index != right_index or not (
-                left_op == right_op == this_op):
-                node.left = group(node.left, left_index, left_values)
-                node.right = group(node.right, right_index, right_values)
-                return None, None, []
-            return this_op, left_index, left_values + right_values
-        elif isinstance(node, Eq):
-            return None, node.index_name, [node.value]
-        return None, None, []
-
-    # Must call group on the root node, in case the root node needs to be
-    # replaced.
-    op, index, values = visit(tree)
-    return group(tree, index, values)
-
-
-def _make_ranges(tree):
-    """
-    This is a query optimization which looks for pairs of Gt/Ge and Lt/Le
-    queries for the same index, joined by intersection. So, for example, this
-    query:
-
-      Ge(a, 0) & Le(a, 5)
-
-    Can be rewritten as:
-
-      Range(a, 0, 5, False, False)
-
-    Here we take what would be two separate index queries and an intersection
-    and replace with a single range query on that index.
-
-    The start and end queries for a pair do not have to be immediately
-    adjacent to each other--they need only be in the same grouping of
-    intersections. For example this query:
-
-      Ge(a, 0) & Eq(b, 7) & Lt(a, 5)
-
-    Will be rewritten as:
-
-      Eq(b, 7) & Range(a, 0, 5, False, True)
-
-    This query will not be rewritten because the start and end queries are
-    separated by a union operator:
-
-      Ge(a, 0) | Eq(b, 7) & Lt(a, 5)
-
-
-    Note that tree transformations are done in place.  The root node of the
-    tree is returned since there is a chance that the root node needs to be
-    replaced.
-
-    Potential range boundaries are discovered by performing a depth first
-    traversal of the query tree. At each node, there is a check to see if the
-    current node could potentially form half of a range query. Range
-    boundaries are collected by index_name and stored in `starts` and `ends`
-    dictionaries that will be accessible at higher nodes. Whenever a set
-    operator node other than an intersection is traversed, potential range
-    boundaries are forgotten since we only want to create ranges from
-    subqueries that are connected to each other via intersection operations.
-
-    At each intersection node, after potential range boundaries have been
-    collected from the left and right subtrees, the potential boundaries are
-    checked for any matching pairs. A matching pair is comprised of a Gt or Ge
-    and an Lt or Le which are for the same index. When a matching pair is
-    found, the tree must be transformed. There are three potential cases which
-    must be handled each in a different way.
-
-    In the first and easier case, the range boundary pair nodes are the
-    immediate left and right children of the current node.  In this case, the
-    current node can simply be replaced by a range.  For example, this query:
-
-        >>> expr = "A > 0 and A < 5 and B ==7"
-        >>> _AstParser(expr, {}).query.print_tree()
-        Intersection
-          Intersection
-            A > 0
-            A < 5
-          B == 7
-
-    Is transformed to:
-
-        >>> expr = "A > 0 and A < 5 and B ==7"
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < A < 5
-          B == 7
-
-    The nested Intersection was replaced with the range query.
-
-    In the second, somewhat more complicated case, one of the pair is a
-    descendant of the current node but not an immediate child. We refer to the
-    descendant node half of the pair as the nephew and that node's parent,
-    which we know must be an intersection node, as the brother. Don't worry if
-    the nephew/brother nomenclature doesn't make complete sense. We need to
-    refer to them as something. We could have called them Fred and Barney. To
-    help visualize, consider this unoptimized query tree:
-
-        >>> expr = "A > 0 and (A < 5 and B == 7)"
-        >>> _AstQuery(expr, {}).query.print_tree()
-        Intersection
-          A > 0           <-- child
-          Intersection    <-- brother
-            A < 5         <-- nephew
-            B == 7        <-- other_nephew
-
-    When the match is found between the child and nephew, we now need to
-    transform the tree in such a way that the expression remains equivalent
-    but with two fewer nodes since we are trading one intersection and two
-    comparisons for a single range query. In this case we can replace the
-    child with the new range query and then promote the other_nephew up to
-    replace the brother (an intersection node), since the nephew has been
-    absorbed into the range query. The transformed tree looks like this:
-
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < A < 5
-          B == 7
-
-    The third, trickiest case is when neither bound is a child of the current
-    node, but both lie further down in the tree.  We know that one bound is in
-    the left subtree and one bound is in the right subtree, otherwise we would
-    have matched them before getting to the current node.  As an example, let's
-    take a look at this unoptimized tree:
-
-        >>> expr = "(A > 0 and B == 2) and (A < 5 and C == 3)"
-        >>> _AstParser(expr, {}).query.print_tree()
-        Intersection
-          Intersection
-            A > 0       <-- start
-            B == 2      <-- siblings[0]
-          Intersection
-            A < 5       <-- end
-            C == 3      <-- siblings[1]
-
-    In this case, we are not going to find the match between start and end
-    until we process the root node of our tree. Both bounds are in subtrees of
-    the root node, but are not immediate children. We need to be a bit more
-    drastic in how we rearrange the tree. To solve this problem, we group
-    together the bounds' siblings and combine them in a new intersection. We
-    then replace the parent of start with the new range and we replace the
-    parent of end with the intersection of the two siblings. (In this example,
-    both start and end share the same grandparent node, but this does not have
-    to be the case generally.)  The transformed tree looks like this:
-
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < A < 5
-          Intersection
-            B == 2
-            C == 3
-
-    One other complication remains.  To illustrate, consider this expression:
-
-        >>> expr = "(A > 0 and B > 0 and C > 0) and (
-        ...          A < 5 and B < 5 and C < 5)"
-        >>> _AstParser(expr, {}).query.print_tree()
-        Intersection
-          Intersection
-            Intersection
-              A > 0
-              B > 0
-            C > 0
-          Intersection
-            Intersection
-              A < 5
-              B < 5
-            C < 5
-
-    In this case, ranges for A, B, and C are all going to be found at the root
-    node and not before. The order the ranges are processed in depends on dict
-    key ordering, but let's presume for a moment that we end up processing A
-    first. Our tree after processing A now looks like:
-
-        Intersection
-          Intersection
-            0 < A < 5
-            C > 0
-          Intersection
-            Intersection  <-- nearest common ancestor to bounds of B
-              B > 0
-              B < 5
-            C < 5
-
-    You can see that the lower bound for B has now been moved over to a
-    completely different branch of the tree. Had this tree looked like this
-    initially, range B would have been processed as the first case, described
-    above, long before we ever got to the current node.. Code which now tries
-    to process range B as the third case will break because the relationship
-    between the bounds has changed. We can detect this case, though, by
-    computing the nearest common ancestor of our bounds before attempting to
-    perform any transformations. If the nearest common ancestor is not the
-    current node, we know that a transformation performed for another range,
-    in this case A, has rearranged the tree. In that case, we can bypass the
-    current processing and start a new traversal at the nearest common
-    ancestor, replacing the nearest common ancestor with the result of the
-    traversal. In the example, above, then, assuming that B is processed next,
-    we see that processing the nearest common ancestor to the bounds of B will
-    lead us to the first case, where both bounds are immediate children of the
-    node being processed. After performing the transformation for range B, our
-    tree now looks like:
-
-        Intersection
-          Intersection
-            0 < A < 5
-            C > 0
-          Intersection
-            0 < B < 5
-            C < 5
-
-    We can see now that when we go to process range C, the nearest common
-    ancestor of the bounds of C is going to be the root node, so C will be
-    processed using the third case where neither bound is an immediate child
-    of the node being processed.  The final optimized tree looks like:
-
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < C < 5
-          Intersection
-            0 < A < 5
-            0 < B < 5
-
-    """
-    def visit(node, starts, ends):
-        # Is this node potentially one half of a range query?
-        if isinstance(node, (Gt, Ge)):
-            starts[node.index_name] = node
-            return node
-        elif isinstance(node, (Lt, Le)):
-            ends[node.index_name] = node
-            return node
-
-        # If a leaf node and not an upper or lower bound, nothing to do.
-        elif not isinstance(node, SetOp):
-            return node
-
-        # Left and right subtrees shouldn't know about each other's potential
-        # matches, because we always want to process matches at the nearest
-        # common ancestor to both nodes.
-        left_starts = starts.copy()
-        left_ends = ends.copy()
-        node.left = visit(node.left, left_starts, left_ends)
-
-        right_starts = starts.copy()
-        right_ends = ends.copy()
-        node.right = visit(node.right, right_starts, right_ends)
-
-        if not isinstance(node, Intersection):
-            starts.clear()
-            ends.clear()
-            return node
-
-        # Combine potential matches from left and right subtrees so we can
-        # look for matches.
-        starts.update(left_starts)
-        starts.update(right_starts)
-        ends.update(left_ends)
-        ends.update(right_ends)
-        for index_name in starts.keys():
-            if index_name not in ends:
-                continue
-
-            # Found a match
-            start = starts.pop(index_name)
-            end = ends.pop(index_name)
-
-            # Tree may have gotten rearranged such that current node is no
-            # longer the nearest common ancestor of start and end. If this is
-            # the case, process the subtree rooted at the nearest common
-            # ancestor of the matching nodes and replace nce with the result.
-            nce = _nearest_common_ancestor(start, end)
-            if nce is not node:
-                setattr(nce.__parent__, nce.__name__, visit(nce, {}, {}))
-                continue
-
-            range_query = Range.fromGTLT(start, end)
-
-            # Case 1: Both bounds are immediate children of this node
-            if start.__parent__ is end.__parent__ is node:
-                return range_query
-
-            # Case 2: One bound is an immediate child of this node, and one
-            # child is a descendent
-            elif start.__parent__ is node or end.__parent__ is node:
-                if start.__parent__ is node:
-                    child = start
-                    nephew = end
-                else:
-                    child = end
-                    nephew = start
-
-                if child.__name__ == 'left':
-                    node.left = range_query
-                else:
-                    node.right = range_query
-
-                brother = nephew.__parent__
-                if nephew.__name__ == 'left':
-                    other_nephew = brother.right
-                else:
-                    other_nephew = brother.left
-                setattr(brother.__parent__, brother.__name__, other_nephew)
-
-            # Case 3: Neither bound is an immediate child of this node
-            else:
-                siblings = []
-                for bound in start, end:
-                    if bound.__name__ == 'left':
-                        siblings.append(bound.__parent__.right)
-                    else:
-                        siblings.append(bound.__parent__.left)
-                other = Intersection(*siblings)
-                start_parent = start.__parent__
-                end_parent = end.__parent__
-                setattr(start_parent.__parent__, start_parent.__name__,
-                        range_query)
-                setattr(end_parent.__parent__, end_parent.__name__, other)
-
-        return node
-
-    return visit(tree, {}, {})
-
-
-def _nearest_common_ancestor(n1, n2):
-    n1_ancestors = set([n1])
-    n2_ancestors = set([n2])
-    while n1.__parent__ is not None or n2.__parent__ is not None:
-        if n1 in n2_ancestors:
-            return n1
-        elif n2 in n1_ancestors:
-            return n2
-
-        if n1.__parent__ is not None:
-            n1 = n1.__parent__
-            n1_ancestors.add(n1)
-
-        if n2.__parent__ is not None:
-            n2 = n2.__parent__
-            n2_ancestors.add(n2)
-    assert n1 is n2, "Nodes are not part of same tree."
-    return n1
-
-
-def _optimize_query(tree):
-    tree = _group_any_and_all(tree)
-    tree = _make_ranges(tree)
-    return tree
-
-
 def parse_query(expr, names=None):
     """
     Parses the given expression string into a catalog query.  The `names` dict
@@ -1024,7 +644,7 @@ def parse_query(expr, names=None):
         raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")
     if names is None:
         names = {}
-    return _optimize_query(_AstParser(expr, names).parse())
+    return _AstParser(expr, names).parse()
 
 
 def _print_ast(expr):  # pragma NO COVERAGE
