@@ -51,7 +51,8 @@ class TestCatalogIndex(unittest.TestCase):
             'applyNotAny',
             'applyAll',
             'applyNotAll',
-            'applyInRange']:
+            'applyInRange',
+            'applyNotInRange']:
             self.assertRaises(NotImplementedError, getattr(index, name))
 
     def test_avg_result_len_methods(self):
