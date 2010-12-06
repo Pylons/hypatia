@@ -304,6 +304,33 @@ class TestAny(ComparatorTestBase):
         inst = self._makeOne('index', [1, 2, 3])
         self.assertEqual(str(inst), "index any [1, 2, 3]")
 
+    def test_negate(self):
+        from repoze.catalog.query import NotAny
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), NotAny('index', 'val'))
+
+
+class TestNotAny(ComparatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import NotAny
+        return NotAny
+
+    def test_apply(self):
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', 'val')
+        result = inst.apply(catalog)
+        self.assertEqual(result, 'val')
+        self.assertEqual(catalog.index.not_any, 'val')
+
+    def test_to_str(self):
+        inst = self._makeOne('index', [1, 2, 3])
+        self.assertEqual(str(inst), "index not any [1, 2, 3]")
+
+    def test_negate(self):
+        from repoze.catalog.query import Any
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Any('index', 'val'))
+
 
 class TestRange(ComparatorTestBase):
     def _getTargetClass(self):
@@ -916,6 +943,10 @@ class DummyIndex(object):
 
     def applyAny(self, value):
         self.any = value
+        return value
+
+    def applyNotAny(self, value):
+        self.not_any = value
         return value
 
     def applyAll(self, value):

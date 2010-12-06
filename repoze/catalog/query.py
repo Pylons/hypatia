@@ -187,7 +187,6 @@ class Le(Comparator):
         index = self.get_index(catalog)
         return index.applyLe(self.value)
 
-
     def negate(self):
         return Gt(self.index_name, self.value)
 
@@ -202,6 +201,24 @@ class Any(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyAny(self.value)
+
+    def negate(self):
+        return NotAny(self.index_name, self.value)
+
+
+class NotAny(Comparator):
+    """Not any of query (ie, None of query)
+
+    CQE equivalent: index not in any(['foo', 'bar'])
+    """
+    operator = 'not any'
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyNotAny(self.value)
+
+    def negate(self):
+        return Any(self.index_name, self.value)
 
 
 class All(Comparator):
