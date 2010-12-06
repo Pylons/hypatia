@@ -156,6 +156,10 @@ class TestEq(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index == 'val'")
 
+    def test_negate(self):
+        from repoze.catalog.query import NotEq
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), NotEq('index', 'val'))
 
 class TestNotEq(ComparatorTestBase):
     def _getTargetClass(self):
@@ -172,6 +176,11 @@ class TestNotEq(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index != 'val'")
+
+    def test_negate(self):
+        from repoze.catalog.query import Eq
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Eq('index', 'val'))
 
 
 class TestGt(ComparatorTestBase):
@@ -190,6 +199,11 @@ class TestGt(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index > 'val'")
 
+    def test_negate(self):
+        from repoze.catalog.query import Le
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Le('index', 'val'))
+
 
 class TestLt(ComparatorTestBase):
     def _getTargetClass(self):
@@ -206,6 +220,11 @@ class TestLt(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index < 'val'")
+
+    def test_negate(self):
+        from repoze.catalog.query import Ge
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Ge('index', 'val'))
 
 
 class TestGe(ComparatorTestBase):
@@ -224,6 +243,11 @@ class TestGe(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index >= 'val'")
 
+    def test_negate(self):
+        from repoze.catalog.query import Lt
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Lt('index', 'val'))
+
 
 class TestLe(ComparatorTestBase):
     def _getTargetClass(self):
@@ -240,6 +264,11 @@ class TestLe(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "index <= 'val'")
+
+    def test_negate(self):
+        from repoze.catalog.query import Gt
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Gt('index', 'val'))
 
 
 class TestAll(ComparatorTestBase):

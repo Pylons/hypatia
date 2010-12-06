@@ -112,6 +112,9 @@ class Eq(Comparator):
         index = self.get_index(catalog)
         return index.applyEq(self.value)
 
+    def negate(self):
+        return NotEq(self.index_name, self.value)
+
 
 class NotEq(Comparator):
     """Not equal query.
@@ -123,6 +126,9 @@ class NotEq(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyNotEq(self.value)
+
+    def negate(self):
+        return Eq(self.index_name, self.value)
 
 
 class Gt(Comparator):
@@ -136,6 +142,9 @@ class Gt(Comparator):
         index = self.get_index(catalog)
         return index.applyGt(self.value)
 
+    def negate(self):
+        return Le(self.index_name, self.value)
+
 
 class Lt(Comparator):
     """ Less than query.
@@ -147,6 +156,9 @@ class Lt(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyLt(self.value)
+
+    def negate(self):
+        return Ge(self.index_name, self.value)
 
 
 class Ge(Comparator):
@@ -160,6 +172,9 @@ class Ge(Comparator):
         index = self.get_index(catalog)
         return index.applyGe(self.value)
 
+    def negate(self):
+        return Lt(self.index_name, self.value)
+
 
 class Le(Comparator):
     """Less (or equal) query.
@@ -171,6 +186,10 @@ class Le(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyLe(self.value)
+
+
+    def negate(self):
+        return Gt(self.index_name, self.value)
 
 
 class Any(Comparator):
