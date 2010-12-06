@@ -304,6 +304,42 @@ class InRange(Comparator):
         return ' '.join(s)
 
 
+class NotInRange(Comparator):
+    """ Index value falls outside a range.
+
+    CQE eqivalent: not(lower < index < upper)
+                   not(lower <= index <= upper)
+    """
+
+    def __init__(self, index_name, start, end,
+                 start_exclusive=False, end_exclusive=False):
+        self.index_name = index_name
+        self.start = start
+        self.end = end
+        self.start_exclusive = start_exclusive
+        self.end_exclusive = end_exclusive
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyNotInRange(
+            self.start, self.end, self.start_exclusive, self.end_exclusive
+        )
+
+    def __str__(self):
+        s = [repr(self.start)]
+        if self.start_exclusive:
+            s.append('<')
+        else:
+            s.append('<=')
+        s.append(self.index_name)
+        if self.end_exclusive:
+            s.append('<')
+        else:
+            s.append('<=')
+        s.append(repr(self.end))
+        return 'not(%s)' % ' '.join(s)
+
+
 class SetOp(Query):
     """
     Base class for set operators.
