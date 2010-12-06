@@ -600,6 +600,14 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [])
 
+    def test_applyNotAny(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyNotAny([1, 2, 60])
+        result = sorted(list(result))
+        self.assertEqual(result, [1, 3, 4, 6, 7, 8, 9, 10, 11])
+
     def test_applyRange_inclusive_inclusive(self):
         index = self._makeOne()
         self._populateIndex(index)

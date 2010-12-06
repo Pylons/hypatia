@@ -5,6 +5,24 @@ from zope.index.keyword import KeywordIndex
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
+def _negate(assertion):
+    def negation(self, value):
+        not_indexed = self.not_indexed
+        all_indexed = self._rev_index.keys()
+        if len(not_indexed) == 0:
+            all = self.family.IF.Set(all_indexed)
+        elif len(all_indexed) == 0:
+            all = not_indexed
+        else:
+            all_indexed = self.family.IF.Set(all_indexed)
+            all = self.family.IF.union(not_indexed, all_indexed)
+        positive = assertion(self, value)
+        if len(positive) == 0:
+            return all
+        return self.family.IF.difference(all, positive)
+    return negation
+
+
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     """
     Keyword index.
@@ -37,20 +55,12 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
-    def _get_all_docids(self):
-        indexed = self._rev_index.keys()
-        not_indexed = self.not_indexed
-        if len(indexed) == 0:
-            return not_indexed
-        indexed = self.family.IF.Set(indexed)
-        if len(not_indexed) == 0:
-            return indexed
-        return self.family.IF.union(indexed, not_indexed)
-
     def applyAny(self, values):
         return self.apply({'query': values, 'operator':'or'})
 
     applyIn = applyAny
+
+    applyNotAny = _negate(applyAny)
 
     def applyAll(self, values):
         return self.apply({'query': values, 'operator':'and'})
@@ -58,8 +68,5 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     def applyEq(self, value):
         return self.apply(value)
 
-    def applyNotEq(self, not_value):
-        all = self._get_all_docids()
-        r = self.apply(not_value)
-        return self.family.IF.difference(all, r)
+    applyNotEq = _negate(applyEq)
 
