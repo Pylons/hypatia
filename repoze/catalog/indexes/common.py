@@ -107,9 +107,9 @@ class CatalogIndex(object):
         raise NotImplementedError(
             "NotAll is not supported for %s" % type(self).__name__)
 
-    def applyRange(self, *args, **kw):
+    def applyInRange(self, *args, **kw):
         raise NotImplementedError(
-            "Range is not supported for %s" % type(self).__name__)
+            "InRange is not supported for %s" % type(self).__name__)
 
     def avg_result_len_eq(self):
         return None

@@ -251,7 +251,7 @@ class NotAll(Comparator):
         return All(self.index_name, self.value)
 
 
-class Range(Comparator):
+class InRange(Comparator):
     """ Index value falls within a range.
 
     CQE eqivalent: lower < index < upper
@@ -272,8 +272,8 @@ class Range(Comparator):
             end_exclusive = False
 
         assert start.index_name == end.index_name
-        return Range(start.index_name, start.value, end.value,
-                     start_exclusive, end_exclusive)
+        return InRange(start.index_name, start.value, end.value,
+                       start_exclusive, end_exclusive)
 
     def __init__(self, index_name, start, end,
                  start_exclusive=False, end_exclusive=False):
@@ -285,7 +285,7 @@ class Range(Comparator):
 
     def apply(self, catalog):
         index = self.get_index(catalog)
-        return index.applyRange(
+        return index.applyInRange(
             self.start, self.end, self.start_exclusive, self.end_exclusive
         )
 
@@ -409,13 +409,13 @@ class Intersection(NarySetOp):
             return new_self
 
         # There might be a combination of Gt/Ge and Lt/Le operators for the
-        # same index that could be used to compose a Range.
+        # same index that could be used to compose an InRange.
         uppers = {}
         lowers = {}
         args = list(self.arguments)
 
         def process_range(i_lower, arg_lower, i_upper, arg_upper):
-            args[i_lower] = Range.fromGTLT(arg_lower, arg_upper)
+            args[i_lower] = InRange.fromGTLT(arg_lower, arg_upper)
             args[i_upper] = None
 
         for i in xrange(len(args)):
@@ -611,7 +611,7 @@ class _AstParser(object):
         # or
         #   start [<|<=] index_name [<|<=] end
         #
-        # Where the second form maps to a Range comparator and the first
+        # Where the second form maps to an InRange comparator and the first
         # form matches any of the other comparators.  Arbitrary chaining as
         # shown above is not supported.
         if len(children) == 3:
@@ -631,11 +631,11 @@ class _AstParser(object):
                     end_exclusive = True
                 else:
                     end_exclusive = False
-                return Range(self._index_name(index_name),
-                             self._value(start),
-                             self._value(end),
-                             start_exclusive,
-                             end_exclusive)
+                return InRange(self._index_name(index_name),
+                               self._value(start),
+                               self._value(end),
+                               start_exclusive,
+                               end_exclusive)
         raise ValueError(
             "Bad expression: unsupported chaining of comparators."
         )

@@ -48,10 +48,15 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     - In
 
+    - NotIn
+
     - Any
 
-    - Range
+    - NotAny
 
+    - InRange
+
+    - NotInRange
     """
     implements(ICatalogIndex)
 
@@ -284,16 +289,16 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     applyNotEq = _negate(applyEq)
 
     def applyGe(self, min_value):
-        return self.applyRange(min_value, None)
+        return self.applyInRange(min_value, None)
 
     def applyLe(self, max_value):
-        return self.applyRange(None, max_value)
+        return self.applyInRange(None, max_value)
 
     def applyGt(self, min_value):
-        return self.applyRange(min_value, None, excludemin=True)
+        return self.applyInRange(min_value, None, excludemin=True)
 
     def applyLt(self, max_value):
-        return self.applyRange(None, max_value, excludemax=True)
+        return self.applyInRange(None, max_value, excludemax=True)
 
     def applyAny(self, values):
         queries = list(values)
@@ -301,7 +306,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     applyNotAny = _negate(applyAny)
 
-    def applyRange(self, start, end, excludemin=False, excludemax=False):
+    def applyInRange(self, start, end, excludemin=False, excludemax=False):
         return self.family.IF.multiunion(
             self._fwd_index.values(
                 start, end, excludemin=excludemin, excludemax=excludemax)
