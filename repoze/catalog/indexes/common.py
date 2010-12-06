@@ -95,6 +95,10 @@ class CatalogIndex(object):
         raise NotImplementedError(
             "Any is not supported for %s" % type(self).__name__)
 
+    def applyNotAny(self, *args, **kw):
+        raise NotImplementedError(
+            "NotAny is not supported for %s" % type(self).__name__)
+
     def applyAll(self, *args, **kw):
         raise NotImplementedError(
             "All is not supported for %s" % type(self).__name__)
