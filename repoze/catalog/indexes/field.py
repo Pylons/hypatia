@@ -17,7 +17,7 @@ NBEST = 'nbest'
 TIMSORT = 'timsort'
 
 def _negate(assertion):
-    def negation(self, value):
+    def negation(self, value, *arg, **kw):
         not_indexed = self.not_indexed
         all_indexed = self._rev_index.keys()
         if len(not_indexed) == 0:
@@ -27,7 +27,7 @@ def _negate(assertion):
         else:
             all_indexed = self.family.IF.Set(all_indexed)
             all = self.family.IF.union(not_indexed, all_indexed)
-        positive = assertion(self, value)
+        positive = assertion(self, value, *arg, **kw)
         if len(positive) == 0:
             return all
         return self.family.IF.difference(all, positive)
@@ -311,6 +311,8 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
             self._fwd_index.values(
                 start, end, excludemin=excludemin, excludemax=excludemax)
         )
+
+    applyNotInRange = _negate(applyInRange)
 
     def avg_result_len_eq(self):
         return float(self.documentCount()) / self.wordCount()

@@ -636,6 +636,13 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [3, 4, 8])
 
+    def test_applyNotInRange(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyNotInRange(3, 7)
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 6, 7, 10, 11])
+
     def test_avg_result_len_eq(self):
         index = self._makeOne()
         self._populateIndex(index)
