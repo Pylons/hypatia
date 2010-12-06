@@ -78,3 +78,32 @@ class TestCatalogTextIndex(unittest.TestCase):
         results = {-2: 5.0, 3: 3.0, 0: 4.5}
         expect = [-2, 0]
         self.assertEqual(index.sort(results, limit=2), expect)
+
+    def test_applyDoesNotContain(self):
+        index = self._makeOne()
+        index.index_doc(1, u'now is the time')
+        index.index_doc(2, u"l'ora \xe9 ora")
+        result = sorted(index.applyDoesNotContain('time'))
+        self.assertEqual(result, [2])
+
+    def test_applyDoesNotContain_with_unindexed_doc(self):
+        def discriminator(obj, default):
+            if isinstance(obj, basestring):
+                return obj
+            return default
+        index = self._makeOne(discriminator)
+        index.index_doc(1, u'now is the time')
+        index.index_doc(2, u"l'ora \xe9 ora")
+        index.index_doc(3, 3)
+        result = sorted(index.applyDoesNotContain('time'))
+        self.assertEqual(result, [2, 3])
+
+    def test_applyDoesNotContain_nothing_indexed(self):
+        def discriminator(obj, default):
+            return default
+        index = self._makeOne(discriminator)
+        index.index_doc(1, u'now is the time')
+        index.index_doc(2, u"l'ora \xe9 ora")
+        index.index_doc(3, 3)
+        result = sorted(index.applyDoesNotContain('time'))
+        self.assertEqual(result, [1, 2, 3])

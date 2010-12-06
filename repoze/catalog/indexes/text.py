@@ -15,7 +15,7 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
     - Eq
     """
-    
+
     implements(ICatalogIndex, IIndexSort)
 
     def __init__(self, discriminator, lexicon=None, index=None):
@@ -24,6 +24,7 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
         TextIndex.__init__(self, lexicon, index)
         self.clear()
 
@@ -65,4 +66,20 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
         return self.apply(value)
 
     applyEq = applyContains
-    
+
+    def applyDoesNotContain(self, value):
+        not_indexed = self.not_indexed
+        all_indexed = self.index._docwords.keys()
+        if len(not_indexed) == 0:
+            all = self.family.IF.Set(all_indexed)
+        elif len(all_indexed) == 0:
+            all = not_indexed
+        else:
+            all_indexed = self.family.IF.Set(all_indexed)
+            all = self.family.IF.union(not_indexed, all_indexed)
+        does_contain = self.applyContains(value)
+        if len(does_contain) == 0:
+            return all
+        return self.family.IF.difference(all, does_contain)
+
+    applyNotEq = applyDoesNotContain

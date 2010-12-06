@@ -91,6 +91,10 @@ class TestComparator(ComparatorTestBase):
         self.assertEqual(inst.index_name, 'index')
         self.assertEqual(inst.value, 'val')
 
+    def test_eq(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst, self._makeOne('index', 'val'))
+
 
 class TestContains(ComparatorTestBase):
     def _getTargetClass(self):
@@ -107,6 +111,33 @@ class TestContains(ComparatorTestBase):
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "'val' in index")
+
+    def test_negate(self):
+        from repoze.catalog.query import DoesNotContain
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), DoesNotContain('index', 'val'))
+
+
+class TestDoesNotContain(ComparatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import DoesNotContain
+        return DoesNotContain
+
+    def test_apply(self):
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', 'val')
+        result = inst.apply(catalog)
+        self.assertEqual(result, 'val')
+        self.assertEqual(catalog.index.does_not_contain, 'val')
+
+    def test_to_str(self):
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(str(inst), "'val' not in index")
+
+    def test_negate(self):
+        from repoze.catalog.query import Contains
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), Contains('index', 'val'))
 
 
 class TestEq(ComparatorTestBase):
@@ -824,6 +855,10 @@ class DummyIndex(object):
 
     def applyContains(self, value):
         self.contains = value
+        return value
+
+    def applyDoesNotContain(self, value):
+        self.does_not_contain = value
         return value
 
     def applyEq(self, value):

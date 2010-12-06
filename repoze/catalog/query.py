@@ -64,11 +64,15 @@ class Comparator(Query):
     def __str__(self):
         return ' '.join((self.index_name, self.operator, repr(self.value)))
 
+    def __eq__(self, other):
+        return (self.index_name == other.index_name and
+                self.value == other.value)
+
 
 class Contains(Comparator):
     """Contains query.
 
-    CQE equivalent: index in all(['foo', 'bar'])
+    CQE equivalent: 'foo' in index
     """
 
     def apply(self, catalog):
@@ -77,6 +81,24 @@ class Contains(Comparator):
 
     def __str__(self):
         return '%s in %s' % (repr(self.value), self.index_name)
+
+    def negate(self):
+        return DoesNotContain(self.index_name, self.value)
+
+
+class DoesNotContain(Comparator):
+    """CQE equivalent: 'foo' not in index
+    """
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyDoesNotContain(self.value)
+
+    def __str__(self):
+        return '%s not in %s' % (repr(self.value), self.index_name)
+
+    def negate(self):
+        return Contains(self.index_name, self.value)
 
 
 class Eq(Comparator):
@@ -154,7 +176,7 @@ class Le(Comparator):
 class Any(Comparator):
     """Any of query.
 
-    CQE equivalent: ??
+    CQE equivalent: index in any(['foo', 'bar'])
     """
     operator = 'any'
 
@@ -166,7 +188,7 @@ class Any(Comparator):
 class All(Comparator):
     """All query.
 
-    CQE equivalent: ??
+    CQE equivalent: index in all(['foo', 'bar'])
     """
     operator = 'all'
 
@@ -176,7 +198,11 @@ class All(Comparator):
 
 
 class Range(Comparator):
-    """ Index value falls within a range. """
+    """ Index value falls within a range.
+
+    CQE eqivalent: lower < index < upper
+                   lower <= index <= upper
+    """
     @classmethod
     def fromGTLT(self, start, end):
         assert isinstance(start, (Gt, Ge))

@@ -16,6 +16,7 @@ class CatalogIndex(object):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
 
     def index_doc(self, docid, object):
         if callable(self.discriminator):
@@ -26,6 +27,10 @@ class CatalogIndex(object):
         if value is _marker:
             # unindex the previous value
             super(CatalogIndex, self).unindex_doc(docid)
+
+            # Store docid in set of unindexed docids
+            self.not_indexed.add(docid)
+
             return None
 
         if isinstance(value, Persistent):
@@ -35,6 +40,10 @@ class CatalogIndex(object):
         if isinstance(value, Broken):
             raise ValueError('Catalog cannot index broken object %s' %
                              value)
+
+        if docid in self.not_indexed:
+            # Remove from set of unindexed docs if it was in there.
+            self.not_indexed.remove(docid)
 
         return super(CatalogIndex, self).index_doc(docid, value)
 
@@ -53,6 +62,10 @@ class CatalogIndex(object):
     def applyContains(self, *args, **kw):
         raise NotImplementedError(
             "Contains is not supported for %s" % type(self).__name__)
+
+    def applyDoesNotContain(self, *args, **kw):
+        raise NotImplementedError(
+            "DoesNotContain is not supported for %s" % type(self).__name__)
 
     def applyEq(self, *args, **kw):
         raise NotImplementedError(

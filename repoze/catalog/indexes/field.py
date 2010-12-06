@@ -44,6 +44,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
         self.clear()
 
     def reindex_doc(self, docid, value):
@@ -264,8 +265,18 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
         return self.apply(value)
 
     def applyNotEq(self, not_value):
-        all = self.apply(RangeValue(None, None))
+        not_indexed = self.not_indexed
+        all_indexed = self._rev_index.keys()
+        if len(not_indexed) == 0:
+            all = self.family.IF.Set(all_indexed)
+        elif len(all_indexed) == 0:
+            all = not_indexed
+        else:
+            all_indexed = self.family.IF.Set(all_indexed)
+            all = self.family.IF.union(not_indexed, all_indexed)
         r = self.apply((not_value, not_value))
+        if len(r) == 0:
+            return all
         return self.family.IF.difference(all, r)
 
     def applyGe(self, min_value):

@@ -30,11 +30,22 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
         self.clear()
 
     def reindex_doc(self, docid, value):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
+
+    def _get_all_docids(self):
+        indexed = self._rev_index.keys()
+        not_indexed = self.not_indexed
+        if len(indexed) == 0:
+            return not_indexed
+        indexed = self.family.IF.Set(indexed)
+        if len(not_indexed) == 0:
+            return indexed
+        return self.family.IF.union(indexed, not_indexed)
 
     def applyAny(self, values):
         return self.apply({'query': values, 'operator':'or'})
@@ -48,7 +59,7 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         return self.apply(value)
 
     def applyNotEq(self, not_value):
-        all = self.family.IF.multiunion(self._fwd_index.values())
+        all = self._get_all_docids()
         r = self.apply(not_value)
         return self.family.IF.difference(all, r)
 

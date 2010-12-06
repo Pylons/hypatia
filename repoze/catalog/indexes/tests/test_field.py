@@ -527,10 +527,30 @@ class TestCatalogFieldIndex(unittest.TestCase):
     def test_applyNotEq(self):
         index = self._makeOne()
         self._populateIndex(index)
-        index.index_doc(50, 1)
         result = index.applyNotEq(1)
         result = sorted(list(result))
         self.assertEqual(result, [1,2,3,4,6,7,8,9,10,11])
+
+    def test_applyNotEq_returns_unindexed_docs(self):
+        def discriminator(obj, default):
+            if isinstance(obj, int):
+                return obj
+            return default
+
+        index = self._makeOne(discriminator)
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        index.index_doc(51, '1')
+        result = index.applyNotEq(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [1,2,3,4,6,7,8,9,10,11,51])
+
+    def test_applyNotEq_nothing_indexed(self):
+        index = self._makeOne('foo')
+        self._populateIndex(index)
+        result = index.applyNotEq(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [1,2,3,4,5,6,7,8,9,10,11])
 
     def test_applyGe(self):
         index = self._makeOne()
