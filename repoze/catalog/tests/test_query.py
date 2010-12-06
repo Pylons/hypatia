@@ -287,6 +287,33 @@ class TestAll(ComparatorTestBase):
         inst = self._makeOne('index', [1, 2, 3])
         self.assertEqual(str(inst), "index all [1, 2, 3]")
 
+    def test_negate(self):
+        from repoze.catalog.query import NotAll
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), NotAll('index', 'val'))
+
+
+class TestNotAll(ComparatorTestBase):
+    def _getTargetClass(self):
+        from repoze.catalog.query import NotAll
+        return NotAll
+
+    def test_apply(self):
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', 'val')
+        result = inst.apply(catalog)
+        self.assertEqual(result, 'val')
+        self.assertEqual(catalog.index.all, 'val')
+
+    def test_to_str(self):
+        inst = self._makeOne('index', [1, 2, 3])
+        self.assertEqual(str(inst), "index all [1, 2, 3]")
+
+    def test_negate(self):
+        from repoze.catalog.query import All
+        inst = self._makeOne('index', 'val')
+        self.assertEqual(inst.negate(), All('index', 'val'))
+
 
 class TestAny(ComparatorTestBase):
     def _getTargetClass(self):
@@ -653,6 +680,13 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(contains.index_name, 'a')
         self.assertEqual(contains.value, 6)
 
+##    def test_does_not_contain(self):
+##        from repoze.catalog.query import DoesNotContain
+##        contains = self._call_fut("6 not in a")
+##        self.failUnless(isinstance(contains, DoesNotContain))
+##        self.assertEqual(contains.index_name, 'a')
+##        self.assertEqual(contains.value, 6)
+
     def test_range_exclusive_exclusive(self):
         from repoze.catalog.query import Range
         comp = self._call_fut("0 < a < 5")
@@ -734,6 +768,20 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op, Any), op)
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])
+
+##    def test_not_any(self):
+##        from repoze.catalog.query import NotAny
+##        op = self._call_fut("not(a == 1 or a == 2 or a == 3)")
+##        self.failUnless(isinstance(op, NotAny), op)
+##        self.assertEqual(op.index_name, 'a')
+##        self.assertEqual(op.value, [1, 2, 3])
+##
+##    def test_better_not_any(self):
+##        from repoze.catalog.query import NotAny
+##        op = self._call_fut("a not in any([1, 2, 3])")
+##        self.failUnless(isinstance(op, NotAny), op)
+##        self.assertEqual(op.index_name, 'a')
+##        self.assertEqual(op.value, [1, 2, 3])
 
     def test_intersection(self):
         from repoze.catalog.query import Eq

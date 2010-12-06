@@ -232,6 +232,24 @@ class All(Comparator):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
 
+    def negate(self):
+        return NotAll(self.index_name, self.value)
+
+
+class NotAll(Comparator):
+    """NotAll query.
+
+    CQE equivalent: index not in all(['foo', 'bar'])
+    """
+    operator = 'not all'
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyAll(self.value)
+
+    def negate(self):
+        return All(self.index_name, self.value)
+
 
 class Range(Comparator):
     """ Index value falls within a range.
