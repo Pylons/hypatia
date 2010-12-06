@@ -65,6 +65,8 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     def applyAll(self, values):
         return self.apply({'query': values, 'operator':'and'})
 
+    applyNotAll = _negate(applyAll)
+
     def applyEq(self, value):
         return self.apply(value)
 

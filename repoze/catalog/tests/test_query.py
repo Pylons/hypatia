@@ -307,7 +307,7 @@ class TestNotAll(ComparatorTestBase):
 
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
-        self.assertEqual(str(inst), "index all [1, 2, 3]")
+        self.assertEqual(str(inst), "index not all [1, 2, 3]")
 
     def test_negate(self):
         from repoze.catalog.query import All

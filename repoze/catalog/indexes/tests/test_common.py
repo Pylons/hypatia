@@ -50,6 +50,7 @@ class TestCatalogIndex(unittest.TestCase):
             'applyAny',
             'applyNotAny',
             'applyAll',
+            'applyNotAll',
             'applyRange']:
             self.assertRaises(NotImplementedError, getattr(index, name))
 

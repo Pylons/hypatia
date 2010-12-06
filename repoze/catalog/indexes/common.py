@@ -103,6 +103,10 @@ class CatalogIndex(object):
         raise NotImplementedError(
             "All is not supported for %s" % type(self).__name__)
 
+    def applyNotAll(self, *args, **kw):
+        raise NotImplementedError(
+            "NotAll is not supported for %s" % type(self).__name__)
+
     def applyRange(self, *args, **kw):
         raise NotImplementedError(
             "Range is not supported for %s" % type(self).__name__)
