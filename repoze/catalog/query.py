@@ -196,7 +196,6 @@ class Any(Comparator):
 
     CQE equivalent: index in any(['foo', 'bar'])
     """
-    operator = 'any'
 
     def apply(self, catalog):
         index = self.get_index(catalog)
@@ -204,6 +203,9 @@ class Any(Comparator):
 
     def negate(self):
         return NotAny(self.index_name, self.value)
+
+    def __str__(self):
+        return '%s in any(%s)' % (self.index_name, repr(self.value))
 
 
 class NotAny(Comparator):
@@ -220,6 +222,8 @@ class NotAny(Comparator):
     def negate(self):
         return Any(self.index_name, self.value)
 
+    def __str__(self):
+        return '%s not in any(%s)' % (self.index_name, repr(self.value))
 
 class All(Comparator):
     """All query.
@@ -235,6 +239,8 @@ class All(Comparator):
     def negate(self):
         return NotAll(self.index_name, self.value)
 
+    def __str__(self):
+        return '%s in all(%s)' % (self.index_name, repr(self.value))
 
 class NotAll(Comparator):
     """NotAll query.
@@ -250,6 +256,8 @@ class NotAll(Comparator):
     def negate(self):
         return All(self.index_name, self.value)
 
+    def __str__(self):
+        return '%s not in all(%s)' % (self.index_name, repr(self.value))
 
 class InRange(Comparator):
     """ Index value falls within a range.
@@ -385,25 +393,53 @@ class NarySetOp(SetOp):
 
     def _optimize(self):
         self.arguments = [arg._optimize() for arg in self.arguments]
+        new_me = self._optimize_eq()
+        if new_me is not None:
+            return new_me
+        new_me = self._optimize_not_eq()
+        if new_me is not None:
+            return new_me
+        return self
 
+    def _optimize_eq(self):
         # If all arguments are Eq operators for the same index, we can replace
         # this Intersection or Union with an All or Any node.
         args = list(self.arguments)
         arg = args.pop(0)
         if type(arg) != Eq:
-            return self
+            return None
         index_name = arg.index_name
         values = [arg.value]
         while args:
             arg = args.pop(0)
             if type(arg) != Eq or arg.index_name != index_name:
-                return self
+                return None
             values.append(arg.value)
 
         # All arguments are Eq operators for the same index.
         if type(self) == Union:
             return Any(index_name, values)
         return All(index_name, values)
+
+    def _optimize_not_eq(self):
+        # If all arguments are NotEq operators for the same index, we can
+        # replace this Intersection or Union with a NotAll or NotAny node.
+        args = list(self.arguments)
+        arg = args.pop(0)
+        if type(arg) != NotEq:
+            return None
+        index_name = arg.index_name
+        values = [arg.value]
+        while args:
+            arg = args.pop(0)
+            if type(arg) != NotEq or arg.index_name != index_name:
+                return None
+            values.append(arg.value)
+
+        # All arguments are Eq operators for the same index.
+        if type(self) == Union:
+            return NotAll(index_name, values)
+        return NotAny(index_name, values)
 
 
 class Union(NarySetOp):
@@ -420,6 +456,10 @@ class Union(NarySetOp):
             elif len(next_result) > 0:
                 _, result = self.family.IF.weightedUnion(result, next_result)
         return result
+
+    def negate(self):
+        neg_args = [arg.negate() for arg in self.arguments]
+        return Intersection(*neg_args)
 
 
 class Intersection(NarySetOp):
@@ -438,6 +478,10 @@ class Intersection(NarySetOp):
                 return IF.Set()
             _, result = IF.weightedIntersection(result, next_result)
         return result
+
+    def negate(self):
+        neg_args = [arg.negate() for arg in self.arguments]
+        return Union(*neg_args)
 
     def _optimize(self):
         new_self = NarySetOp._optimize(self)
@@ -478,6 +522,27 @@ class Intersection(NarySetOp):
 
         self.arguments = args
         return self
+
+
+class Not(Query):
+    """Negation of a query."""
+    def __init__(self, query):
+        self.query = query
+
+    def __str__(self):
+        return 'Not'
+
+    def iter_children(self):
+        yield self.query
+
+    def negate(self):
+        return self.query
+
+    def apply(self, catalog):
+        return self.query.negate().apply(catalog)
+
+    def _optimize(self):
+        return self.query.negate()._optimize()
 
 
 class Difference(SetOp):
@@ -560,8 +625,6 @@ class _AstParser(object):
             )
 
         result = self.walk(expr_tree.value)
-        if isinstance(result, Query):
-            result = result._optimize()
         return result
 
     def walk(self, tree):
@@ -636,6 +699,21 @@ class _AstParser(object):
             return Contains(self._index_name(right), self._value(left))
         factory.type = Contains
         return factory
+
+    def process_NotIn(self, node, children):
+        def factory(left, right):
+            if callable(right):  # any or all, see process_Call
+                return right(self._index_name(left)).negate()
+            return DoesNotContain(self._index_name(right), self._value(left))
+        factory.type = DoesNotContain
+        return factory
+
+    def process_Not(self, node, children):
+        return Not
+
+    def process_UnaryOp(self, node, children):
+        operator, query = children
+        return operator(query)
 
     def process_Compare(self, node, children):
         # Python allows arbitrary chaining of comparisons, ie:
@@ -751,7 +829,13 @@ class _AstParser(object):
         return node
 
 
-def parse_query(expr, names=None):
+def optimize(query):
+    if isinstance(query, Query):
+        return query._optimize()
+    return query
+
+
+def parse_query(expr, names=None, optimize_query=True):
     """
     Parses the given expression string into a catalog query.  The `names` dict
     provides local variable names that can be used in the expression.
@@ -760,7 +844,10 @@ def parse_query(expr, names=None):
         raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")
     if names is None:
         names = {}
-    return _AstParser(expr, names).parse()
+    query = _AstParser(expr, names).parse()
+    if optimize_query:
+        query = optimize(query)
+    return query
 
 
 def _print_ast(expr):  # pragma NO COVERAGE
