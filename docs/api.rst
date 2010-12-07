@@ -41,20 +41,30 @@ Comparators
 
    .. autoclass:: Le
 
+   .. autoclass:: Contains
+
+   .. autoclass:: DoesNotContain
+
    .. autoclass:: Any
+
+   .. autoclass:: NotAny
 
    .. autoclass:: All
 
-   .. autoclass:: Range
+   .. autoclass:: NotAll
 
-Set Operators
-~~~~~~~~~~~~~
+   .. autoclass:: InRange
 
-   .. autoclass:: Union
+   .. autoclass:: NotInRange
 
-   .. autoclass:: Intersection
+Boolean Operators
+~~~~~~~~~~~~~~~~~
 
-   .. autoclass:: Difference
+   .. autoclass:: Or
+
+   .. autoclass:: And
+
+   .. autoclass:: Not
 
 .. _api_fieldindex_section:
 

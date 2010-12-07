@@ -203,30 +203,34 @@ catalog to create a query object.
 
 Whether a query object is used directly or query objects are generated
 as the result of a CQE, an individual query object will be one of two
-types: a comparator or a set operator.  A comparator performs a single
-query on a single index.  A set operator allows results from
-individual queries to be combined using set operations.  For example:
+types: a comparator or a boolean operator.  A comparator performs a single
+query on a single index.  A boolean operator allows results from
+individual queries to be combined using boolean operations.  For example:
 
 .. code-block:: python
    :linenos:
 
-    from repoze.catalog.query import Intersection, Eq, Contains
-    query = Intersection(Eq('author', 'crossi'), Contains('body', 'biscuits'))
+    from repoze.catalog.query import And, Eq, Contains
+    query = And(Eq('author', 'crossi'), Contains('body', 'biscuits'))
 
-In the above example, ``Intersection`` is a set operator, and both
-``Eq`` and ``Contains`` are comparison operators.  The resulting query
-will search two indexes, ``author`` and ``body``.  Because the
-individual comparators are passed as arguments to the ``Intersection``
-set operator, the result becomes all documents which satisfy *both*
-comparators.
+In the above example, ``And`` is a boolean operator, and both ``Eq`` and
+``Contains`` are comparison operators. The resulting query will search two
+indexes, ``author`` and ``body``. Because the individual comparators are
+passed as arguments to the ``And`` set operator, the result becomes all
+documents which satisfy *both* comparators.
 
-All query objects may be combined using supported set operators, so
-the above query could also have been written:
+All query objects overload the bitwise and (``&``) and or (``|``) operators
+and can be combined using these.  The above query could also have been written
+as follows:
 
 .. code-block:: python
    :linenos:
 
     query = Eq('author', 'crossi') & Contains('body', 'biscuits')
+
+.. note:: Although it would be more intuitive to use the boolean operators,
+   ``or`` and ``and`` for this rather than bitwise operators, Python does not
+   allow overloading boolean operators.
 
 Query objects may also be created by parsing a :term:`CQE` string.
 The query parser uses Python's internal code parser to parse CQE query
@@ -332,6 +336,30 @@ CQE::
 
    index_name <= value
 
+Contains
+########
+
+Python::
+
+   from repoze.catalog.query import Contains
+   Contains(index_name, value)
+
+CQE::
+
+   value in index_name
+
+Does Not Contain
+################
+
+Python::
+
+   from repoze.catalog.query import DoesNotContain
+   DoesNotContain(index_name, value)
+
+CQE::
+
+   value not in index_name
+
 Any
 ###
 
@@ -345,6 +373,20 @@ CQE::
    index_name == value1 or index_name == value2 or etc...
    index_name in any([value1, value2, ...])
    index_name in any(values)
+
+Not Any (aka None Of)
+#####################
+
+Python::
+
+   from repoze.catalog.query import NotAny
+   NotAny(index_name, [value1, value2, ...])
+
+CQE::
+
+   index_name != value1 and index_name != value2 and etc...
+   index_name not in any([value1, value2, ...])
+   index_name not in any(values)
 
 All
 ###
@@ -360,32 +402,60 @@ CQE::
    index_name in all([value1, value2, ...])
    index_name in all(values)
 
+Not All
+#######
+
+Python::
+
+   from repoze.catalog.query import NotAll
+   NotAll(index_name, [value1, value2, ...])
+
+CQE::
+
+   index_name != value1 or index_name != value2 or etc...
+   index_name not in all([value1, value2, ...])
+   index_name not in all(values)
+
 Within Range
 ############
 
 Python::
 
-   from repoze.catalog.query import Range
-   Range(index_name, start, end,
+   from repoze.catalog.query import InRange
+   InRange(index_name, start, end,
          start_exclusive=False, end_exclusive=False)
 
 CQE::
 
-   start <= index_name <= end
+   index_name >= start and index_name <= end
    start < index_name < end
 
-Set Operators
-!!!!!!!!!!!!!
+Not Within Range
+################
+
+Python::
+
+   from repoze.catalog.query import NotInRange
+   NotInRange(index_name, start, end,
+         start_exclusive=False, end_exclusive=False)
+
+CQE::
+
+   index_name <= start or index_name >= end
+   not(start < index_name < end)
+
+Boolean Operators
+!!!!!!!!!!!!!!!!!
 
 The following set operators are allowed in queries:
 
-Intersection
-############
+And
+###
 
 Python (explicit)::
 
-   from repoze.catalog.query import Intersection
-   Intersection(query1, query2)
+   from repoze.catalog.query import And
+   And(query1, query2)
 
 Python (implicit)::
 
@@ -396,13 +466,13 @@ CQE::
     query1 and query2
     query1 & query2
 
-Union
-#####
+Or
+##
 
 Python (explicit)::
 
-   from repoze.catalog.query import Union
-   Union(query1, query2)
+   from repoze.catalog.query import Or
+   Or(query1, query2)
 
 Python (implicit)::
 
@@ -413,21 +483,17 @@ CQE::
     query1 or query2
     query1 | query2
 
-Difference
-##########
+Not
+###
 
 Python (explicit)::
 
-   from repoze.catalog.query import Difference
-   Difference(query1, query2)
-
-Python (implicit)::
-
-   query1 - query2
+   from repoze.catalog.query import Not
+   Not(query1, query2)
 
 CQE::
 
-   query1 - query2
+   not query1
 
 Search Using the :meth:`repoze.catalog.Catalog.search` Method (Deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
