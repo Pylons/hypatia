@@ -347,30 +347,30 @@ class NotInRange(_Range):
 
 class BoolOp(Query):
     """
-    Base class for Or and And operators which can have N arguments.
+    Base class for Or and And operators.
     """
     family = BTrees.family32
 
-    def __init__(self, *args):
+    def __init__(self, *queries):
         arguments = []
-        for arg in args:
+        for query in queries:
             # If argument is of the same type, can promote its arguments up
             # to here.
-            if type(arg) == type(self):
-                arguments.extend(arg.arguments)
+            if type(query) == type(self):
+                arguments.extend(query.queries)
             else:
-                arguments.append(arg)
-        self.arguments = arguments
+                arguments.append(query)
+        self.queries = arguments
 
     def __str__(self):
         return type(self).__name__
 
     def iter_children(self):
-        for arg in self.arguments:
-            yield arg
+        for query in self.queries:
+            yield query
 
     def _optimize(self):
-        self.arguments = [arg._optimize() for arg in self.arguments]
+        self.queries = [query._optimize() for query in self.queries]
         new_me = self._optimize_eq()
         if new_me is not None:
             return new_me
@@ -380,55 +380,55 @@ class BoolOp(Query):
         return self
 
     def _optimize_eq(self):
-        # If all arguments are Eq operators for the same index, we can replace
+        # If all queries are Eq operators for the same index, we can replace
         # this And or Or with an All or Any node.
-        args = list(self.arguments)
-        arg = args.pop(0)
-        if type(arg) != Eq:
+        queries = list(self.queries)
+        query = queries.pop(0)
+        if type(query) != Eq:
             return None
-        index_name = arg.index_name
-        values = [arg.value]
-        while args:
-            arg = args.pop(0)
-            if type(arg) != Eq or arg.index_name != index_name:
+        index_name = query.index_name
+        values = [query.value]
+        while queries:
+            query = queries.pop(0)
+            if type(query) != Eq or query.index_name != index_name:
                 return None
-            values.append(arg.value)
+            values.append(query.value)
 
-        # All arguments are Eq operators for the same index.
+        # All queries are Eq operators for the same index.
         if type(self) == Or:
             return Any(index_name, values)
         return All(index_name, values)
 
     def _optimize_not_eq(self):
-        # If all arguments are NotEq operators for the same index, we can
+        # If all queries are NotEq operators for the same index, we can
         # replace this And or Or with a NotAll or NotAny node.
-        args = list(self.arguments)
-        arg = args.pop(0)
-        if type(arg) != NotEq:
+        queries = list(self.queries)
+        query = queries.pop(0)
+        if type(query) != NotEq:
             return None
-        index_name = arg.index_name
-        values = [arg.value]
-        while args:
-            arg = args.pop(0)
-            if type(arg) != NotEq or arg.index_name != index_name:
+        index_name = query.index_name
+        values = [query.value]
+        while queries:
+            query = queries.pop(0)
+            if type(query) != NotEq or query.index_name != index_name:
                 return None
-            values.append(arg.value)
+            values.append(query.value)
 
-        # All arguments are Eq operators for the same index.
+        # All queries are Eq operators for the same index.
         if type(self) == Or:
             return NotAll(index_name, values)
         return NotAny(index_name, values)
 
 
 class Or(BoolOp):
-    """Or of two result sets."""
+    """Boolean Or of multiple queries."""
     def apply(self, catalog):
         # XXX Try to figure out when we need weightedOr and when we can
         # just use union or multiunion.
-        arguments = self.arguments
-        result = arguments[0].apply(catalog)
-        for arg in arguments[1:]:
-            next_result = arg.apply(catalog)
+        queries = self.queries
+        result = queries[0].apply(catalog)
+        for query in queries[1:]:
+            next_result = query.apply(catalog)
             if len(result) == 0:
                 result = next_result
             elif len(next_result) > 0:
@@ -436,8 +436,8 @@ class Or(BoolOp):
         return result
 
     def negate(self):
-        neg_args = [arg.negate() for arg in self.arguments]
-        return And(*neg_args)
+        neg_queries = [query.negate() for query in self.queries]
+        return And(*neg_queries)
 
     def _optimize(self):
         new_self = BoolOp._optimize(self)
@@ -448,61 +448,61 @@ class Or(BoolOp):
         # same index that could be used to compose a NotInRange.
         uppers = {}
         lowers = {}
-        args = list(self.arguments)
+        queries = list(self.queries)
 
-        def process_range(i_lower, arg_lower, i_upper, arg_upper):
-            if arg_lower.value >= arg_upper.value:
+        def process_range(i_lower, query_lower, i_upper, query_upper):
+            if query_lower.value >= query_upper.value:
                 return
-            args[i_lower] = NotInRange.fromGTLT(
-                arg_lower.negate(), arg_upper.negate())
-            args[i_upper] = None
+            queries[i_lower] = NotInRange.fromGTLT(
+                query_lower.negate(), query_upper.negate())
+            queries[i_upper] = None
 
-        for i in xrange(len(args)):
-            arg = args[i]
-            if type(arg) in (Lt, Le):
-                match = uppers.get(arg.index_name)
+        for i in xrange(len(queries)):
+            query = queries[i]
+            if type(query) in (Lt, Le):
+                match = uppers.get(query.index_name)
                 if match is not None:
-                    i_upper, arg_upper = match
-                    process_range(i, arg, i_upper, arg_upper)
+                    i_upper, query_upper = match
+                    process_range(i, query, i_upper, query_upper)
                 else:
-                    lowers[arg.index_name] = (i, arg)
+                    lowers[query.index_name] = (i, query)
 
-            elif type(arg) in (Gt, Ge):
-                match = lowers.get(arg.index_name)
+            elif type(query) in (Gt, Ge):
+                match = lowers.get(query.index_name)
                 if match is not None:
-                    i_lower, arg_lower = match
-                    process_range(i_lower, arg_lower, i, arg)
+                    i_lower, query_lower = match
+                    process_range(i_lower, query_lower, i, query)
                 else:
-                    uppers[arg.index_name] = (i, arg)
+                    uppers[query.index_name] = (i, query)
 
-        args = filter(None, args)
-        if len(args) == 1:
-            return args[0]
+        queries = filter(None, queries)
+        if len(queries) == 1:
+            return queries[0]
 
-        self.arguments = args
+        self.queries = queries
         return self
 
 
 class And(BoolOp):
-    """And of two result sets."""
+    """Boolean And of multiple queries."""
     def apply(self, catalog):
         # XXX Try to figure out when we need weightedIntersection and when we
         # can just use intersection.
         IF = self.family.IF
-        arguments = self.arguments
-        result = arguments[0].apply(catalog)
-        for arg in arguments[1:]:
+        queries = self.queries
+        result = queries[0].apply(catalog)
+        for query in queries[1:]:
             if len(result) == 0:
                 return IF.Set()
-            next_result = arg.apply(catalog)
+            next_result = query.apply(catalog)
             if len(next_result) == 0:
                 return IF.Set()
             _, result = IF.weightedIntersection(result, next_result)
         return result
 
     def negate(self):
-        neg_args = [arg.negate() for arg in self.arguments]
-        return Or(*neg_args)
+        neg_queries = [query.negate() for query in self.queries]
+        return Or(*neg_queries)
 
     def _optimize(self):
         new_self = BoolOp._optimize(self)
@@ -513,37 +513,37 @@ class And(BoolOp):
         # same index that could be used to compose an InRange.
         uppers = {}
         lowers = {}
-        args = list(self.arguments)
+        queries = list(self.queries)
 
-        def process_range(i_lower, arg_lower, i_upper, arg_upper):
-            if arg_lower.value >= arg_upper.value:
+        def process_range(i_lower, query_lower, i_upper, query_upper):
+            if query_lower.value >= query_upper.value:
                 return
-            args[i_lower] = InRange.fromGTLT(arg_lower, arg_upper)
-            args[i_upper] = None
+            queries[i_lower] = InRange.fromGTLT(query_lower, query_upper)
+            queries[i_upper] = None
 
-        for i in xrange(len(args)):
-            arg = args[i]
-            if type(arg) in (Gt, Ge):
-                match = uppers.get(arg.index_name)
+        for i in xrange(len(queries)):
+            query = queries[i]
+            if type(query) in (Gt, Ge):
+                match = uppers.get(query.index_name)
                 if match is not None:
-                    i_upper, arg_upper = match
-                    process_range(i, arg, i_upper, arg_upper)
+                    i_upper, query_upper = match
+                    process_range(i, query, i_upper, query_upper)
                 else:
-                    lowers[arg.index_name] = (i, arg)
+                    lowers[query.index_name] = (i, query)
 
-            elif type(arg) in (Lt, Le):
-                match = lowers.get(arg.index_name)
+            elif type(query) in (Lt, Le):
+                match = lowers.get(query.index_name)
                 if match is not None:
-                    i_lower, arg_lower = match
-                    process_range(i_lower, arg_lower, i, arg)
+                    i_lower, query_lower = match
+                    process_range(i_lower, query_lower, i, query)
                 else:
-                    uppers[arg.index_name] = (i, arg)
+                    uppers[query.index_name] = (i, query)
 
-        args = filter(None, args)
-        if len(args) == 1:
-            return args[0]
+        queries = filter(None, queries)
+        if len(queries) == 1:
+            return queries[0]
 
-        self.arguments = args
+        self.queries = queries
         return self
 
 
