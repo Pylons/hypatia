@@ -16,12 +16,12 @@ class Query(object):
     __name__ = None
 
     def __and__(self, right):
-        self._check_type("set intersection", right)
-        return Intersection(self, right)
+        self._check_type("and", right)
+        return And(self, right)
 
     def __or__(self, right):
-        self._check_type("set union", right)
-        return Union(self, right)
+        self._check_type("or", right)
+        return Or(self, right)
 
     def _check_type(self, setop, operand):
         if not isinstance(operand, Query):
@@ -347,7 +347,7 @@ class NotInRange(_Range):
 
 class NarySetOp(Query):
     """
-    Base class for Union and Intersection operators which can have N arguments.
+    Base class for Or and And operators which can have N arguments.
     """
     family = BTrees.family32
 
@@ -381,7 +381,7 @@ class NarySetOp(Query):
 
     def _optimize_eq(self):
         # If all arguments are Eq operators for the same index, we can replace
-        # this Intersection or Union with an All or Any node.
+        # this And or Or with an All or Any node.
         args = list(self.arguments)
         arg = args.pop(0)
         if type(arg) != Eq:
@@ -395,13 +395,13 @@ class NarySetOp(Query):
             values.append(arg.value)
 
         # All arguments are Eq operators for the same index.
-        if type(self) == Union:
+        if type(self) == Or:
             return Any(index_name, values)
         return All(index_name, values)
 
     def _optimize_not_eq(self):
         # If all arguments are NotEq operators for the same index, we can
-        # replace this Intersection or Union with a NotAll or NotAny node.
+        # replace this And or Or with a NotAll or NotAny node.
         args = list(self.arguments)
         arg = args.pop(0)
         if type(arg) != NotEq:
@@ -415,15 +415,15 @@ class NarySetOp(Query):
             values.append(arg.value)
 
         # All arguments are Eq operators for the same index.
-        if type(self) == Union:
+        if type(self) == Or:
             return NotAll(index_name, values)
         return NotAny(index_name, values)
 
 
-class Union(NarySetOp):
-    """Union of two result sets."""
+class Or(NarySetOp):
+    """Or of two result sets."""
     def apply(self, catalog):
-        # XXX Try to figure out when we need weightedUnion and when we can
+        # XXX Try to figure out when we need weightedOr and when we can
         # just use union or multiunion.
         arguments = self.arguments
         result = arguments[0].apply(catalog)
@@ -437,7 +437,7 @@ class Union(NarySetOp):
 
     def negate(self):
         neg_args = [arg.negate() for arg in self.arguments]
-        return Intersection(*neg_args)
+        return And(*neg_args)
 
     def _optimize(self):
         new_self = NarySetOp._optimize(self)
@@ -483,8 +483,8 @@ class Union(NarySetOp):
         return self
 
 
-class Intersection(NarySetOp):
-    """Intersection of two result sets."""
+class And(NarySetOp):
+    """And of two result sets."""
     def apply(self, catalog):
         # XXX Try to figure out when we need weightedIntersection and when we
         # can just use intersection.
@@ -502,7 +502,7 @@ class Intersection(NarySetOp):
 
     def negate(self):
         neg_args = [arg.negate() for arg in self.arguments]
-        return Union(*neg_args)
+        return Or(*neg_args)
 
     def _optimize(self):
         new_self = NarySetOp._optimize(self)
@@ -763,10 +763,10 @@ class _AstParser(object):
         )
 
     def process_BitOr(self, node, children):
-        return Union
+        return Or
 
     def process_BitAnd(self, node, children):
-        return Intersection
+        return And
 
     def process_BinOp(self, node, children):
         left, operator, right = children
@@ -783,10 +783,10 @@ class _AstParser(object):
         return operator(left, right)
 
     def process_Or(self, node, children):
-        return Union
+        return Or
 
     def process_And(self, node, children):
-        return Intersection
+        return And
 
     def process_BoolOp(self, node, children):
         operator = children.pop(0)

@@ -12,29 +12,29 @@ class TestQuery(unittest.TestCase):
         from repoze.catalog.query import Query as cls
         return cls()
 
-    def test_intersection(self):
-        from repoze.catalog.query import Intersection
+    def test_and(self):
+        from repoze.catalog.query import And
         a = self._makeOne()
         b = self._makeOne()
         result = a & b
-        self.failUnless(isinstance(result, Intersection))
+        self.failUnless(isinstance(result, And))
         self.assertEqual(result.arguments[0], a)
         self.assertEqual(result.arguments[1], b)
 
-    def test_intersection_type_error(self):
+    def test_and_type_error(self):
         a = self._makeOne()
         self.assertRaises(TypeError, a.__and__, 2)
 
     def test_or(self):
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import Or
         a = self._makeOne()
         b = self._makeOne()
         result = a | b
-        self.failUnless(isinstance(result, Union))
+        self.failUnless(isinstance(result, Or))
         self.assertEqual(result.arguments[0], a)
         self.assertEqual(result.arguments[1], b)
 
-    def test_union_type_error(self):
+    def test_or_type_error(self):
         a = self._makeOne()
         self.assertRaises(TypeError, a.__or__, 2)
 
@@ -468,14 +468,14 @@ class TestNarySetOp(SetOpTestBase):
         self.assertEqual(list(o.iter_children()), [left, right])
 
 
-class TestUnion(SetOpTestBase):
+class TestOr(SetOpTestBase):
     def _getTargetClass(self):
-        from repoze.catalog.query import Union as cls
+        from repoze.catalog.query import Or as cls
         return cls
 
     def test_to_str(self):
         o = self._makeOne(None, None)
-        self.assertEqual(str(o), 'Union')
+        self.assertEqual(str(o), 'Or')
 
     def test_apply(self):
         left = DummyQuery(set([1, 2]))
@@ -508,25 +508,25 @@ class TestUnion(SetOpTestBase):
         self.assertEqual(o.family.union, None)
 
     def test_negate(self):
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         left = DummyQuery('foo')
         right = DummyQuery('bar')
         o = self._makeOne(left, right)
         neg = o.negate()
-        self.failUnless(isinstance(neg, Intersection))
+        self.failUnless(isinstance(neg, And))
         left ,right = neg.arguments
         self.failUnless(left.negated)
         self.failUnless(right.negated)
 
 
-class TestIntersection(SetOpTestBase):
+class TestAnd(SetOpTestBase):
     def _getTargetClass(self):
-        from repoze.catalog.query import Intersection as cls
+        from repoze.catalog.query import And as cls
         return cls
 
     def test_to_str(self):
         o = self._makeOne(None, None)
-        self.assertEqual(str(o), 'Intersection')
+        self.assertEqual(str(o), 'And')
 
     def test_apply(self):
         left = DummyQuery(set([1, 2, 3]))
@@ -559,12 +559,12 @@ class TestIntersection(SetOpTestBase):
         self.assertEqual(o.family.intersection, None)
 
     def test_negate(self):
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import Or
         left = DummyQuery('foo')
         right = DummyQuery('bar')
         o = self._makeOne(left, right)
         neg = o.negate()
-        self.failUnless(isinstance(neg, Union))
+        self.failUnless(isinstance(neg, Or))
         left ,right = neg.arguments
         self.failUnless(left.negated)
         self.failUnless(right.negated)
@@ -774,11 +774,11 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(comp.start_exclusive)
         self.failUnless(comp.end_exclusive)
 
-    def test_union(self):
+    def test_or(self):
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import Or
         op = self._call_fut("(a == 1) | (b == 2)")
-        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op, Or))
         query = op.arguments[0]
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'a')
@@ -788,11 +788,11 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
 
-    def test_union_with_bool_syntax(self):
+    def test_or_with_bool_syntax(self):
         from repoze.catalog.query import NotEq
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import Or
         op = self._call_fut("a != 1 or b != 2")
-        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op, Or))
         query = op.arguments[0]
         self.failUnless(isinstance(query, NotEq))
         self.assertEqual(query.index_name, 'a')
@@ -830,11 +830,11 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])
 
-    def test_intersection(self):
+    def test_and(self):
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         op = self._call_fut("(a == 1) & (b == 2)")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         query = op.arguments[0]
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'a')
@@ -844,11 +844,11 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(query.index_name, 'b')
         self.assertEqual(query.value, 2)
 
-    def test_intersection_with_bool_syntax(self):
+    def test_and_with_bool_syntax(self):
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         op = self._call_fut("a == 1 and b == 2")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         query = op.arguments[0]
         self.failUnless(isinstance(query, Eq))
         self.assertEqual(query.index_name, 'a')
@@ -886,16 +886,16 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op.value, [1, 2, 3])
 
-    def test_all_with_union(self):
+    def test_all_with_or(self):
         # Regression test for earlier bug where:
         #   a == 1 or a == 2 and a == 3
         # was transformed into:
         #   a any [1, 2, 3]
         from repoze.catalog.query import All
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import Or
         op = self._call_fut("a == 1 or a == 2 and a == 3")
-        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op, Or))
         self.failUnless(isinstance(op.arguments[0], Eq))
         self.failUnless(isinstance(op.arguments[1], All))
         self.assertEqual(op.arguments[1].index_name, 'a')
@@ -921,29 +921,29 @@ class Test_parse_query(unittest.TestCase):
 
     def test_convert_gtlt_child_left_nephew_left(self):
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         from repoze.catalog.query import InRange
         op = self._call_fut("a > 0 and (a < 5 and b == 7)")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         self.failUnless(isinstance(op.arguments[0], InRange))
         self.failUnless(isinstance(op.arguments[1], Eq))
 
     def test_strange_gtlt_child_left_nephew_right(self):
         from repoze.catalog.query import Eq
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         from repoze.catalog.query import InRange
         op = self._call_fut("a > 0 and (b == 7 and a < 5)")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         self.failUnless(isinstance(op.arguments[0], InRange))
         self.failUnless(isinstance(op.arguments[1], Eq))
 
     def test_convert_gtlt_child_right_nephew_left(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Gt
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         from repoze.catalog.query import InRange
         op = self._call_fut("a >= -1 and b == 2 and c > 3 and a <= 1")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         self.failUnless(isinstance(op.arguments[0], InRange))
         self.failUnless(isinstance(op.arguments[1], Eq))
         self.failUnless(isinstance(op.arguments[2], Gt))
@@ -951,20 +951,20 @@ class Test_parse_query(unittest.TestCase):
     def test_convert_gtlt_both_descendants(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Gt
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         from repoze.catalog.query import InRange
         op = self._call_fut("b == 2 and a > -1 and (a <= 1 and c > 3)")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         self.failUnless(isinstance(op.arguments[0], Eq))
         self.failUnless(isinstance(op.arguments[1], InRange))
         self.failUnless(isinstance(op.arguments[2], Gt))
 
     def test_convert_gtlt_both_descendants_multiple_times(self):
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         from repoze.catalog.query import InRange
         op = self._call_fut(
             "(a > 0 and b > 0 and c > 0) and (a < 5 and b < 5 and c < 5)")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         self.failUnless(isinstance(op.arguments[0], InRange))
         self.failUnless(isinstance(op.arguments[1], InRange))
         self.failUnless(isinstance(op.arguments[2], InRange))
@@ -972,32 +972,32 @@ class Test_parse_query(unittest.TestCase):
     def test_dont_convert_gtlt_to_not_in_range_with_swapped_bounds(self):
         from repoze.catalog.query import Gt
         from repoze.catalog.query import Lt
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import Or
         op = self._call_fut("a > 0 or a < 5")
-        self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op, Or))
         self.failUnless(isinstance(op.arguments[0], Gt))
         self.failUnless(isinstance(op.arguments[1], Lt))
 
     def test_dont_convert_gtlt_to_range_with_swapped_bounds(self):
         from repoze.catalog.query import Gt
         from repoze.catalog.query import Lt
-        from repoze.catalog.query import Intersection
+        from repoze.catalog.query import And
         op = self._call_fut("a > 5 and a < 0")
-        self.failUnless(isinstance(op, Intersection))
+        self.failUnless(isinstance(op, And))
         self.failUnless(isinstance(op.arguments[0], Gt))
         self.failUnless(isinstance(op.arguments[1], Lt))
 
     def test_dont_convert_gtlt_to_range_with_or_spread_out(self):
         from repoze.catalog.query import Gt
         from repoze.catalog.query import Lt
-        from repoze.catalog.query import Intersection
-        from repoze.catalog.query import Union
+        from repoze.catalog.query import And
+        from repoze.catalog.query import Or
         op = self._call_fut("a > 0 and b > 0 or a < 5 and b < 5")
-        self.failUnless(isinstance(op, Union))
-        self.failUnless(isinstance(op.arguments[0], Intersection))
+        self.failUnless(isinstance(op, Or))
+        self.failUnless(isinstance(op.arguments[0], And))
         self.failUnless(isinstance(op.arguments[0].arguments[0], Gt))
         self.failUnless(isinstance(op.arguments[0].arguments[1], Gt))
-        self.failUnless(isinstance(op.arguments[1], Intersection))
+        self.failUnless(isinstance(op.arguments[1], And))
         self.failUnless(isinstance(op.arguments[1].arguments[0], Lt))
         self.failUnless(isinstance(op.arguments[1].arguments[1], Lt))
 
