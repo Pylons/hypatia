@@ -5,6 +5,24 @@ from zope.index.keyword import KeywordIndex
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
+def _negate(assertion):
+    def negation(self, value):
+        not_indexed = self.not_indexed
+        all_indexed = self._rev_index.keys()
+        if len(not_indexed) == 0:
+            all = self.family.IF.Set(all_indexed)
+        elif len(all_indexed) == 0:
+            all = not_indexed
+        else:
+            all_indexed = self.family.IF.Set(all_indexed)
+            all = self.family.IF.union(not_indexed, all_indexed)
+        positive = assertion(self, value)
+        if len(positive) == 0:
+            return all
+        return self.family.IF.difference(all, positive)
+    return negation
+
+
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     """
     Keyword index.
@@ -30,6 +48,7 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
         self.clear()
 
     def reindex_doc(self, docid, value):
@@ -41,14 +60,15 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
 
     applyIn = applyAny
 
+    applyNotAny = _negate(applyAny)
+
     def applyAll(self, values):
         return self.apply({'query': values, 'operator':'and'})
+
+    applyNotAll = _negate(applyAll)
 
     def applyEq(self, value):
         return self.apply(value)
 
-    def applyNotEq(self, not_value):
-        all = self.family.IF.multiunion(self._fwd_index.values())
-        r = self.apply(not_value)
-        return self.family.IF.difference(all, r)
+    applyNotEq = _negate(applyEq)
 

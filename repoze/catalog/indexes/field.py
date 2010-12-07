@@ -16,6 +16,23 @@ FWSCAN = 'fwscan'
 NBEST = 'nbest'
 TIMSORT = 'timsort'
 
+def _negate(assertion):
+    def negation(self, value, *arg, **kw):
+        not_indexed = self.not_indexed
+        all_indexed = self._rev_index.keys()
+        if len(not_indexed) == 0:
+            all = self.family.IF.Set(all_indexed)
+        elif len(all_indexed) == 0:
+            all = not_indexed
+        else:
+            all_indexed = self.family.IF.Set(all_indexed)
+            all = self.family.IF.union(not_indexed, all_indexed)
+        positive = assertion(self, value, *arg, **kw)
+        if len(positive) == 0:
+            return all
+        return self.family.IF.difference(all, positive)
+    return negation
+
 class CatalogFieldIndex(CatalogIndex, FieldIndex):
     """ Field indexing.
 
@@ -31,10 +48,15 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     - In
 
+    - NotIn
+
     - Any
 
-    - Range
+    - NotAny
 
+    - InRange
+
+    - NotInRange
     """
     implements(ICatalogIndex)
 
@@ -44,6 +66,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
         self.clear()
 
     def reindex_doc(self, docid, value):
@@ -263,28 +286,37 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     def applyEq(self, value):
         return self.apply(value)
 
-    def applyNotEq(self, not_value):
-        all = self.apply(RangeValue(None, None))
-        r = self.apply((not_value, not_value))
-        return self.family.IF.difference(all, r)
+    applyNotEq = _negate(applyEq)
 
     def applyGe(self, min_value):
-        return self.apply(RangeValue(min_value, None))
+        return self.applyInRange(min_value, None)
 
     def applyLe(self, max_value):
-        return self.apply(RangeValue(None, max_value))
+        return self.applyInRange(None, max_value)
 
-    def applyIn(self, values):
+    def applyGt(self, min_value):
+        return self.applyInRange(min_value, None, excludemin=True)
+
+    def applyLt(self, max_value):
+        return self.applyInRange(None, max_value, excludemax=True)
+
+    def applyAny(self, values):
         queries = list(values)
         return self.search(queries, operator='or')
 
-    applyAny = applyIn
+    applyNotAny = _negate(applyAny)
 
-    def applyRange(self, start, end, excludemin=False, excludemax=False):
+    def applyInRange(self, start, end, excludemin=False, excludemax=False):
         return self.family.IF.multiunion(
             self._fwd_index.values(
                 start, end, excludemin=excludemin, excludemax=excludemax)
         )
+
+    applyNotInRange = _negate(applyInRange)
+
+    def avg_result_len_eq(self):
+        return float(self.documentCount()) / self.wordCount()
+
 
 def nsort(docids, rev_index):
     for docid in docids:

@@ -4,6 +4,7 @@ import BTrees
 
 _marker = ()
 
+
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
 
@@ -15,6 +16,7 @@ class CatalogIndex(object):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self.not_indexed = self.family.IF.Set()
 
     def index_doc(self, docid, object):
         if callable(self.discriminator):
@@ -25,6 +27,10 @@ class CatalogIndex(object):
         if value is _marker:
             # unindex the previous value
             super(CatalogIndex, self).unindex_doc(docid)
+
+            # Store docid in set of unindexed docids
+            self.not_indexed.add(docid)
+
             return None
 
         if isinstance(value, Persistent):
@@ -35,6 +41,9 @@ class CatalogIndex(object):
             raise ValueError('Catalog cannot index broken object %s' %
                              value)
 
+        if docid in self.not_indexed:
+            # Remove from set of unindexed docs if it was in there.
+            self.not_indexed.remove(docid)
 
         return super(CatalogIndex, self).index_doc(docid, value)
 
@@ -53,6 +62,10 @@ class CatalogIndex(object):
     def applyContains(self, *args, **kw):
         raise NotImplementedError(
             "Contains is not supported for %s" % type(self).__name__)
+
+    def applyDoesNotContain(self, *args, **kw):
+        raise NotImplementedError(
+            "DoesNotContain is not supported for %s" % type(self).__name__)
 
     def applyEq(self, *args, **kw):
         raise NotImplementedError(
@@ -82,11 +95,35 @@ class CatalogIndex(object):
         raise NotImplementedError(
             "Any is not supported for %s" % type(self).__name__)
 
+    def applyNotAny(self, *args, **kw):
+        raise NotImplementedError(
+            "NotAny is not supported for %s" % type(self).__name__)
+
     def applyAll(self, *args, **kw):
         raise NotImplementedError(
             "All is not supported for %s" % type(self).__name__)
 
-    def applyRange(self, *args, **kw):
+    def applyNotAll(self, *args, **kw):
         raise NotImplementedError(
-            "Range is not supported for %s" % type(self).__name__)
+            "NotAll is not supported for %s" % type(self).__name__)
 
+    def applyInRange(self, *args, **kw):
+        raise NotImplementedError(
+            "InRange is not supported for %s" % type(self).__name__)
+
+    def applyNotInRange(self, *args, **kw):
+        raise NotImplementedError(
+            "NotInRange is not supported for %s" % type(self).__name__)
+
+    def avg_result_len_eq(self):
+        return None
+
+    avg_result_len_contains = avg_result_len_eq
+    avg_result_len_not_eq = avg_result_len_eq
+    avg_result_len_gt = avg_result_len_eq
+    avg_result_len_lt = avg_result_len_eq
+    avg_result_len_ge = avg_result_len_eq
+    avg_result_len_le = avg_result_len_eq
+    avg_result_len_any = avg_result_len_eq
+    avg_result_len_all = avg_result_len_eq
+    avg_result_len_range = avg_result_len_eq

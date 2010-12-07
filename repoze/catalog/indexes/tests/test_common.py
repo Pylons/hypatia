@@ -40,6 +40,7 @@ class TestCatalogIndex(unittest.TestCase):
         index = self._getTargetClass()('foo')
         for name in [
             'applyContains',
+            'applyDoesNotContain',
             'applyEq',
             'applyNotEq',
             'applyGt',
@@ -47,9 +48,28 @@ class TestCatalogIndex(unittest.TestCase):
             'applyGe',
             'applyLe',
             'applyAny',
+            'applyNotAny',
             'applyAll',
-            'applyRange']:
+            'applyNotAll',
+            'applyInRange',
+            'applyNotInRange']:
             self.assertRaises(NotImplementedError, getattr(index, name))
+
+    def test_avg_result_len_methods(self):
+        index = self._getTargetClass()('foo')
+        for op in [
+            'contains',
+            'eq',
+            'not_eq',
+            'gt',
+            'lt',
+            'ge',
+            'le',
+            'any',
+            'all',
+            'range']:
+            fut = getattr(index, 'avg_result_len_%s' % op)
+            self.assertEqual(fut(), None)
 
     def test_index_doc_callback_returns_nondefault(self):
         klass = self._getTargetClass()
@@ -91,6 +111,30 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.docid, None)
         self.assertEqual(index.value, None)
         self.assertEqual(index.unindexed, 1)
+
+    def test_index_doc_missing_value_adds_to_not_indexed(self):
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        class Dummy:
+            pass
+        dummy = Dummy()
+        self.assertEqual(index.index_doc(20, dummy), None)
+        self.failUnless(20 in index.not_indexed)
+
+    def test_index_doc_with_value_removes_from_not_indexed(self):
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        index.not_indexed.add(20)
+        class Dummy:
+            pass
+        dummy = Dummy()
+        dummy.abc = 'foo'
+        self.assertEqual(index.index_doc(20, dummy), 'foo')
+        self.failIf(20 in index.not_indexed)
 
     def test_index_doc_persistent_value_raises(self):
         from persistent import Persistent

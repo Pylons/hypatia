@@ -2,6 +2,7 @@ import unittest
 
 _marker = object()
 
+
 class TestCatalogFieldIndex(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.catalog.indexes.field import CatalogFieldIndex
@@ -15,7 +16,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         return self._getTargetClass()(discriminator)
 
     def _populateIndex(self, index):
-        index.index_doc(5, 1) # docid, obj
+        index.index_doc(5, 1)  # docid, obj
         index.index_doc(2, 2)
         index.index_doc(1, 3)
         index.index_doc(3, 4)
@@ -53,7 +54,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
     def test_reindex_doc_doesnt_unindex(self):
         index = self._makeOne()
         index.index_doc(5, 1)
-        index.unindex_doc = lambda *args, **kw: 1/0
+        index.unindex_doc = lambda *args, **kw: 1 / 0
         index.reindex_doc(5, 1)
 
     def test_reindex_doc_w_existing_docid_same_value(self):
@@ -526,10 +527,30 @@ class TestCatalogFieldIndex(unittest.TestCase):
     def test_applyNotEq(self):
         index = self._makeOne()
         self._populateIndex(index)
-        index.index_doc(50, 1)
         result = index.applyNotEq(1)
         result = sorted(list(result))
         self.assertEqual(result, [1,2,3,4,6,7,8,9,10,11])
+
+    def test_applyNotEq_returns_unindexed_docs(self):
+        def discriminator(obj, default):
+            if isinstance(obj, int):
+                return obj
+            return default
+
+        index = self._makeOne(discriminator)
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        index.index_doc(51, '1')
+        result = index.applyNotEq(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [1,2,3,4,6,7,8,9,10,11,51])
+
+    def test_applyNotEq_nothing_indexed(self):
+        index = self._makeOne('foo')
+        self._populateIndex(index)
+        result = index.applyNotEq(1)
+        result = sorted(list(result))
+        self.assertEqual(result, [1,2,3,4,5,6,7,8,9,10,11])
 
     def test_applyGe(self):
         index = self._makeOne()
@@ -539,6 +560,14 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [10, 11])
 
+    def test_applyGt(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyGt(10)
+        result = sorted(list(result))
+        self.assertEqual(result, [10])
+
     def test_applyLe(self):
         index = self._makeOne()
         self._populateIndex(index)
@@ -547,49 +576,77 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
 
-    def test_applyIn(self):
+    def test_applyLt(self):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.applyIn([1, 2, 60])
+        result = index.applyLt(2)
+        result = sorted(list(result))
+        self.assertEqual(result, [5, 50])
+
+    def test_applyAny(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(50, 1)
+        result = index.applyAny([1, 2, 60])
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
 
-    def test_applyIn_noresults(self):
+    def test_applyAny_noresults(self):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        result = index.applyIn([60, 70])
+        result = index.applyAny([60, 70])
         result = sorted(list(result))
         self.assertEqual(result, [])
 
-    def test_applyRange_inclusive_inclusive(self):
+    def test_applyNotAny(self):
         index = self._makeOne()
         self._populateIndex(index)
-        result = index.applyRange(3, 7)
+        index.index_doc(50, 1)
+        result = index.applyNotAny([1, 2, 60])
+        result = sorted(list(result))
+        self.assertEqual(result, [1, 3, 4, 6, 7, 8, 9, 10, 11])
+
+    def test_applyInRange_inclusive_inclusive(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyInRange(3, 7)
         result = sorted(list(result))
         self.assertEqual(result, [1, 3, 4, 8, 9])
 
-    def test_applyRange_inclusive_exclusive(self):
+    def test_applyInRange_inclusive_exclusive(self):
         index = self._makeOne()
         self._populateIndex(index)
-        result = index.applyRange(3, 7, excludemax=True)
+        result = index.applyInRange(3, 7, excludemax=True)
         result = sorted(list(result))
         self.assertEqual(result, [1, 3, 4, 8])
 
-    def test_applyRange_exclusive_inclusive(self):
+    def test_applyInRange_exclusive_inclusive(self):
         index = self._makeOne()
         self._populateIndex(index)
-        result = index.applyRange(3, 7, excludemin=True)
+        result = index.applyInRange(3, 7, excludemin=True)
         result = sorted(list(result))
         self.assertEqual(result, [3, 4, 8, 9])
 
-    def test_applyRange_exclusive_exclusive(self):
+    def test_applyInRange_exclusive_exclusive(self):
         index = self._makeOne()
         self._populateIndex(index)
-        result = index.applyRange(3, 7, excludemin=True, excludemax=True)
+        result = index.applyInRange(3, 7, excludemin=True, excludemax=True)
         result = sorted(list(result))
         self.assertEqual(result, [3, 4, 8])
+
+    def test_applyNotInRange(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        result = index.applyNotInRange(3, 7)
+        result = sorted(list(result))
+        self.assertEqual(result, [2, 5, 6, 7, 10, 11])
+
+    def test_avg_result_len_eq(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertAlmostEqual(index.avg_result_len_eq(), 1.0)
 
 class Test_fwscan_wins(unittest.TestCase):
 

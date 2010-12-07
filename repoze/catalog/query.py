@@ -16,16 +16,12 @@ class Query(object):
     __name__ = None
 
     def __and__(self, right):
-        self._check_type("set intersection", right)
-        return Intersection(self, right)
+        self._check_type("and", right)
+        return And(self, right)
 
     def __or__(self, right):
-        self._check_type("set union", right)
-        return Union(self, right)
-
-    def __sub__(self, right):
-        self._check_type("set difference", right)
-        return Difference(self, right)
+        self._check_type("or", right)
+        return Or(self, right)
 
     def _check_type(self, setop, operand):
         if not isinstance(operand, Query):
@@ -42,6 +38,13 @@ class Query(object):
         for child in self.iter_children():
             child.print_tree(out, level + 1)
 
+    def _optimize(self):
+        """
+        If subtree represented by this node can be transformed into a more
+        optimal subtree, return the transformed subtree, otherwise return self.
+        """
+        return self
+
 
 class Comparator(Query):
     """
@@ -57,11 +60,15 @@ class Comparator(Query):
     def __str__(self):
         return ' '.join((self.index_name, self.operator, repr(self.value)))
 
+    def __eq__(self, other):
+        return (self.index_name == other.index_name and
+                self.value == other.value)
+
 
 class Contains(Comparator):
     """Contains query.
 
-    CQE equivalent: index in all(['foo', 'bar'])
+    CQE equivalent: 'foo' in index
     """
 
     def apply(self, catalog):
@@ -70,6 +77,24 @@ class Contains(Comparator):
 
     def __str__(self):
         return '%s in %s' % (repr(self.value), self.index_name)
+
+    def negate(self):
+        return DoesNotContain(self.index_name, self.value)
+
+
+class DoesNotContain(Comparator):
+    """CQE equivalent: 'foo' not in index
+    """
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyDoesNotContain(self.value)
+
+    def __str__(self):
+        return '%s not in %s' % (repr(self.value), self.index_name)
+
+    def negate(self):
+        return Contains(self.index_name, self.value)
 
 
 class Eq(Comparator):
@@ -83,6 +108,9 @@ class Eq(Comparator):
         index = self.get_index(catalog)
         return index.applyEq(self.value)
 
+    def negate(self):
+        return NotEq(self.index_name, self.value)
+
 
 class NotEq(Comparator):
     """Not equal query.
@@ -94,6 +122,9 @@ class NotEq(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyNotEq(self.value)
+
+    def negate(self):
+        return Eq(self.index_name, self.value)
 
 
 class Gt(Comparator):
@@ -107,6 +138,9 @@ class Gt(Comparator):
         index = self.get_index(catalog)
         return index.applyGt(self.value)
 
+    def negate(self):
+        return Le(self.index_name, self.value)
+
 
 class Lt(Comparator):
     """ Less than query.
@@ -118,6 +152,9 @@ class Lt(Comparator):
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyLt(self.value)
+
+    def negate(self):
+        return Ge(self.index_name, self.value)
 
 
 class Ge(Comparator):
@@ -131,6 +168,9 @@ class Ge(Comparator):
         index = self.get_index(catalog)
         return index.applyGe(self.value)
 
+    def negate(self):
+        return Lt(self.index_name, self.value)
+
 
 class Le(Comparator):
     """Less (or equal) query.
@@ -143,23 +183,48 @@ class Le(Comparator):
         index = self.get_index(catalog)
         return index.applyLe(self.value)
 
+    def negate(self):
+        return Gt(self.index_name, self.value)
+
 
 class Any(Comparator):
     """Any of query.
 
-    CQE equivalent: ??
+    CQE equivalent: index in any(['foo', 'bar'])
     """
-    operator = 'any'
 
     def apply(self, catalog):
         index = self.get_index(catalog)
         return index.applyAny(self.value)
 
+    def negate(self):
+        return NotAny(self.index_name, self.value)
+
+    def __str__(self):
+        return '%s in any(%s)' % (self.index_name, repr(self.value))
+
+
+class NotAny(Comparator):
+    """Not any of query (ie, None of query)
+
+    CQE equivalent: index not in any(['foo', 'bar'])
+    """
+    operator = 'not any'
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyNotAny(self.value)
+
+    def negate(self):
+        return Any(self.index_name, self.value)
+
+    def __str__(self):
+        return '%s not in any(%s)' % (self.index_name, repr(self.value))
 
 class All(Comparator):
     """All query.
 
-    CQE equivalent: ??
+    CQE equivalent: index in all(['foo', 'bar'])
     """
     operator = 'all'
 
@@ -167,11 +232,32 @@ class All(Comparator):
         index = self.get_index(catalog)
         return index.applyAll(self.value)
 
+    def negate(self):
+        return NotAll(self.index_name, self.value)
 
-class Range(Comparator):
-    """ Index value falls within a range. """
+    def __str__(self):
+        return '%s in all(%s)' % (self.index_name, repr(self.value))
+
+class NotAll(Comparator):
+    """NotAll query.
+
+    CQE equivalent: index not in all(['foo', 'bar'])
+    """
+    operator = 'not all'
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyAll(self.value)
+
+    def negate(self):
+        return All(self.index_name, self.value)
+
+    def __str__(self):
+        return '%s not in all(%s)' % (self.index_name, repr(self.value))
+
+class _Range(Comparator):
     @classmethod
-    def fromGTLT(self, start, end):
+    def fromGTLT(cls, start, end):
         assert isinstance(start, (Gt, Ge))
         if isinstance(start, Gt):
             start_exclusive = True
@@ -185,8 +271,8 @@ class Range(Comparator):
             end_exclusive = False
 
         assert start.index_name == end.index_name
-        return Range(start.index_name, start.value, end.value,
-                     start_exclusive, end_exclusive)
+        return cls(start.index_name, start.value, end.value,
+                   start_exclusive, end_exclusive)
 
     def __init__(self, index_name, start, end,
                  start_exclusive=False, end_exclusive=False):
@@ -195,12 +281,6 @@ class Range(Comparator):
         self.end = end
         self.start_exclusive = start_exclusive
         self.end_exclusive = end_exclusive
-
-    def apply(self, catalog):
-        index = self.get_index(catalog)
-        return index.applyRange(
-            self.start, self.end, self.start_exclusive, self.end_exclusive
-        )
 
     def __str__(self):
         s = [repr(self.start)]
@@ -216,93 +296,276 @@ class Range(Comparator):
         s.append(repr(self.end))
         return ' '.join(s)
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        return (self.index_name == other.index_name and
+                self.start == other.start and
+                self.end == other.end and
+                self.start_exclusive == other.start_exclusive and
+                self.end_exclusive == other.end_exclusive)
 
-class SetOp(Query):
+
+class InRange(_Range):
+    """ Index value falls within a range.
+
+    CQE eqivalent: lower < index < upper
+                   lower <= index <= upper
     """
-    Base class for set operators.
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyInRange(
+            self.start, self.end, self.start_exclusive, self.end_exclusive
+        )
+
+    def negate(self):
+        return NotInRange(self.index_name, self.start, self.end,
+                          self.start_exclusive, self.end_exclusive)
+
+
+class NotInRange(_Range):
+    """ Index value falls outside a range.
+
+    CQE eqivalent: not(lower < index < upper)
+                   not(lower <= index <= upper)
+    """
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyNotInRange(
+            self.start, self.end, self.start_exclusive, self.end_exclusive
+        )
+
+    def __str__(self):
+        return 'not(%s)' % _Range.__str__(self)
+
+    def negate(self):
+        return InRange(self.index_name, self.start, self.end,
+                       self.start_exclusive, self.end_exclusive)
+
+
+class BoolOp(Query):
+    """
+    Base class for Or and And operators.
     """
     family = BTrees.family32
 
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-    @apply
-    def left():
-        def _set_left(self, left):
-            if left is not None:
-                left.__parent__ = self
-                left.__name__ = 'left'
-            self._left = left
-
-        def _get_left(self):
-            return self._left
-
-        return property(_get_left, _set_left)
-
-    @apply
-    def right():
-        def _set_right(self, right):
-            if right is not None:
-                right.__parent__ = self
-                right.__name__ = 'right'
-            self._right = right
-
-        def _get_right(self):
-            return self._right
-
-        return property(_get_right, _set_right)
+    def __init__(self, *queries):
+        arguments = []
+        for query in queries:
+            # If argument is of the same type, can promote its arguments up
+            # to here.
+            if type(query) == type(self):
+                arguments.extend(query.queries)
+            else:
+                arguments.append(query)
+        self.queries = arguments
 
     def __str__(self):
         return type(self).__name__
 
     def iter_children(self):
-        yield self._left
-        yield self._right
+        for query in self.queries:
+            yield query
+
+    def _optimize(self):
+        self.queries = [query._optimize() for query in self.queries]
+        new_me = self._optimize_eq()
+        if new_me is not None:
+            return new_me
+        new_me = self._optimize_not_eq()
+        if new_me is not None:
+            return new_me
+        return self
+
+    def _optimize_eq(self):
+        # If all queries are Eq operators for the same index, we can replace
+        # this And or Or with an All or Any node.
+        queries = list(self.queries)
+        query = queries.pop(0)
+        if type(query) != Eq:
+            return None
+        index_name = query.index_name
+        values = [query.value]
+        while queries:
+            query = queries.pop(0)
+            if type(query) != Eq or query.index_name != index_name:
+                return None
+            values.append(query.value)
+
+        # All queries are Eq operators for the same index.
+        if type(self) == Or:
+            return Any(index_name, values)
+        return All(index_name, values)
+
+    def _optimize_not_eq(self):
+        # If all queries are NotEq operators for the same index, we can
+        # replace this And or Or with a NotAll or NotAny node.
+        queries = list(self.queries)
+        query = queries.pop(0)
+        if type(query) != NotEq:
+            return None
+        index_name = query.index_name
+        values = [query.value]
+        while queries:
+            query = queries.pop(0)
+            if type(query) != NotEq or query.index_name != index_name:
+                return None
+            values.append(query.value)
+
+        # All queries are Eq operators for the same index.
+        if type(self) == Or:
+            return NotAll(index_name, values)
+        return NotAny(index_name, values)
 
 
-class Union(SetOp):
-    """Union of two result sets."""
+class Or(BoolOp):
+    """Boolean Or of multiple queries."""
     def apply(self, catalog):
-        left = self.left.apply(catalog)
-        right = self.right.apply(catalog)
-        if len(left) == 0:
-            results = right
-        elif len(right) == 0:
-            results = left
-        else:
-            _, results = self.family.IF.weightedUnion(left, right)
-        return results
+        # XXX Try to figure out when we need weightedOr and when we can
+        # just use union or multiunion.
+        queries = self.queries
+        result = queries[0].apply(catalog)
+        for query in queries[1:]:
+            next_result = query.apply(catalog)
+            if len(result) == 0:
+                result = next_result
+            elif len(next_result) > 0:
+                _, result = self.family.IF.weightedUnion(result, next_result)
+        return result
+
+    def negate(self):
+        neg_queries = [query.negate() for query in self.queries]
+        return And(*neg_queries)
+
+    def _optimize(self):
+        new_self = BoolOp._optimize(self)
+        if self is not new_self:
+            return new_self
+
+        # There might be a combination of Gt/Ge and Lt/Le operators for the
+        # same index that could be used to compose a NotInRange.
+        uppers = {}
+        lowers = {}
+        queries = list(self.queries)
+
+        def process_range(i_lower, query_lower, i_upper, query_upper):
+            if query_lower.value >= query_upper.value:
+                return
+            queries[i_lower] = NotInRange.fromGTLT(
+                query_lower.negate(), query_upper.negate())
+            queries[i_upper] = None
+
+        for i in xrange(len(queries)):
+            query = queries[i]
+            if type(query) in (Lt, Le):
+                match = uppers.get(query.index_name)
+                if match is not None:
+                    i_upper, query_upper = match
+                    process_range(i, query, i_upper, query_upper)
+                else:
+                    lowers[query.index_name] = (i, query)
+
+            elif type(query) in (Gt, Ge):
+                match = lowers.get(query.index_name)
+                if match is not None:
+                    i_lower, query_lower = match
+                    process_range(i_lower, query_lower, i, query)
+                else:
+                    uppers[query.index_name] = (i, query)
+
+        queries = filter(None, queries)
+        if len(queries) == 1:
+            return queries[0]
+
+        self.queries = queries
+        return self
 
 
-class Intersection(SetOp):
-    """Intersection of two result sets."""
+class And(BoolOp):
+    """Boolean And of multiple queries."""
     def apply(self, catalog):
-        left = self.left.apply(catalog)
-        if len(left) == 0:
-            results = self.family.IF.Set()
-        else:
-            right = self.right.apply(catalog)
-            if len(right) == 0:
-                results = self.family.IF.Set()
-            else:
-                _, results = self.family.IF.weightedIntersection(left, right)
-        return results
+        # XXX Try to figure out when we need weightedIntersection and when we
+        # can just use intersection.
+        IF = self.family.IF
+        queries = self.queries
+        result = queries[0].apply(catalog)
+        for query in queries[1:]:
+            if len(result) == 0:
+                return IF.Set()
+            next_result = query.apply(catalog)
+            if len(next_result) == 0:
+                return IF.Set()
+            _, result = IF.weightedIntersection(result, next_result)
+        return result
+
+    def negate(self):
+        neg_queries = [query.negate() for query in self.queries]
+        return Or(*neg_queries)
+
+    def _optimize(self):
+        new_self = BoolOp._optimize(self)
+        if self is not new_self:
+            return new_self
+
+        # There might be a combination of Gt/Ge and Lt/Le operators for the
+        # same index that could be used to compose an InRange.
+        uppers = {}
+        lowers = {}
+        queries = list(self.queries)
+
+        def process_range(i_lower, query_lower, i_upper, query_upper):
+            if query_lower.value >= query_upper.value:
+                return
+            queries[i_lower] = InRange.fromGTLT(query_lower, query_upper)
+            queries[i_upper] = None
+
+        for i in xrange(len(queries)):
+            query = queries[i]
+            if type(query) in (Gt, Ge):
+                match = uppers.get(query.index_name)
+                if match is not None:
+                    i_upper, query_upper = match
+                    process_range(i, query, i_upper, query_upper)
+                else:
+                    lowers[query.index_name] = (i, query)
+
+            elif type(query) in (Lt, Le):
+                match = lowers.get(query.index_name)
+                if match is not None:
+                    i_lower, query_lower = match
+                    process_range(i_lower, query_lower, i, query)
+                else:
+                    uppers[query.index_name] = (i, query)
+
+        queries = filter(None, queries)
+        if len(queries) == 1:
+            return queries[0]
+
+        self.queries = queries
+        return self
 
 
-class Difference(SetOp):
-    """Difference between two result sets."""
+class Not(Query):
+    """Negation of a query."""
+    def __init__(self, query):
+        self.query = query
+
+    def __str__(self):
+        return 'Not'
+
+    def iter_children(self):
+        yield self.query
+
+    def negate(self):
+        return self.query
+
     def apply(self, catalog):
-        left = self.left.apply(catalog)
-        if len(left) == 0:
-            results = self.family.IF.Set()
-        else:
-            right = self.right.apply(catalog)
-            if len(right) == 0:
-                results = left
-            else:
-                results = self.family.IF.difference(left, right)
-        return results
+        return self.query.negate().apply(catalog)
+
+    def _optimize(self):
+        return self.query.negate()._optimize()
 
 
 class _AstParser(object):
@@ -369,7 +632,8 @@ class _AstParser(object):
                 "Not an expression."
             )
 
-        return self.walk(expr_tree.value)
+        result = self.walk(expr_tree.value)
+        return result
 
     def walk(self, tree):
         def visit(node):
@@ -444,6 +708,21 @@ class _AstParser(object):
         factory.type = Contains
         return factory
 
+    def process_NotIn(self, node, children):
+        def factory(left, right):
+            if callable(right):  # any or all, see process_Call
+                return right(self._index_name(left)).negate()
+            return DoesNotContain(self._index_name(right), self._value(left))
+        factory.type = DoesNotContain
+        return factory
+
+    def process_Not(self, node, children):
+        return Not
+
+    def process_UnaryOp(self, node, children):
+        operator, query = children
+        return operator(query)
+
     def process_Compare(self, node, children):
         # Python allows arbitrary chaining of comparisons, ie:
         #   x == y == z != abc
@@ -454,7 +733,7 @@ class _AstParser(object):
         # or
         #   start [<|<=] index_name [<|<=] end
         #
-        # Where the second form maps to a Range comparator and the first
+        # Where the second form maps to an InRange comparator and the first
         # form matches any of the other comparators.  Arbitrary chaining as
         # shown above is not supported.
         if len(children) == 3:
@@ -474,23 +753,20 @@ class _AstParser(object):
                     end_exclusive = True
                 else:
                     end_exclusive = False
-                return Range(self._index_name(index_name),
-                             self._value(start),
-                             self._value(end),
-                             start_exclusive,
-                             end_exclusive)
+                return InRange(self._index_name(index_name),
+                               self._value(start),
+                               self._value(end),
+                               start_exclusive,
+                               end_exclusive)
         raise ValueError(
             "Bad expression: unsupported chaining of comparators."
         )
 
     def process_BitOr(self, node, children):
-        return Union
+        return Or
 
     def process_BitAnd(self, node, children):
-        return Intersection
-
-    def process_Sub(self, node, children):
-        return Difference
+        return And
 
     def process_BinOp(self, node, children):
         left, operator, right = children
@@ -507,10 +783,10 @@ class _AstParser(object):
         return operator(left, right)
 
     def process_Or(self, node, children):
-        return Union
+        return Or
 
     def process_And(self, node, children):
-        return Intersection
+        return And
 
     def process_BoolOp(self, node, children):
         operator = children.pop(0)
@@ -520,10 +796,7 @@ class _AstParser(object):
                     "Bad expression: All operands for %s must be result sets."
                     % operator.__name__)
 
-        op = operator(children.pop(0), children.pop(0))
-        while children:
-            op = operator(op, children.pop(0))
-        return op
+        return operator(*children)
 
     def process_Call(self, node, children):
         func = children.pop(0)
@@ -561,461 +834,13 @@ class _AstParser(object):
         return node
 
 
-def _group_any_and_all(tree):
-    """
-    This is a query optimization which looks for subtrees of two or more
-    Eq queries for the same index all joined by union or intersection:
+def optimize(query):
+    if isinstance(query, Query):
+        return query._optimize()
+    return query
 
-        Eq(a, 1) | Eq(a, 2) | etc...
 
-    or:
-
-        Eq(a, 1) & Eq(a, 2) & etc...
-
-    In these cases, instead of performing N individual Eq queries and combining
-    the result sets along the way via union or intersection operations, we can
-    rewrite these subexpressions as:
-
-        Any(a, [1, 2])
-
-    or:
-
-        All(a, [1, 2])
-
-    Take, for example, the expression:
-
-        >>> expr = "(a == 1 or a == 2 or a == 3) and b == 1"
-
-    Before optimization the query tree looks like this:
-
-        >>> query._AstParser(expr, {}).query.print_tree()
-        Intersection
-          Union
-            Union
-              a == 1
-              a == 2
-            a == 3
-          b == 1
-
-    And after optimization:
-
-        >>> query.parse_query(expr).print_tree()
-        Intersection
-          a any [1, 2, 3]
-          b == 1
-
-    So we've taken three separate index queries for index a, joined by two
-    set union operations, and replaced this with a single Any query for the
-    same index.
-
-    Note that tree transformations are done in place.  The root node of the
-    tree is returned since there is a chance that the root node needs to be
-    replaced.
-    """
-    def group(node, index_name, values):
-        """
-        Called on each node in the tree which might be replaceable.  `node` is
-        the candidate for replacement.  `index_name` is the name of the index
-        for all descendant Eq queries and `values` is a list of the values for
-        the descendant Eq queries.  If there is more than one value and the
-        type of the current node is Union or Intersection, then we can replace
-        the subexpression represented by this node with a single Any or All
-        query.  Returns either the node or its replacement.
-        """
-        if len(values) > 1:
-            if isinstance(node, Intersection):
-                return All(index_name, values)
-            elif isinstance(node, Union):
-                return Any(index_name, values)
-        return node
-
-    def visit(node):
-        """
-        Performs a recursive depth first traversal attempting to collect
-        values for Eq comparators which are joined together by unions or
-        intersections. Returns a tuple: (op_type, index_name, values) where
-        `op_type` is the type of all set operators in the subexpression
-        represented by the visited node, `index_name` is the name of the index
-        used in all Eq queries in the subexpression represented by the visited
-        node, and `values` is the collection of values for each Eq query in
-        the subexpression. If the subexpression contains mixed set operators,
-        comparators other than Eq or mixed index_names, the return value will
-        be (None, None, []), meaning that no grouping could be done.
-
-        If a visited node is an Eq comparator, then we start a new potential
-        grouping by returning (None, node.index_name, node.value). `op_type`
-        is None because we don't know yet what, if any, set operator contains
-        the current node. This will be filled in at the Eq node's parent,
-        which will be an operator node.
-
-        If the visited node is a set operator node, then we recursively visit
-        the left and right subtrees and look at the results. If visiting a
-        subtree returns None for `op_type` then we fill in the current
-        operation type for the subtree. If `index_name` and `op_type` match
-        for both subtrees and if both subtree op_types match the current
-        node's op_type, then we may group both subtrees together and return
-        the common `op_type`, `index_name` and the values collected from any
-        Eq nodes in either subtree. Otherwise, if not able to group the two
-        subtrees together, `group` is called on each subtree, attempting to
-        replace each subtree with an Any or All query if possible.
-        """
-        if isinstance(node, SetOp):
-            this_op = type(node)
-            left_op, left_index, left_values = visit(node.left)
-            if left_op is None:
-                left_op = this_op
-            right_op, right_index, right_values = visit(node.right)
-            if right_op is None:
-                right_op = this_op
-            if left_index != right_index or not (
-                left_op == right_op == this_op):
-                node.left = group(node.left, left_index, left_values)
-                node.right = group(node.right, right_index, right_values)
-                return None, None, []
-            return this_op, left_index, left_values + right_values
-        elif isinstance(node, Eq):
-            return None, node.index_name, [node.value]
-        return None, None, []
-
-    # Must call group on the root node, in case the root node needs to be
-    # replaced.
-    op, index, values = visit(tree)
-    return group(tree, index, values)
-
-
-def _make_ranges(tree):
-    """
-    This is a query optimization which looks for pairs of Gt/Ge and Lt/Le
-    queries for the same index, joined by intersection. So, for example, this
-    query:
-
-      Ge(a, 0) & Le(a, 5)
-
-    Can be rewritten as:
-
-      Range(a, 0, 5, False, False)
-
-    Here we take what would be two separate index queries and an intersection
-    and replace with a single range query on that index.
-
-    The start and end queries for a pair do not have to be immediately
-    adjacent to each other--they need only be in the same grouping of
-    intersections. For example this query:
-
-      Ge(a, 0) & Eq(b, 7) & Lt(a, 5)
-
-    Will be rewritten as:
-
-      Eq(b, 7) & Range(a, 0, 5, False, True)
-
-    This query will not be rewritten because the start and end queries are
-    separated by a union operator:
-
-      Ge(a, 0) | Eq(b, 7) & Lt(a, 5)
-
-
-    Note that tree transformations are done in place.  The root node of the
-    tree is returned since there is a chance that the root node needs to be
-    replaced.
-
-    Potential range boundaries are discovered by performing a depth first
-    traversal of the query tree. At each node, there is a check to see if the
-    current node could potentially form half of a range query. Range
-    boundaries are collected by index_name and stored in `starts` and `ends`
-    dictionaries that will be accessible at higher nodes. Whenever a set
-    operator node other than an intersection is traversed, potential range
-    boundaries are forgotten since we only want to create ranges from
-    subqueries that are connected to each other via intersection operations.
-
-    At each intersection node, after potential range boundaries have been
-    collected from the left and right subtrees, the potential boundaries are
-    checked for any matching pairs. A matching pair is comprised of a Gt or Ge
-    and an Lt or Le which are for the same index. When a matching pair is
-    found, the tree must be transformed. There are three potential cases which
-    must be handled each in a different way.
-
-    In the first and easier case, the range boundary pair nodes are the
-    immediate left and right children of the current node.  In this case, the
-    current node can simply be replaced by a range.  For example, this query:
-
-        >>> expr = "A > 0 and A < 5 and B ==7"
-        >>> _AstParser(expr, {}).query.print_tree()
-        Intersection
-          Intersection
-            A > 0
-            A < 5
-          B == 7
-
-    Is transformed to:
-
-        >>> expr = "A > 0 and A < 5 and B ==7"
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < A < 5
-          B == 7
-
-    The nested Intersection was replaced with the range query.
-
-    In the second, somewhat more complicated case, one of the pair is a
-    descendant of the current node but not an immediate child. We refer to the
-    descendant node half of the pair as the nephew and that node's parent,
-    which we know must be an intersection node, as the brother. Don't worry if
-    the nephew/brother nomenclature doesn't make complete sense. We need to
-    refer to them as something. We could have called them Fred and Barney. To
-    help visualize, consider this unoptimized query tree:
-
-        >>> expr = "A > 0 and (A < 5 and B == 7)"
-        >>> _AstQuery(expr, {}).query.print_tree()
-        Intersection
-          A > 0           <-- child
-          Intersection    <-- brother
-            A < 5         <-- nephew
-            B == 7        <-- other_nephew
-
-    When the match is found between the child and nephew, we now need to
-    transform the tree in such a way that the expression remains equivalent
-    but with two fewer nodes since we are trading one intersection and two
-    comparisons for a single range query. In this case we can replace the
-    child with the new range query and then promote the other_nephew up to
-    replace the brother (an intersection node), since the nephew has been
-    absorbed into the range query. The transformed tree looks like this:
-
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < A < 5
-          B == 7
-
-    The third, trickiest case is when neither bound is a child of the current
-    node, but both lie further down in the tree.  We know that one bound is in
-    the left subtree and one bound is in the right subtree, otherwise we would
-    have matched them before getting to the current node.  As an example, let's
-    take a look at this unoptimized tree:
-
-        >>> expr = "(A > 0 and B == 2) and (A < 5 and C == 3)"
-        >>> _AstParser(expr, {}).query.print_tree()
-        Intersection
-          Intersection
-            A > 0       <-- start
-            B == 2      <-- siblings[0]
-          Intersection
-            A < 5       <-- end
-            C == 3      <-- siblings[1]
-
-    In this case, we are not going to find the match between start and end
-    until we process the root node of our tree. Both bounds are in subtrees of
-    the root node, but are not immediate children. We need to be a bit more
-    drastic in how we rearrange the tree. To solve this problem, we group
-    together the bounds' siblings and combine them in a new intersection. We
-    then replace the parent of start with the new range and we replace the
-    parent of end with the intersection of the two siblings. (In this example,
-    both start and end share the same grandparent node, but this does not have
-    to be the case generally.)  The transformed tree looks like this:
-
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < A < 5
-          Intersection
-            B == 2
-            C == 3
-
-    One other complication remains.  To illustrate, consider this expression:
-
-        >>> expr = "(A > 0 and B > 0 and C > 0) and (
-        ...          A < 5 and B < 5 and C < 5)"
-        >>> _AstParser(expr, {}).query.print_tree()
-        Intersection
-          Intersection
-            Intersection
-              A > 0
-              B > 0
-            C > 0
-          Intersection
-            Intersection
-              A < 5
-              B < 5
-            C < 5
-
-    In this case, ranges for A, B, and C are all going to be found at the root
-    node and not before. The order the ranges are processed in depends on dict
-    key ordering, but let's presume for a moment that we end up processing A
-    first. Our tree after processing A now looks like:
-
-        Intersection
-          Intersection
-            0 < A < 5
-            C > 0
-          Intersection
-            Intersection  <-- nearest common ancestor to bounds of B
-              B > 0
-              B < 5
-            C < 5
-
-    You can see that the lower bound for B has now been moved over to a
-    completely different branch of the tree. Had this tree looked like this
-    initially, range B would have been processed as the first case, described
-    above, long before we ever got to the current node.. Code which now tries
-    to process range B as the third case will break because the relationship
-    between the bounds has changed. We can detect this case, though, by
-    computing the nearest common ancestor of our bounds before attempting to
-    perform any transformations. If the nearest common ancestor is not the
-    current node, we know that a transformation performed for another range,
-    in this case A, has rearranged the tree. In that case, we can bypass the
-    current processing and start a new traversal at the nearest common
-    ancestor, replacing the nearest common ancestor with the result of the
-    traversal. In the example, above, then, assuming that B is processed next,
-    we see that processing the nearest common ancestor to the bounds of B will
-    lead us to the first case, where both bounds are immediate children of the
-    node being processed. After performing the transformation for range B, our
-    tree now looks like:
-
-        Intersection
-          Intersection
-            0 < A < 5
-            C > 0
-          Intersection
-            0 < B < 5
-            C < 5
-
-    We can see now that when we go to process range C, the nearest common
-    ancestor of the bounds of C is going to be the root node, so C will be
-    processed using the third case where neither bound is an immediate child
-    of the node being processed.  The final optimized tree looks like:
-
-        >>> parse_query(expr).print_tree()
-        Intersection
-          0 < C < 5
-          Intersection
-            0 < A < 5
-            0 < B < 5
-
-    """
-    def visit(node, starts, ends):
-        # Is this node potentially one half of a range query?
-        if isinstance(node, (Gt, Ge)):
-            starts[node.index_name] = node
-            return node
-        elif isinstance(node, (Lt, Le)):
-            ends[node.index_name] = node
-            return node
-
-        # If a leaf node and not an upper or lower bound, nothing to do.
-        elif not isinstance(node, SetOp):
-            return node
-
-        # Left and right subtrees shouldn't know about each other's potential
-        # matches, because we always want to process matches at the nearest
-        # common ancestor to both nodes.
-        left_starts = starts.copy()
-        left_ends = ends.copy()
-        node.left = visit(node.left, left_starts, left_ends)
-
-        right_starts = starts.copy()
-        right_ends = ends.copy()
-        node.right = visit(node.right, right_starts, right_ends)
-
-        if not isinstance(node, Intersection):
-            starts.clear()
-            ends.clear()
-            return node
-
-        # Combine potential matches from left and right subtrees so we can
-        # look for matches.
-        starts.update(left_starts)
-        starts.update(right_starts)
-        ends.update(left_ends)
-        ends.update(right_ends)
-        for index_name in starts.keys():
-            if index_name not in ends:
-                continue
-
-            # Found a match
-            start = starts.pop(index_name)
-            end = ends.pop(index_name)
-
-            # Tree may have gotten rearranged such that current node is no
-            # longer the nearest common ancestor of start and end. If this is
-            # the case, process the subtree rooted at the nearest common
-            # ancestor of the matching nodes and replace nce with the result.
-            nce = _nearest_common_ancestor(start, end)
-            if nce is not node:
-                setattr(nce.__parent__, nce.__name__, visit(nce, {}, {}))
-                continue
-
-            range_query = Range.fromGTLT(start, end)
-
-            # Case 1: Both bounds are immediate children of this node
-            if start.__parent__ is end.__parent__ is node:
-                return range_query
-
-            # Case 2: One bound is an immediate child of this node, and one
-            # child is a descendent
-            elif start.__parent__ is node or end.__parent__ is node:
-                if start.__parent__ is node:
-                    child = start
-                    nephew = end
-                else:
-                    child = end
-                    nephew = start
-
-                if child.__name__ == 'left':
-                    node.left = range_query
-                else:
-                    node.right = range_query
-
-                brother = nephew.__parent__
-                if nephew.__name__ == 'left':
-                    other_nephew = brother.right
-                else:
-                    other_nephew = brother.left
-                setattr(brother.__parent__, brother.__name__, other_nephew)
-
-            # Case 3: Neither bound is an immediate child of this node
-            else:
-                siblings = []
-                for bound in start, end:
-                    if bound.__name__ == 'left':
-                        siblings.append(bound.__parent__.right)
-                    else:
-                        siblings.append(bound.__parent__.left)
-                other = Intersection(*siblings)
-                start_parent = start.__parent__
-                end_parent = end.__parent__
-                setattr(start_parent.__parent__, start_parent.__name__,
-                        range_query)
-                setattr(end_parent.__parent__, end_parent.__name__, other)
-
-        return node
-
-    return visit(tree, {}, {})
-
-
-def _nearest_common_ancestor(n1, n2):
-    n1_ancestors = set([n1])
-    n2_ancestors = set([n2])
-    while n1.__parent__ is not None or n2.__parent__ is not None:
-        if n1 in n2_ancestors:
-            return n1
-        elif n2 in n1_ancestors:
-            return n2
-
-        if n1.__parent__ is not None:
-            n1 = n1.__parent__
-            n1_ancestors.add(n1)
-
-        if n2.__parent__ is not None:
-            n2 = n2.__parent__
-            n2_ancestors.add(n2)
-    assert n1 is n2, "Nodes are not part of same tree."
-    return n1
-
-
-def _optimize_query(tree):
-    tree = _group_any_and_all(tree)
-    tree = _make_ranges(tree)
-    return tree
-
-
-def parse_query(expr, names=None):
+def parse_query(expr, names=None, optimize_query=True):
     """
     Parses the given expression string into a catalog query.  The `names` dict
     provides local variable names that can be used in the expression.
@@ -1024,7 +849,10 @@ def parse_query(expr, names=None):
         raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")
     if names is None:
         names = {}
-    return _optimize_query(_AstParser(expr, names).parse())
+    query = _AstParser(expr, names).parse()
+    if optimize_query:
+        query = optimize(query)
+    return query
 
 
 def _print_ast(expr):  # pragma NO COVERAGE
