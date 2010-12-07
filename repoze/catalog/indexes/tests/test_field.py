@@ -643,10 +643,6 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 6, 7, 10, 11])
 
-    def test_avg_result_len_eq(self):
-        index = self._makeOne()
-        self._populateIndex(index)
-        self.assertAlmostEqual(index.avg_result_len_eq(), 1.0)
 
 class Test_fwscan_wins(unittest.TestCase):
 

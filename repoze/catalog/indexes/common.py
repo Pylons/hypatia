@@ -114,16 +114,3 @@ class CatalogIndex(object):
     def applyNotInRange(self, *args, **kw):
         raise NotImplementedError(
             "NotInRange is not supported for %s" % type(self).__name__)
-
-    def avg_result_len_eq(self):
-        return None
-
-    avg_result_len_contains = avg_result_len_eq
-    avg_result_len_not_eq = avg_result_len_eq
-    avg_result_len_gt = avg_result_len_eq
-    avg_result_len_lt = avg_result_len_eq
-    avg_result_len_ge = avg_result_len_eq
-    avg_result_len_le = avg_result_len_eq
-    avg_result_len_any = avg_result_len_eq
-    avg_result_len_all = avg_result_len_eq
-    avg_result_len_range = avg_result_len_eq

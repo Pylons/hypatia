@@ -314,9 +314,6 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     applyNotInRange = _negate(applyInRange)
 
-    def avg_result_len_eq(self):
-        return float(self.documentCount()) / self.wordCount()
-
 
 def nsort(docids, rev_index):
     for docid in docids:
