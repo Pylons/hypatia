@@ -38,19 +38,6 @@ class TestQuery(unittest.TestCase):
         a = self._makeOne()
         self.assertRaises(TypeError, a.__or__, 2)
 
-    def test_difference(self):
-        from repoze.catalog.query import Difference
-        a = self._makeOne()
-        b = self._makeOne()
-        result = a - b
-        self.failUnless(isinstance(result, Difference))
-        self.assertEqual(result.left, a)
-        self.assertEqual(result.right, b)
-
-    def test_difference_type_error(self):
-        a = self._makeOne()
-        self.assertRaises(TypeError, a.__sub__, 2)
-
     def test_iter_children(self):
         a = self._makeOne()
         self.assertEqual(a.iter_children(), ())
@@ -468,19 +455,6 @@ class SetOpTestBase(unittest.TestCase):
         return self._getTargetClass()(left, right)
 
 
-class TestSetOp(SetOpTestBase):
-    def _getTargetClass(self):
-        from repoze.catalog.query import SetOp as cls
-        return cls
-
-    def test_iter_children(self):
-        class Dummy(object):
-            pass
-        left, right = Dummy(), Dummy()
-        o = self._makeOne(left, right)
-        self.assertEqual(list(o.iter_children()), [left, right])
-
-
 class TestNarySetOp(SetOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import NarySetOp as cls
@@ -622,46 +596,6 @@ class TestNot(SetOpTestBase):
         query = DummyQuery('foo')
         o = self._makeOne(query)
         self.assertEqual(list(o.iter_children()), [query])
-
-
-class TestDifference(SetOpTestBase):
-    def _getTargetClass(self):
-        from repoze.catalog.query import Difference as cls
-        return cls
-
-    def test_to_str(self):
-        o = self._makeOne(None, None)
-        self.assertEqual(str(o), 'Difference')
-
-    def test_apply(self):
-        left = DummyQuery(set([1, 2, 3]))
-        right = DummyQuery(set([3, 4, 5]))
-        o = self._makeOne(left, right)
-        o.family = DummyFamily()
-        self.assertEqual(o.apply(None), set([1, 2]))
-        self.failUnless(left.applied)
-        self.failUnless(right.applied)
-        self.assertEqual(o.family.diff, (left.results, right.results))
-
-    def test_apply_left_empty(self):
-        left = DummyQuery(set([]))
-        right = DummyQuery(set([3, 4, 5]))
-        o = self._makeOne(left, right)
-        o.family = DummyFamily()
-        self.assertEqual(o.apply(None), set())
-        self.failUnless(left.applied)
-        self.failIf(right.applied)
-        self.assertEqual(o.family.diff, None)
-
-    def test_right_empty(self):
-        left = DummyQuery(set([1, 2, 3]))
-        right = DummyQuery(set())
-        o = self._makeOne(left, right)
-        o.family = DummyFamily()
-        self.assertEqual(o.apply(None), set([1, 2, 3]))
-        self.failUnless(left.applied)
-        self.failUnless(right.applied)
-        self.assertEqual(o.family.diff, None)
 
 
 class Test_parse_query(unittest.TestCase):
@@ -967,20 +901,6 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.arguments[1].index_name, 'a')
         self.assertEqual(op.arguments[1].value, [2, 3])
 
-    def test_difference(self):
-        from repoze.catalog.query import Eq
-        from repoze.catalog.query import Difference
-        op = self._call_fut("(a == 1) - (b == 2)")
-        self.failUnless(isinstance(op, Difference))
-        query = op.left
-        self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'a')
-        self.assertEqual(query.value, 1)
-        query = op.right
-        self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'b')
-        self.assertEqual(query.value, 2)
-
     def test_convert_gtlt_to_range(self):
         from repoze.catalog.query import InRange
         op = self._call_fut("a < 1 and a > 0")
@@ -1171,10 +1091,6 @@ class DummyFamily(object):
     def weightedIntersection(self, left, right):
         self.intersection = (left, right)
         return None, left & right
-
-    def difference(self, left, right):
-        self.diff = (left, right)
-        return left - right
 
     def Set(self):
         return set()

@@ -23,10 +23,6 @@ class Query(object):
         self._check_type("set union", right)
         return Union(self, right)
 
-    def __sub__(self, right):
-        self._check_type("set difference", right)
-        return Difference(self, right)
-
     def _check_type(self, setop, operand):
         if not isinstance(operand, Query):
             raise TypeError(
@@ -349,33 +345,11 @@ class NotInRange(_Range):
                        self.start_exclusive, self.end_exclusive)
 
 
-class SetOp(Query):
-    """
-    Base class for set operators.
-    """
-    family = BTrees.family32
-
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-    def __str__(self):
-        return type(self).__name__
-
-    def iter_children(self):
-        yield self.left
-        yield self.right
-
-    def _optimize(self):
-        self.left = self.left._optimize()
-        self.right = self.right._optimize()
-        return self
-
-
-class NarySetOp(SetOp):
+class NarySetOp(Query):
     """
     Base class for Union and Intersection operators which can have N arguments.
     """
+    family = BTrees.family32
 
     def __init__(self, *args):
         arguments = []
@@ -387,6 +361,9 @@ class NarySetOp(SetOp):
             else:
                 arguments.append(arg)
         self.arguments = arguments
+
+    def __str__(self):
+        return type(self).__name__
 
     def iter_children(self):
         for arg in self.arguments:
@@ -591,21 +568,6 @@ class Not(Query):
         return self.query.negate()._optimize()
 
 
-class Difference(SetOp):
-    """Difference between two result sets."""
-    def apply(self, catalog):
-        left = self.left.apply(catalog)
-        if len(left) == 0:
-            results = self.family.IF.Set()
-        else:
-            right = self.right.apply(catalog)
-            if len(right) == 0:
-                results = left
-            else:
-                results = self.family.IF.difference(left, right)
-        return results
-
-
 class _AstParser(object):
     """
     Uses Python's ast module to parse an expression into an abstract syntax
@@ -805,9 +767,6 @@ class _AstParser(object):
 
     def process_BitAnd(self, node, children):
         return Intersection
-
-    def process_Sub(self, node, children):
-        return Difference
 
     def process_BinOp(self, node, children):
         left, operator, right = children

@@ -27,26 +27,26 @@ class TestQueryBase(object):
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
 
-class TestQueryWithCQL(unittest.TestCase, TestQueryBase):
+class TestQueryWithCQE(unittest.TestCase, TestQueryBase):
     query = (
         "(allowed == 'a' and allowed == 'b' and "
         "(name == 'name1' or name == 'name2' or name == 'name3' or "
-        "name == 'name4' or name == 'name5') - (title == 'title3')) and "
+        "name == 'name4' or name == 'name5') and not(title == 'title3')) and "
         "body in text"
         )
 
 class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
     query = (
         q.All('allowed', ['a', 'b']) &
-        q.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5']) -
-        q.Eq('title', 'title3') &
+        q.Any('name', ['name1', 'name2', 'name3', 'name4', 'name5']) &
+        q.Not(q.Eq('title', 'title3')) &
         q.Contains('text', 'body')
         )
 
 try:
     import ast
 except ImportError: #pragma NO COVERAGE
-    del TestQueryWithCQL
+    del TestQueryWithCQE
     del TestQueryWithPythonQueryObjects
 
 class Content(object):
