@@ -259,14 +259,9 @@ class NotAll(Comparator):
     def __str__(self):
         return '%s not in all(%s)' % (self.index_name, repr(self.value))
 
-class InRange(Comparator):
-    """ Index value falls within a range.
-
-    CQE eqivalent: lower < index < upper
-                   lower <= index <= upper
-    """
+class _Range(Comparator):
     @classmethod
-    def fromGTLT(self, start, end):
+    def fromGTLT(cls, start, end):
         assert isinstance(start, (Gt, Ge))
         if isinstance(start, Gt):
             start_exclusive = True
@@ -280,8 +275,8 @@ class InRange(Comparator):
             end_exclusive = False
 
         assert start.index_name == end.index_name
-        return InRange(start.index_name, start.value, end.value,
-                       start_exclusive, end_exclusive)
+        return cls(start.index_name, start.value, end.value,
+                   start_exclusive, end_exclusive)
 
     def __init__(self, index_name, start, end,
                  start_exclusive=False, end_exclusive=False):
@@ -290,12 +285,6 @@ class InRange(Comparator):
         self.end = end
         self.start_exclusive = start_exclusive
         self.end_exclusive = end_exclusive
-
-    def apply(self, catalog):
-        index = self.get_index(catalog)
-        return index.applyInRange(
-            self.start, self.end, self.start_exclusive, self.end_exclusive
-        )
 
     def __str__(self):
         s = [repr(self.start)]
@@ -311,21 +300,40 @@ class InRange(Comparator):
         s.append(repr(self.end))
         return ' '.join(s)
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        return (self.index_name == other.index_name and
+                self.start == other.start and
+                self.end == other.end and
+                self.start_exclusive == other.start_exclusive and
+                self.end_exclusive == other.end_exclusive)
 
-class NotInRange(Comparator):
+
+class InRange(_Range):
+    """ Index value falls within a range.
+
+    CQE eqivalent: lower < index < upper
+                   lower <= index <= upper
+    """
+
+    def apply(self, catalog):
+        index = self.get_index(catalog)
+        return index.applyInRange(
+            self.start, self.end, self.start_exclusive, self.end_exclusive
+        )
+
+    def negate(self):
+        return NotInRange(self.index_name, self.start, self.end,
+                          self.start_exclusive, self.end_exclusive)
+
+
+class NotInRange(_Range):
     """ Index value falls outside a range.
 
     CQE eqivalent: not(lower < index < upper)
                    not(lower <= index <= upper)
     """
-
-    def __init__(self, index_name, start, end,
-                 start_exclusive=False, end_exclusive=False):
-        self.index_name = index_name
-        self.start = start
-        self.end = end
-        self.start_exclusive = start_exclusive
-        self.end_exclusive = end_exclusive
 
     def apply(self, catalog):
         index = self.get_index(catalog)
@@ -334,18 +342,11 @@ class NotInRange(Comparator):
         )
 
     def __str__(self):
-        s = [repr(self.start)]
-        if self.start_exclusive:
-            s.append('<')
-        else:
-            s.append('<=')
-        s.append(self.index_name)
-        if self.end_exclusive:
-            s.append('<')
-        else:
-            s.append('<=')
-        s.append(repr(self.end))
-        return 'not(%s)' % ' '.join(s)
+        return 'not(%s)' % _Range.__str__(self)
+
+    def negate(self):
+        return InRange(self.index_name, self.start, self.end,
+                       self.start_exclusive, self.end_exclusive)
 
 
 class SetOp(Query):
@@ -461,6 +462,49 @@ class Union(NarySetOp):
         neg_args = [arg.negate() for arg in self.arguments]
         return Intersection(*neg_args)
 
+    def _optimize(self):
+        new_self = NarySetOp._optimize(self)
+        if self is not new_self:
+            return new_self
+
+        # There might be a combination of Gt/Ge and Lt/Le operators for the
+        # same index that could be used to compose a NotInRange.
+        uppers = {}
+        lowers = {}
+        args = list(self.arguments)
+
+        def process_range(i_lower, arg_lower, i_upper, arg_upper):
+            if arg_lower.value >= arg_upper.value:
+                return
+            args[i_lower] = NotInRange.fromGTLT(
+                arg_lower.negate(), arg_upper.negate())
+            args[i_upper] = None
+
+        for i in xrange(len(args)):
+            arg = args[i]
+            if type(arg) in (Lt, Le):
+                match = uppers.get(arg.index_name)
+                if match is not None:
+                    i_upper, arg_upper = match
+                    process_range(i, arg, i_upper, arg_upper)
+                else:
+                    lowers[arg.index_name] = (i, arg)
+
+            elif type(arg) in (Gt, Ge):
+                match = lowers.get(arg.index_name)
+                if match is not None:
+                    i_lower, arg_lower = match
+                    process_range(i_lower, arg_lower, i, arg)
+                else:
+                    uppers[arg.index_name] = (i, arg)
+
+        args = filter(None, args)
+        if len(args) == 1:
+            return args[0]
+
+        self.arguments = args
+        return self
+
 
 class Intersection(NarySetOp):
     """Intersection of two result sets."""
@@ -485,7 +529,7 @@ class Intersection(NarySetOp):
 
     def _optimize(self):
         new_self = NarySetOp._optimize(self)
-        if self != new_self:
+        if self is not new_self:
             return new_self
 
         # There might be a combination of Gt/Ge and Lt/Le operators for the
@@ -495,6 +539,8 @@ class Intersection(NarySetOp):
         args = list(self.arguments)
 
         def process_range(i_lower, arg_lower, i_upper, arg_upper):
+            if arg_lower.value >= arg_upper.value:
+                return
             args[i_lower] = InRange.fromGTLT(arg_lower, arg_upper)
             args[i_upper] = None
 

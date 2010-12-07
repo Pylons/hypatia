@@ -409,6 +409,15 @@ class TestInRange(ComparatorTestBase):
         inst = self._getTargetClass().fromGTLT(gt, lt)
         self.assertEqual(str(inst), "0 < index < 5")
 
+    def test_negate(self):
+        from repoze.catalog.query import NotInRange
+        inst = self._makeOne('index', 'begin', 'end')
+        self.assertEqual(inst.negate(), NotInRange('index', 'begin', 'end'))
+
+    def test_not_equal_to_another_type(self):
+        inst = self._makeOne('index', 'begin', 'end')
+        self.assertNotEqual(inst, object())
+
 
 class TestNotInRange(ComparatorTestBase):
     def _getTargetClass(self):
@@ -443,6 +452,15 @@ class TestNotInRange(ComparatorTestBase):
     def test_to_str_exclusive(self):
         inst = self._makeOne('index', 0, 5, True, True)
         self.assertEqual(str(inst), "not(0 < index < 5)")
+
+    def test_negate(self):
+        from repoze.catalog.query import InRange
+        inst = self._makeOne('index', 'begin', 'end')
+        self.assertEqual(inst.negate(), InRange('index', 'begin', 'end'))
+
+    def test_not_equal_to_another_type(self):
+        inst = self._makeOne('index', 'begin', 'end')
+        self.assertNotEqual(inst, object())
 
 
 class SetOpTestBase(unittest.TestCase):
@@ -812,6 +830,16 @@ class Test_parse_query(unittest.TestCase):
         self.failIf(comp.start_exclusive)
         self.failIf(comp.end_exclusive)
 
+    def test_not_in_range(self):
+        from repoze.catalog.query import NotInRange
+        comp = self._call_fut("not(0 < a < 5)")
+        self.failUnless(isinstance(comp, NotInRange))
+        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.start, 0)
+        self.assertEqual(comp.end, 5)
+        self.failUnless(comp.start_exclusive)
+        self.failUnless(comp.end_exclusive)
+
     def test_union(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Union
@@ -962,6 +990,15 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.start_exclusive, True)
         self.assertEqual(op.end_exclusive, True)
 
+    def test_convert_gtlt_to_not_in_range(self):
+        from repoze.catalog.query import NotInRange
+        op = self._call_fut("a < 0 or a > 1")
+        self.failUnless(isinstance(op, NotInRange))
+        self.assertEqual(op.start, 0)
+        self.assertEqual(op.end, 1)
+        self.assertEqual(op.start_exclusive, False)
+        self.assertEqual(op.end_exclusive, False)
+
     def test_convert_gtlt_child_left_nephew_left(self):
         from repoze.catalog.query import Eq
         from repoze.catalog.query import Intersection
@@ -1012,12 +1049,21 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op.arguments[1], InRange))
         self.failUnless(isinstance(op.arguments[2], InRange))
 
-    def test_dont_convert_gtlt_to_range_with_or(self):
+    def test_dont_convert_gtlt_to_not_in_range_with_swapped_bounds(self):
         from repoze.catalog.query import Gt
         from repoze.catalog.query import Lt
         from repoze.catalog.query import Union
         op = self._call_fut("a > 0 or a < 5")
         self.failUnless(isinstance(op, Union))
+        self.failUnless(isinstance(op.arguments[0], Gt))
+        self.failUnless(isinstance(op.arguments[1], Lt))
+
+    def test_dont_convert_gtlt_to_range_with_swapped_bounds(self):
+        from repoze.catalog.query import Gt
+        from repoze.catalog.query import Lt
+        from repoze.catalog.query import Intersection
+        op = self._call_fut("a > 5 and a < 0")
+        self.failUnless(isinstance(op, Intersection))
         self.failUnless(isinstance(op.arguments[0], Gt))
         self.failUnless(isinstance(op.arguments[1], Lt))
 
