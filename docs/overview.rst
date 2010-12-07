@@ -138,8 +138,7 @@ a generator) is a sequence of document ids that match the query.
 You can combine search parameters to further limit a query::
 
    from repoze.catalog.query import Contains, Eq, Intersection
-   catalog.query(Intersection(Eq('flavor', 'peach'), 
-                              Contains('description', 'nuts')))
+   catalog.query(Eq('flavor', 'peach') & Contains('description', 'nuts'))
 
 This would return a result representing all the documents indexed
 within the catalog with the flavor of peach and a description of nuts.

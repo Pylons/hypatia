@@ -56,12 +56,12 @@ from repoze.catalog.catalog import ConnectionManager
 from repoze.catalog.catalog import FileStorageCatalogFactory
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.query import Eq
-from repoze.catalog.query import SetOp
+from repoze.catalog.query import BoolOp
 
 _marker = object()
 random.seed()
 
-class Intersection1(SetOp):
+class Intersection1(BoolOp):
     """
     Total cost: O(log(nk2, oob) + max(n1, nd2/nk2))
     """
@@ -77,7 +77,7 @@ class Intersection1(SetOp):
                 _, results = self.family.IF.weightedIntersection(left, right)
         return results
 
-class Intersection2(SetOp):
+class Intersection2(BoolOp):
     """
     Implements algorithm2 above.  In real life we wouldn't do this in the
     Intersection operator--we'd do it in the apply_intersection() of the index

@@ -345,7 +345,7 @@ class NotInRange(_Range):
                        self.start_exclusive, self.end_exclusive)
 
 
-class NarySetOp(Query):
+class BoolOp(Query):
     """
     Base class for Or and And operators which can have N arguments.
     """
@@ -420,7 +420,7 @@ class NarySetOp(Query):
         return NotAny(index_name, values)
 
 
-class Or(NarySetOp):
+class Or(BoolOp):
     """Or of two result sets."""
     def apply(self, catalog):
         # XXX Try to figure out when we need weightedOr and when we can
@@ -440,7 +440,7 @@ class Or(NarySetOp):
         return And(*neg_args)
 
     def _optimize(self):
-        new_self = NarySetOp._optimize(self)
+        new_self = BoolOp._optimize(self)
         if self is not new_self:
             return new_self
 
@@ -483,7 +483,7 @@ class Or(NarySetOp):
         return self
 
 
-class And(NarySetOp):
+class And(BoolOp):
     """And of two result sets."""
     def apply(self, catalog):
         # XXX Try to figure out when we need weightedIntersection and when we
@@ -505,7 +505,7 @@ class And(NarySetOp):
         return Or(*neg_args)
 
     def _optimize(self):
-        new_self = NarySetOp._optimize(self)
+        new_self = BoolOp._optimize(self)
         if self is not new_self:
             return new_self
 

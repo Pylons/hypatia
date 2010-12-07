@@ -450,14 +450,14 @@ class TestNotInRange(ComparatorTestBase):
         self.assertNotEqual(inst, object())
 
 
-class SetOpTestBase(unittest.TestCase):
+class BoolOpTestBase(unittest.TestCase):
     def _makeOne(self, left, right):
         return self._getTargetClass()(left, right)
 
 
-class TestNarySetOp(SetOpTestBase):
+class TestBoolOp(BoolOpTestBase):
     def _getTargetClass(self):
-        from repoze.catalog.query import NarySetOp as cls
+        from repoze.catalog.query import BoolOp as cls
         return cls
 
     def test_iter_children(self):
@@ -468,7 +468,7 @@ class TestNarySetOp(SetOpTestBase):
         self.assertEqual(list(o.iter_children()), [left, right])
 
 
-class TestOr(SetOpTestBase):
+class TestOr(BoolOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import Or as cls
         return cls
@@ -519,7 +519,7 @@ class TestOr(SetOpTestBase):
         self.failUnless(right.negated)
 
 
-class TestAnd(SetOpTestBase):
+class TestAnd(BoolOpTestBase):
     def _getTargetClass(self):
         from repoze.catalog.query import And as cls
         return cls
@@ -570,7 +570,7 @@ class TestAnd(SetOpTestBase):
         self.failUnless(right.negated)
 
 
-class TestNot(SetOpTestBase):
+class TestNot(BoolOpTestBase):
 
     def _makeOne(self, query):
         from repoze.catalog.query import Not as cls

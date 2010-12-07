@@ -35,7 +35,7 @@ index, ``text``, is a :term:`text index`.
 .. literalinclude:: code/index_attributes.py
    :linenos:
    :language: python
-       
+
 Here's a more complicated example.  It uses callbacks to adapt
 cataloged objects to values rather than directly inspecting attributes
 of the content object.  We use the same types of indexes as the
@@ -47,7 +47,7 @@ have attributes that match exactly what you want to index:
 .. literalinclude:: code/index_callbacks.py
    :linenos:
    :language: python
-  
+
 Searching
 ---------
 
@@ -69,11 +69,11 @@ number of arguments:
    The name of the index used to sort the results.
 
 ``limit``
-   Limit the number of results returned to this argument, which should be 
+   Limit the number of results returned to this argument, which should be
    an integer.  This is only used if ``sort_index`` is also specified.
 
 ``reverse``
-   Reverse the order of the result sequence if this is ``True``.  Only used 
+   Reverse the order of the result sequence if this is ``True``.  Only used
    if ``sort_index`` is also specified.
 
 For example::
@@ -90,7 +90,7 @@ For example::
 
 The results of the above search will search the corpus for documents
 which have a result in the ``flavor`` index that matches the value
-``peach``.  
+``peach``.
 
 The :meth:`repoze.catalog.Catalog.query` method will return a
 two-tuple, with the first element in the sequence being the length of
@@ -111,7 +111,7 @@ to its constituent content.
    will always be of a particular type, and *not* always sliceable;
    for example it may be a generator.
 
-You can also combine query objects, using set operations, to search
+You can also combine query objects, using boolean operations, to search
 multiple indexes:
 
 .. code-block:: python
@@ -124,7 +124,7 @@ multiple indexes:
    manager = ConnectionManager()
    catalog = factory(manager)
    numdocs, results = catalog.query(
-                     Intersection(Eq('flavors', 'peach'), Eq('texts', 'nutty')))
+                          Eq('flavors', 'peach') & Eq('texts', 'nutty'))
    print (numdocs, [ x for x in results ])
 
 The results of the above search will return the following::
@@ -141,7 +141,7 @@ used as a sort index::
    from repoze.catalog.query import Range
 
    numdocs, results = catalog.query(
-                  Range('flavors', 'peach', 'pistachio'), 
+                  Range('flavors', 'peach', 'pistachio'),
                   sort_index='flavors')
    print (numdocs, [ x for x in results ])
 
@@ -155,7 +155,7 @@ The default sort order is ascending.  You can reverse the sort using
    from repoze.catalog.query import Range
 
    numdocs, results = catalog.query(
-                  Range('flavors', 'peach', 'pistachio'), 
+                  Range('flavors', 'peach', 'pistachio'),
                   sort_index='flavors',
                   reverse=True)
    print (numdocs, [ x for x in results ])
@@ -240,7 +240,7 @@ resolved using a dict passed into
 
     author = request.params.get("author")
     word = request.params.get("search_term")
-    query = mycatalog.query("author == author and word in body", 
+    query = mycatalog.query("author == author and word in body",
                             names=locals())
 
 Unlike true Python expressions, ordering of the terms in a CQE
@@ -513,7 +513,7 @@ The default sort order is ascending.  You can reverse the sort using
 ``reverse``::
 
    numdocs, results = catalog.search(flavors=('peach', 'pistachio'),
-                                     sort_index='flavors', 
+                                     sort_index='flavors',
                                      reverse=True)
    print (numdocs, [ x for x in results ])
    (2, [2, 1])
@@ -524,7 +524,7 @@ number of results you want.  Note that this parameter has no effect if
 you do not supply a ``sort_index``::
 
    numdocs, results = catalog.search(flavors=('peach', 'pistachio'),
-                                     sort_index='flavors', 
+                                     sort_index='flavors',
                                      limit=1)
    print (numdocs, [ x for x in results ])
    (1, [1])
