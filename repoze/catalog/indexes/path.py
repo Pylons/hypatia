@@ -29,7 +29,7 @@ class CatalogPathIndex(CatalogIndex):
     Query types supported:
 
     Eq
-    
+
     """
     implements(ICatalogIndex)
     useOperator = 'or'
@@ -84,7 +84,7 @@ class CatalogPathIndex(CatalogIndex):
                              value)
 
         path = value
-        
+
         if isinstance(path, (list, tuple)):
             path = '/'+ '/'.join(path[1:])
 
@@ -120,6 +120,9 @@ class CatalogPathIndex(CatalogIndex):
 
         self._length.change(-1)
         del self._unindex[docid]
+
+    def get_indexed_docids(self):
+        return self._unindex.keys()
 
     def search(self, path, default_level=0):
         """
@@ -160,7 +163,7 @@ class CatalogPathIndex(CatalogIndex):
                             ids, self._index[comp][level+i])
                     except KeyError:
                         break
-                else:    
+                else:
                     results = self.family.IF.union(results, ids)
         return results
 
@@ -175,7 +178,7 @@ class CatalogPathIndex(CatalogIndex):
         return self._unindex.get(docid)
 
     def apply(self, query):
-        """  
+        """
         """
         level = 0
         operator = self.useOperator

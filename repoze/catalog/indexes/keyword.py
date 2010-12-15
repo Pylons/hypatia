@@ -55,6 +55,9 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
+    def get_indexed_docids(self):
+        return self._rev_index.keys()
+
     def applyAny(self, values):
         return self.apply({'query': values, 'operator':'or'})
 

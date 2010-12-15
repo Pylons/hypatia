@@ -107,3 +107,10 @@ class TestCatalogTextIndex(unittest.TestCase):
         index.index_doc(3, 3)
         result = sorted(index.applyDoesNotContain('time'))
         self.assertEqual(result, [1, 2, 3])
+
+    def test_get_indexed_docids(self):
+        index = self._makeOne()
+        index.index_doc(1, u'now is the time')
+        index.index_doc(2, u"l'ora \xe9 ora")
+        index.index_doc(3, u"you have nice hair.")
+        self.assertEqual(set(index.get_indexed_docids()), set((1, 2, 3)))

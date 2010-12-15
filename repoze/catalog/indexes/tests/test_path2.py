@@ -354,7 +354,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         index = self._makeOne(VALUES)
         result = index.apply({'query':'/aa', 'depth':1})
         self.assertEqual(sorted(result), [2, 3, 4])
-        
+
     def test_apply_path_dict_with_tuple_query(self):
         index = self._makeOne(VALUES)
         result = index.apply({'query':('', 'aa'), 'depth':1})
@@ -814,7 +814,7 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         attrs, theset = results[1]
         self.assertEqual(attrs, (8, ['acl1', 'acl2']))
         self.assertEqual(list(theset), [])
-        
+
     def test_search_bb_cc_11_depth1_with_attrchecker_and_includepath(self):
         index = self._makeOne(VALUES, attr_discriminator='attr')
         attr_checker = DummyAttrChecker()
@@ -939,6 +939,12 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         attrs, theset = results[2]
         self.assertEqual(attrs, (0, ['acl1']))
         self.assertEqual(list(theset), [0])
+
+    def test_get_indexed_docids(self):
+        index = self._makeOne(VALUES, attr_discriminator='attr')
+        self.assertEqual(
+            set(index.get_indexed_docids()),
+            set(range(22)))
 
 class DummyAttrChecker(object):
     def __init__(self):

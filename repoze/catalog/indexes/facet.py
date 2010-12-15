@@ -1,5 +1,5 @@
 try:
-    from hashlib import md5 
+    from hashlib import md5
 except: # pragma no cover
     from md5 import new as md5
 
@@ -83,7 +83,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
                             revset = self.family.OO.Set()
                             self._rev_index[docid] = revset
                         revset.insert(fac)
-        
+
         if changed:
             self._num_docs.change(1)
 
@@ -107,7 +107,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
 
         counts = {}
         isect_cache = {}
-        
+
         for docid in docids:
             available_facets = self._rev_index.get(docid)
             ck = cachekey(available_facets)
@@ -122,6 +122,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
                 counts[facet] = count
 
         return counts
+
 
 def cachekey(set):
     h = md5()

@@ -168,6 +168,17 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         result = index.applyNotEq([5])
         self.assertEqual(list(result), [1,2,3,4,5,6])
 
+    def test_get_indexed_docids(self):
+        index = self._makeOne()
+        index.index_doc(1, [1,2,3])
+        index.index_doc(2, [3,4,5])
+        index.index_doc(3, [5,6,7])
+        index.index_doc(4, [7,8,9])
+        index.index_doc(5, [9,10])
+        index.index_doc(6, (5,6))
+        self.assertEqual(set(index.get_indexed_docids()),
+                         set((1, 2, 3, 4, 5, 6)))
+
 class FrozenDict(dict):
     def _forbidden(self, *args, **kw):
         assert 0 # pragma: no cover

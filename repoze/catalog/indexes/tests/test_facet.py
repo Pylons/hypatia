@@ -168,7 +168,7 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(sorted(list(result)), [2,3])
         result = index.search(['style:gucci:handbag'])
         self.assertEqual(sorted(list(result)), [])
-        
+
         index.unindex_doc(2)
         result = index.search(['price'])
         self.assertEqual(sorted(list(result)), [3])
@@ -176,7 +176,7 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(sorted(list(result)), [3])
         result = index.search(['style:gucci'])
         self.assertEqual(sorted(list(result)), [3])
-        
+
         index.unindex_doc(4)
         result = index.search(['size'])
         self.assertEqual(sorted(list(result)), [])
@@ -224,3 +224,8 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(sorted(list(result)), [4])
         counts = index.counts(result, search)
         self.assertEqual(counts, {'size:large':1})
+
+    def test_get_indexed_docids(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertEqual(set(index.get_indexed_docids()), set((1, 2, 3, 4)))

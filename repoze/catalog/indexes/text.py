@@ -32,6 +32,9 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
         # index_doc knows enough about reindexing to do the right thing
         return self.index_doc(docid, object)
 
+    def get_indexed_docids(self):
+        return self.index._docwords.keys()
+
     def sort(self, result, reverse=False, limit=None, sort_type=None):
         """Sort by text relevance.
 

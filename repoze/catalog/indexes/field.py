@@ -99,6 +99,9 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         self._num_docs.change(-1)
 
+    def get_indexed_docids(self):
+        return self._rev_index.keys()
+
     def sort(self, docids, reverse=False, limit=None, sort_type=None):
         if not docids:
             return []

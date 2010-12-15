@@ -25,7 +25,7 @@ class CatalogPathIndex2(CatalogIndex):
     Query types supported:
 
     Eq
-    
+
     """
     implements(ICatalogIndex)
     attr_discriminator = None # b/w compat
@@ -78,7 +78,7 @@ class CatalogPathIndex2(CatalogIndex):
             path = getattr(object, self.discriminator, _marker)
 
         return path
-        
+
     def _getObjectAttr(self, object):
         if callable(self.attr_discriminator):
             attr = self.attr_discriminator(object, _marker)
@@ -183,6 +183,9 @@ class CatalogPathIndex2(CatalogIndex):
                         return True
             return False
 
+    def get_indexed_docids(self):
+        return self.docid_to_path.keys()
+
     def search(self, path, depth=None, include_path=False, attr_checker=None):
         """ Provided a path string (e.g. ``/path/to/object``) or a
         path tuple (e.g. ``('', 'path', 'to', 'object')``, or a path
@@ -284,7 +287,7 @@ class CatalogPathIndex2(CatalogIndex):
                 leading_attrs.append(attr)
                 result[subpath] = ((docid, leading_attrs[:]),
                                    self.family.IF.Set())
-                
+
         stack = [(path, leading_attrs)]
         attrset = self.family.IF.Set()
 

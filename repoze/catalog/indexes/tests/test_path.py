@@ -491,6 +491,11 @@ class PathIndexTests(unittest.TestCase):
         results = list(index.applyEq('/').keys())
         self.assertEqual(results, expected)
 
+    def test_get_indexed_docids(self):
+        index = self._makeOne(VALUES)
+        self.assertEquals(set(index.get_indexed_docids()), set(range(1, 19)))
+
+
 class FakeTreeSet(set):
     def insert(self, thing):
         self.add(thing)

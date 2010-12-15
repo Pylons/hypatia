@@ -643,6 +643,12 @@ class TestCatalogFieldIndex(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 6, 7, 10, 11])
 
+    def test_get_indexed_docids(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertEqual(
+            set(index.get_indexed_docids()),
+            set((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)))
 
 class Test_fwscan_wins(unittest.TestCase):
 
