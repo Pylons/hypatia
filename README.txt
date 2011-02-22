@@ -2,7 +2,7 @@
  repoze.catalog
 ================
 
-An indexing and searching system based on `zope.index`_.
+A Python indexing and searching system based on `zope.index`_.
 
 .. _`zope.index`: http://pypi.python.org/pypi/zope.index
 

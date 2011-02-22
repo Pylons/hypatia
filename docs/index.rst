@@ -34,6 +34,13 @@ API documentation for :mod:`repoze.catalog`.
 
    api
 
+Source Code and Issue Tracking
+------------------------------
+
+Source code is available from https://github.com/repoze/repoze.catalog
+
+File bugs via https://github.com/repoze/repoze.catalog/issues
+
 Indices and tables
 ==================
 
