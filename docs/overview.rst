@@ -58,12 +58,12 @@ obtain data about an object being cataloged::
   def get_flavor(object, default):
       return getattr(object, 'flavor', default)
 
-  def get_text(object, default):
-      return getattr(object, 'text', default)
+  def get_description(object, default):
+      return getattr(object, 'description', default)
 
   catalog = Catalog()
   catalog['flavors'] = CatalogFieldIndex(get_flavor)
-  catalog['text'] = CatalogTextIndex(get_text)
+  catalog['descriptions'] = CatalogTextIndex(get_description)
 
 Note that ``get_flavor`` and ``get_text`` will be called for each
 object you attempt to index.  Each of them attempts to grab an
