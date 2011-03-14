@@ -42,6 +42,7 @@ class CatalogPathIndex(CatalogIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
+        self._not_indexed = self.family.IF.Set()
         self.clear()
 
     def clear(self):
@@ -77,11 +78,19 @@ class CatalogPathIndex(CatalogIndex):
         if value is _marker:
             # unindex the previous value
             self.unindex_doc(docid)
+
+            # Store docid in set of unindexed docids
+            self._not_indexed.add(docid)
+
             return None
 
         if isinstance(value, Persistent):
             raise ValueError('Catalog cannot index persistent object %s' %
                              value)
+
+        if docid in self._not_indexed:
+            # Remove from set of unindexed docs if it was in there.
+            self._not_indexed.remove(docid)
 
         path = value
 
@@ -95,10 +104,15 @@ class CatalogPathIndex(CatalogIndex):
 
         for i in range(len(comps)):
             self.insertEntry(comps[i], docid, i)
+
         self._unindex[docid] = path
         return 1
 
     def unindex_doc(self, docid):
+        _not_indexed = self._not_indexed
+        if docid in _not_indexed:
+            _not_indexed.remove(docid)
+
         if not self._unindex.has_key(docid):
             return
 

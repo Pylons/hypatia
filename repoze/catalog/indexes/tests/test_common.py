@@ -185,8 +185,10 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.value, 'abc')
         self.assertEqual(set(index.docids()), set([1]))
 
+
 from repoze.catalog.interfaces import ICatalogIndex
 from zope.interface import implements
+
 
 class DummyIndex(object):
     implements(ICatalogIndex)

@@ -9,6 +9,8 @@ class TestCatalogTextIndex(unittest.TestCase):
 
     def _makeOne(self, discriminator=_marker):
         def _discriminator(obj, default):
+            if obj is _marker:
+                return default
             return obj
         if discriminator is _marker:
             discriminator = _discriminator
@@ -108,9 +110,49 @@ class TestCatalogTextIndex(unittest.TestCase):
         result = sorted(index.applyDoesNotContain('time'))
         self.assertEqual(result, [1, 2, 3])
 
-    def test__indexed(self):
+    def test_docids(self):
         index = self._makeOne()
         index.index_doc(1, u'now is the time')
         index.index_doc(2, u"l'ora \xe9 ora")
         index.index_doc(3, u"you have nice hair.")
-        self.assertEqual(set(index._indexed()), set((1, 2, 3)))
+        self.assertEqual(set(index.docids()), set((1, 2, 3)))
+
+    def test_unindex_doc_removes_from_docids(self):
+        index = self._makeOne()
+        index.index_doc(20, _marker)
+        self.failUnless(20 in index.docids())
+        index.unindex_doc(20)
+        self.failIf(20 in index.docids())
+
+    def test_index_doc_then_missing_value(self):
+        index = self._makeOne()
+        index.index_doc(3, u'Am I rich yet?')
+        self.assertEqual(set([3]), set(index.applyContains('rich')))
+        self.failUnless(3 in index.docids())
+        index.index_doc(3, _marker)
+        self.assertEqual(set(), set(index.applyEq('rich')))
+        self.failUnless(3 in index.docids())
+
+    def test_index_doc_missing_value_then_with_value(self):
+        index = self._makeOne()
+        index.index_doc(20, _marker)
+        self.assertEqual(set(), set(index.applyContains('rich')))
+        self.failUnless(20 in index.docids())
+        index.index_doc(20, u'Am I rich yet?')
+        self.assertEqual(set([20]), set(index.applyContains('rich')))
+        self.failUnless(20 in index.docids())
+
+    def test_index_doc_missing_value_then_unindex(self):
+        index = self._makeOne()
+        index.index_doc(20, _marker)
+        self.assertEqual(set(), set(index.applyEq('/cmr')))
+        self.failUnless(20 in index.docids())
+        index.unindex_doc(20)
+        self.assertEqual(set(), set(index.applyEq('/cmr')))
+        self.failIf(20 in index.docids())
+
+    def test_docids_with_indexed_and_not_indexed(self):
+        index = self._makeOne()
+        index.index_doc(1, u'Am I rich yet?')
+        index.index_doc(2, _marker)
+        self.assertEqual(set([1, 2]), set(index.docids()))

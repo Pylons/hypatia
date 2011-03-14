@@ -658,6 +658,41 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index.unindex_doc(20)
         self.failIf(20 in index.docids())
 
+    def test_index_doc_then_missing_value(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertEqual(set([3]), set(index.applyEq(4)))
+        self.failUnless(3 in index.docids())
+        index.index_doc(3, _marker)
+        self.assertEqual(set(), set(index.applyEq(4)))
+        self.failUnless(3 in index.docids())
+
+    def test_index_doc_missing_value_then_with_value(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(3, _marker)
+        self.assertEqual(set(), set(index.applyEq(4)))
+        self.failUnless(3 in index.docids())
+        index.index_doc(3, 42)
+        self.assertEqual(set([3]), set(index.applyEq(42)))
+        self.failUnless(3 in index.docids())
+
+    def test_index_doc_missing_value_then_unindex(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        index.index_doc(3, _marker)
+        self.assertEqual(set(), set(index.applyEq(4)))
+        self.failUnless(3 in index.docids())
+        index.unindex_doc(3)
+        self.assertEqual(set(), set(index.applyEq(4)))
+        self.failIf(3 in index.docids())
+
+    def test_docids_with_indexed_and_not_indexed(self):
+        index = self._makeOne()
+        index.index_doc(1, 1)
+        index.index_doc(2, _marker)
+        self.assertEqual(set([1, 2]), set(index.docids()))
+
 
 class Test_fwscan_wins(unittest.TestCase):
 

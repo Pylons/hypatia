@@ -75,21 +75,26 @@ class CatalogIndex(object):
             return result
         return self.family.IF.weightedIntersection(result, docids)[1]
 
+    def _negate(self, assertion, *args, **kw):
+        positive = assertion(*args, **kw)
+        all = self.docids()
+        if len(positive) == 0:
+            return all
+        return self.family.IF.difference(all, positive)
+
     def applyContains(self, *args, **kw):
         raise NotImplementedError(
             "Contains is not supported for %s" % type(self).__name__)
 
     def applyDoesNotContain(self, *args, **kw):
-        raise NotImplementedError(
-            "DoesNotContain is not supported for %s" % type(self).__name__)
+        return self._negate(self.applyContains, *args, **kw)
 
     def applyEq(self, *args, **kw):
         raise NotImplementedError(
             "Eq is not supported for %s" % type(self).__name__)
 
     def applyNotEq(self, *args, **kw):
-        raise NotImplementedError(
-            "NotEq is not supported for %s" % type(self).__name__)
+        return self._negate(self.applyEq, *args, **kw)
 
     def applyGt(self, *args, **kw):
         raise NotImplementedError(
@@ -112,21 +117,18 @@ class CatalogIndex(object):
             "Any is not supported for %s" % type(self).__name__)
 
     def applyNotAny(self, *args, **kw):
-        raise NotImplementedError(
-            "NotAny is not supported for %s" % type(self).__name__)
+        return self._negate(self.applyAny, *args, **kw)
 
     def applyAll(self, *args, **kw):
         raise NotImplementedError(
             "All is not supported for %s" % type(self).__name__)
 
     def applyNotAll(self, *args, **kw):
-        raise NotImplementedError(
-            "NotAll is not supported for %s" % type(self).__name__)
+        return self._negate(self.applyAll, *args, **kw)
 
     def applyInRange(self, *args, **kw):
         raise NotImplementedError(
             "InRange is not supported for %s" % type(self).__name__)
 
     def applyNotInRange(self, *args, **kw):
-        raise NotImplementedError(
-            "NotInRange is not supported for %s" % type(self).__name__)
+        return self._negate(self.applyInRange, *args, **kw)

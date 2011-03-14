@@ -9,6 +9,8 @@ class TestCatalogKeywordIndex(unittest.TestCase):
 
     def _makeOne(self, discriminator=_marker):
         def _discriminator(obj, default):
+            if obj is _marker:
+                return default
             return obj
         if discriminator is _marker:
             discriminator = _discriminator
@@ -168,7 +170,7 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         result = index.applyNotEq([5])
         self.assertEqual(list(result), [1,2,3,4,5,6])
 
-    def test__indexed(self):
+    def test_docids(self):
         index = self._makeOne()
         index.index_doc(1, [1,2,3])
         index.index_doc(2, [3,4,5])
@@ -176,8 +178,49 @@ class TestCatalogKeywordIndex(unittest.TestCase):
         index.index_doc(4, [7,8,9])
         index.index_doc(5, [9,10])
         index.index_doc(6, (5,6))
-        self.assertEqual(set(index._indexed()),
+        self.assertEqual(set(index.docids()),
                          set((1, 2, 3, 4, 5, 6)))
+
+    def test_unindex_doc_removes_from_docids(self):
+        index = self._makeOne()
+        index.index_doc(20, [1, 2, 3])
+        self.failUnless(20 in index.docids())
+        index.unindex_doc(20)
+        self.failIf(20 in index.docids())
+
+    def test_index_doc_then_missing_value(self):
+        index = self._makeOne()
+        index.index_doc(20, [1, 2, 3])
+        self.assertEqual(set([20]), set(index.applyEq([2])))
+        self.failUnless(20 in index.docids())
+        index.index_doc(20, _marker)
+        self.assertEqual(set(), set(index.applyEq([2])))
+        self.failUnless(20 in index.docids())
+
+    def test_index_doc_missing_value_then_with_value(self):
+        index = self._makeOne()
+        index.index_doc(3, _marker)
+        self.assertEqual(set(), set(index.applyEq([4])))
+        self.failUnless(3 in index.docids())
+        index.index_doc(3, [3, 4, 5])
+        self.assertEqual(set([3]), set(index.applyEq([4])))
+        self.failUnless(3 in index.docids())
+
+    def test_index_doc_missing_value_then_unindex(self):
+        index = self._makeOne()
+        index.index_doc(3, _marker)
+        self.assertEqual(set(), set(index.applyEq([4])))
+        self.failUnless(3 in index.docids())
+        index.unindex_doc(3)
+        self.assertEqual(set(), set(index.applyEq([4])))
+        self.failIf(3 in index.docids())
+
+    def test_docids_with_indexed_and_not_indexed(self):
+        index = self._makeOne()
+        index.index_doc(1, [1])
+        index.index_doc(2, _marker)
+        self.assertEqual(set([1, 2]), set(index.docids()))
+
 
 class FrozenDict(dict):
     def _forbidden(self, *args, **kw):

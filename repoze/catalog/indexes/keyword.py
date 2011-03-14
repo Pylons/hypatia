@@ -5,23 +5,6 @@ from zope.index.keyword import KeywordIndex
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
-def _negate(assertion):
-    def negation(self, value):
-        _not_indexed = self._not_indexed
-        all_indexed = self._rev_index.keys()
-        if len(_not_indexed) == 0:
-            all = self.family.IF.Set(all_indexed)
-        elif len(all_indexed) == 0:
-            all = _not_indexed
-        else:
-            all_indexed = self.family.IF.Set(all_indexed)
-            all = self.family.IF.union(_not_indexed, all_indexed)
-        positive = assertion(self, value)
-        if len(positive) == 0:
-            return all
-        return self.family.IF.difference(all, positive)
-    return negation
-
 
 class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
     """
@@ -63,15 +46,8 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
 
     applyIn = applyAny
 
-    applyNotAny = _negate(applyAny)
-
     def applyAll(self, values):
         return self.apply({'query': values, 'operator':'and'})
 
-    applyNotAll = _negate(applyAll)
-
     def applyEq(self, value):
         return self.apply(value)
-
-    applyNotEq = _negate(applyEq)
-
