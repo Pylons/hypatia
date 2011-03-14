@@ -69,20 +69,3 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
         return self.apply(value)
 
     applyEq = applyContains
-
-    def applyDoesNotContain(self, value):
-        _not_indexed = self._not_indexed
-        all_indexed = self.index._docwords.keys()
-        if len(_not_indexed) == 0:
-            all = self.family.IF.Set(all_indexed)
-        elif len(all_indexed) == 0:
-            all = _not_indexed
-        else:
-            all_indexed = self.family.IF.Set(all_indexed)
-            all = self.family.IF.union(_not_indexed, all_indexed)
-        does_contain = self.applyContains(value)
-        if len(does_contain) == 0:
-            return all
-        return self.family.IF.difference(all, does_contain)
-
-    applyNotEq = applyDoesNotContain
