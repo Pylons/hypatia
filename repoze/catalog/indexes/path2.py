@@ -7,8 +7,12 @@ from repoze.catalog.indexes.common import CatalogIndex
 
 _marker = object()
 
-class CatalogPathIndex2(CatalogIndex):
-    """Index for model paths (tokens separated by '/' characters or
+
+class CatalogPathIndex2(CatalogIndex):  #pragma NO COVERAGE
+    """
+    DEPRECATED
+
+    Index for model paths (tokens separated by '/' characters or
     tuples representing a model path).
 
     A path index may be queried to obtain all subobjects (optionally

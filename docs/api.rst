@@ -114,14 +114,6 @@ Boolean Operators
    .. autoclass:: CatalogPathIndex
       :members:
 
-:mod:`repoze.catalog.indexes.path2`
------------------------------------
-
-.. automodule:: repoze.catalog.indexes.path2
-
-   .. autoclass:: CatalogPathIndex2
-      :members:
-
 .. _api_document_section:
 
 :mod:`repoze.catalog.document`

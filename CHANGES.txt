@@ -4,12 +4,9 @@ Next release (0.8)
 - Deprecated ``.search``-based querying of catalog in favor of newer
   query language(s) via ``.query``.  See docs for more info.
 
-- Added a ``.not_indexed`` attribute to ``CatalogIndex`` which tracks the
-  documents on which ``.index_doc`` was called but for which no value was found
-  to index.  This is used by the new query language(s) to implement negations
-  of boolean operators.  This represents a backwards incompatible change to
-  ``repoze.catalog``.  XXX Need migration assistance.
+- Added a ``.docids()`` method to ``CatalogIndex``.
 
+- Deprecated ``repoze.catalog.index.path2.CatalogPathIndex2``.
 
 0.7.3 (2010-08-26)
 ==================
