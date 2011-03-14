@@ -494,6 +494,13 @@ class PathIndexTests(unittest.TestCase):
         results = list(index.applyEq('/').keys())
         self.assertEqual(results, expected)
 
+    def test_applyNotEq(self):
+        index = self._makeOne(VALUES)
+        expected = range(1,10)
+
+        results = list(index.applyNotEq('/bb').keys())
+        self.assertEqual(results, expected)
+
     def test_docids(self):
         index = self._makeOne(VALUES)
         self.assertEquals(set(index.docids()), set(range(1, 19)))

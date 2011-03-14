@@ -228,5 +228,4 @@ class CatalogPathIndex(CatalogIndex):
         else:
             return self.family.IF.Set()
 
-    def applyEq(self, query):
-        return self.apply(query)
+    applyEq = apply
