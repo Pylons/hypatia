@@ -232,9 +232,7 @@ class TestCatalogFacetIndex(unittest.TestCase):
 
     def test_index_doc_missing_value_adds_to__not_indexed(self):
         def discriminator(obj, default):
-            if type(obj) == int:
-                return default
-            return obj
+            return default
         index = self._makeOne(discriminator)
         self.assertEqual(index.index_doc(20, 3), None)
         self.failUnless(20 in index._not_indexed)
