@@ -225,7 +225,23 @@ class TestCatalogFacetIndex(unittest.TestCase):
         counts = index.counts(result, search)
         self.assertEqual(counts, {'size:large':1})
 
-    def test_get_indexed_docids(self):
+    def test__indexed(self):
         index = self._makeOne()
         self._populateIndex(index)
-        self.assertEqual(set(index.get_indexed_docids()), set((1, 2, 3, 4)))
+        self.assertEqual(set(index._indexed()), set((1, 2, 3, 4)))
+
+    def test_index_doc_missing_value_adds_to__not_indexed(self):
+        def discriminator(obj, default):
+            if type(obj) == int:
+                return default
+            return obj
+        index = self._makeOne(discriminator)
+        self.assertEqual(index.index_doc(20, 3), None)
+        self.failUnless(20 in index._not_indexed)
+
+    def test_index_doc_with_value_removes_from__not_indexed(self):
+        index = self._makeOne()
+        index._not_indexed.add(20)
+        self.assertEqual(index.index_doc(20, 'foo'), 'foo')
+        self.failIf(20 in index._not_indexed)
+

@@ -121,7 +121,7 @@ class CatalogPathIndex(CatalogIndex):
         self._length.change(-1)
         del self._unindex[docid]
 
-    def get_indexed_docids(self):
+    def _indexed(self):
         return self._unindex.keys()
 
     def search(self, path, default_level=0):

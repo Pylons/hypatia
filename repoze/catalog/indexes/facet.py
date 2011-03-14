@@ -37,6 +37,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
         if family is not None:
             self.family = family
         self.facets = self.family.OO.Set(facets)
+        self._not_indexed = self.family.IF.Set()
         self.clear()
 
     def index_doc(self, docid, object):
@@ -52,11 +53,15 @@ class CatalogFacetIndex(CatalogKeywordIndex):
         if value is _marker:
             # unindex the previous value
             self.unindex_doc(docid)
+            self._not_indexed.add(docid)
             return None
 
         if isinstance(value, Persistent):
             raise ValueError('Catalog cannot index persistent object %s' %
                              value)
+
+        if docid in self._not_indexed:
+            self._not_indexed.remove(docid)
 
         old = self._rev_index.get(docid)
         if old is not None:
@@ -86,6 +91,8 @@ class CatalogFacetIndex(CatalogKeywordIndex):
 
         if changed:
             self._num_docs.change(1)
+
+        return value
 
     def counts(self, docids, omit_facets=()):
         """ Given a set of docids (usually returned from query),

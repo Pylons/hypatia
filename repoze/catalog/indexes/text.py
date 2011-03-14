@@ -24,7 +24,7 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.Set()
         TextIndex.__init__(self, lexicon, index)
         self.clear()
 
@@ -32,7 +32,7 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
         # index_doc knows enough about reindexing to do the right thing
         return self.index_doc(docid, object)
 
-    def get_indexed_docids(self):
+    def _indexed(self):
         return self.index._docwords.keys()
 
     def sort(self, result, reverse=False, limit=None, sort_type=None):
@@ -71,15 +71,15 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
     applyEq = applyContains
 
     def applyDoesNotContain(self, value):
-        not_indexed = self.not_indexed
+        _not_indexed = self._not_indexed
         all_indexed = self.index._docwords.keys()
-        if len(not_indexed) == 0:
+        if len(_not_indexed) == 0:
             all = self.family.IF.Set(all_indexed)
         elif len(all_indexed) == 0:
-            all = not_indexed
+            all = _not_indexed
         else:
             all_indexed = self.family.IF.Set(all_indexed)
-            all = self.family.IF.union(not_indexed, all_indexed)
+            all = self.family.IF.union(_not_indexed, all_indexed)
         does_contain = self.applyContains(value)
         if len(does_contain) == 0:
             return all

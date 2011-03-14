@@ -9,3 +9,5 @@ dist/
 .tox
 nosetests.xml
 repoze/catalog/coverage.xml
+distribute-*.gz
+env

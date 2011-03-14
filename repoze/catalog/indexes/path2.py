@@ -183,7 +183,7 @@ class CatalogPathIndex2(CatalogIndex):
                         return True
             return False
 
-    def get_indexed_docids(self):
+    def _indexed(self):
         return self.docid_to_path.keys()
 
     def search(self, path, depth=None, include_path=False, attr_checker=None):

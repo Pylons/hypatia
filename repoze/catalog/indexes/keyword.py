@@ -7,15 +7,15 @@ from repoze.catalog.indexes.common import CatalogIndex
 
 def _negate(assertion):
     def negation(self, value):
-        not_indexed = self.not_indexed
+        _not_indexed = self._not_indexed
         all_indexed = self._rev_index.keys()
-        if len(not_indexed) == 0:
+        if len(_not_indexed) == 0:
             all = self.family.IF.Set(all_indexed)
         elif len(all_indexed) == 0:
-            all = not_indexed
+            all = _not_indexed
         else:
             all_indexed = self.family.IF.Set(all_indexed)
-            all = self.family.IF.union(not_indexed, all_indexed)
+            all = self.family.IF.union(_not_indexed, all_indexed)
         positive = assertion(self, value)
         if len(positive) == 0:
             return all
@@ -48,14 +48,14 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.Set()
         self.clear()
 
     def reindex_doc(self, docid, value):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
-    def get_indexed_docids(self):
+    def _indexed(self):
         return self._rev_index.keys()
 
     def applyAny(self, values):

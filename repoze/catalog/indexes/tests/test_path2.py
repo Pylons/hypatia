@@ -940,10 +940,10 @@ class CatalogPathIndex2Tests(unittest.TestCase):
         self.assertEqual(attrs, (0, ['acl1']))
         self.assertEqual(list(theset), [0])
 
-    def test_get_indexed_docids(self):
+    def test__indexed(self):
         index = self._makeOne(VALUES, attr_discriminator='attr')
         self.assertEqual(
-            set(index.get_indexed_docids()),
+            set(index._indexed()),
             set(range(22)))
 
 class DummyAttrChecker(object):

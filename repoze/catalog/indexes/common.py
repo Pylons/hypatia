@@ -16,7 +16,7 @@ class CatalogIndex(object):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.Set()
 
     def index_doc(self, docid, object):
         if callable(self.discriminator):
@@ -29,7 +29,7 @@ class CatalogIndex(object):
             super(CatalogIndex, self).unindex_doc(docid)
 
             # Store docid in set of unindexed docids
-            self.not_indexed.add(docid)
+            self._not_indexed.add(docid)
 
             return None
 
@@ -41,16 +41,32 @@ class CatalogIndex(object):
             raise ValueError('Catalog cannot index broken object %s' %
                              value)
 
-        if docid in self.not_indexed:
+        if docid in self._not_indexed:
             # Remove from set of unindexed docs if it was in there.
-            self.not_indexed.remove(docid)
+            self._not_indexed.remove(docid)
 
         return super(CatalogIndex, self).index_doc(docid, value)
+
+    def unindex_doc(self, docid):
+        _not_indexed = self._not_indexed
+        if docid in _not_indexed:
+            _not_indexed.remove(docid)
+        super(CatalogIndex, self).unindex_doc(docid)
 
     def reindex_doc(self, docid, object):
         """ Default reindex_doc implementation """
         self.unindex_doc(docid)
         self.index_doc(docid, object)
+
+    def docids(self):
+        not_indexed = self._not_indexed
+        indexed = self._indexed()
+        if len(not_indexed) == 0:
+            return self.family.IF.Set(indexed)
+        elif len(indexed) == 0:
+            return not_indexed
+        indexed = self.family.IF.Set(indexed)
+        return self.family.IF.union(not_indexed, indexed)
 
     def apply_intersect(self, query, docids):
         """ Default apply_intersect implementation """

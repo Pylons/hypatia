@@ -12,6 +12,7 @@ class TestCatalogIndex(unittest.TestCase):
         def callback(object, default):
             """ """
         index = Test(callback)
+        index._docids = set()
         self.assertEqual(index.discriminator, callback)
 
     def test_ctor_callback(self):
@@ -21,6 +22,7 @@ class TestCatalogIndex(unittest.TestCase):
         class Test(klass, DummyIndex):
             pass
         index = Test(_discriminator)
+        index._docids = set()
         self.failUnless(index.discriminator is _discriminator)
 
     def test_ctor_string(self):
@@ -28,6 +30,7 @@ class TestCatalogIndex(unittest.TestCase):
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         self.assertEqual(index.discriminator, 'abc')
 
     def test_ctor_bad_discrim(self):
@@ -55,7 +58,6 @@ class TestCatalogIndex(unittest.TestCase):
             'applyNotInRange']:
             self.assertRaises(NotImplementedError, getattr(index, name))
 
-
     def test_index_doc_callback_returns_nondefault(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
@@ -63,63 +65,84 @@ class TestCatalogIndex(unittest.TestCase):
         def callback(ob, default):
             return ob
         index = Test(callback)
+        index._docids = set()
         self.assertEqual(index.index_doc(1, 'abc'), 'abc')
         self.assertEqual(index.value, 'abc')
-        self.assertEqual(index.docid, 1)
+        self.assertEqual(set(index.docids()), set([1]))
 
     def test_index_doc_string_discrim(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         class Dummy:
             abc = 'abc'
         dummy = Dummy()
         self.assertEqual(index.index_doc(1, dummy), 'abc')
         self.assertEqual(index.value, 'abc')
-        self.assertEqual(index.docid, 1)
+        self.assertEqual(set(index.docids()), set([1]))
 
     def test_index_doc_missing_value_unindexes(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         class Dummy:
             pass
         dummy = Dummy()
         dummy.abc = 'abc'
         self.assertEqual(index.index_doc(1, dummy), 'abc')
         del dummy.abc
-        del index.docid
         del index.value
         self.assertEqual(index.index_doc(1, dummy), None)
-        self.assertEqual(index.docid, None)
+        self.assertEqual(set(index.docids()), set([1]))
         self.assertEqual(index.value, None)
         self.assertEqual(index.unindexed, 1)
 
-    def test_index_doc_missing_value_adds_to_not_indexed(self):
+    def test_index_doc_missing_value_then_with_value(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         class Dummy:
             pass
         dummy = Dummy()
         self.assertEqual(index.index_doc(20, dummy), None)
-        self.failUnless(20 in index.not_indexed)
+        self.failUnless(20 in index.docids())
+        dummy.abc = 'foo'
+        self.assertEqual(index.index_doc(20, dummy), 'foo')
+        self.failUnless(20 in index.docids())
 
-    def test_index_doc_with_value_removes_from_not_indexed(self):
+    def test_index_doc_missing_value_then_unindex(self):
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
-        index.not_indexed.add(20)
+        index._docids = set()
         class Dummy:
             pass
         dummy = Dummy()
+        self.assertEqual(index.index_doc(20, dummy), None)
+        self.failUnless(20 in index.docids())
+        index.unindex_doc(20)
+        self.failIf(20 in index.docids())
+
+    def test_docids_with_indexed_and_not_indexed(self):
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        index._docids = set()
+        class Dummy:
+            pass
+        dummy = Dummy()
+        self.assertEqual(index.index_doc(20, dummy), None)
         dummy.abc = 'foo'
-        self.assertEqual(index.index_doc(20, dummy), 'foo')
-        self.failIf(20 in index.not_indexed)
+        self.assertEqual(index.index_doc(21, dummy), 'foo')
+        self.assertEqual(set(index.docids()), set([20, 21]))
 
     def test_index_doc_persistent_value_raises(self):
         from persistent import Persistent
@@ -127,6 +150,7 @@ class TestCatalogIndex(unittest.TestCase):
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         class Dummy:
             pass
         dummy = Dummy()
@@ -139,6 +163,7 @@ class TestCatalogIndex(unittest.TestCase):
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         class Dummy:
             pass
         dummy = Dummy()
@@ -150,13 +175,15 @@ class TestCatalogIndex(unittest.TestCase):
         class Test(klass, DummyIndex):
             pass
         index = Test('abc')
+        index._docids = set()
         class Dummy:
             abc = 'abc'
         dummy = Dummy()
+        index.index_doc(1, dummy)
         index.reindex_doc(1, dummy)
         self.assertEqual(index.unindexed, 1)
         self.assertEqual(index.value, 'abc')
-        self.assertEqual(index.docid, 1)
+        self.assertEqual(set(index.docids()), set([1]))
 
 from repoze.catalog.interfaces import ICatalogIndex
 from zope.interface import implements
@@ -165,13 +192,17 @@ class DummyIndex(object):
     implements(ICatalogIndex)
 
     value = None
-    docid = None
 
     def index_doc(self, docid, value):
-        self.docid = docid
+        self._docids.add(docid)
         self.value = value
         return value
 
     def unindex_doc(self, docid):
-        self.unindexed = docid
+        if docid in self._docids:
+            self._docids.remove(docid)
+            self.unindexed = docid
+
+    def _indexed(self):
+        return self._docids
 

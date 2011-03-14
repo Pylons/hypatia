@@ -18,15 +18,15 @@ TIMSORT = 'timsort'
 
 def _negate(assertion):
     def negation(self, value, *arg, **kw):
-        not_indexed = self.not_indexed
+        _not_indexed = self._not_indexed
         all_indexed = self._rev_index.keys()
-        if len(not_indexed) == 0:
+        if len(_not_indexed) == 0:
             all = self.family.IF.Set(all_indexed)
         elif len(all_indexed) == 0:
-            all = not_indexed
+            all = _not_indexed
         else:
             all_indexed = self.family.IF.Set(all_indexed)
-            all = self.family.IF.union(not_indexed, all_indexed)
+            all = self.family.IF.union(_not_indexed, all_indexed)
         positive = assertion(self, value, *arg, **kw)
         if len(positive) == 0:
             return all
@@ -66,7 +66,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.Set()
         self.clear()
 
     def reindex_doc(self, docid, value):
@@ -78,6 +78,10 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         Base class overridden to be able to unindex None values.
         """
+        _not_indexed = self._not_indexed
+        if docid in _not_indexed:
+            _not_indexed.remove(docid)
+
         rev_index = self._rev_index
         value = rev_index.get(docid, _marker)
         if value is _marker:
@@ -99,7 +103,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         self._num_docs.change(-1)
 
-    def get_indexed_docids(self):
+    def _indexed(self):
         return self._rev_index.keys()
 
     def sort(self, docids, reverse=False, limit=None, sort_type=None):
