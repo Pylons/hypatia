@@ -54,7 +54,7 @@ class Comparator(Query):
         self.index_name = index_name
         self.value = value
 
-    def get_index(self, catalog):
+    def _get_index(self, catalog):
         return catalog[self.index_name]
 
     def __str__(self):
@@ -72,7 +72,7 @@ class Contains(Comparator):
     """
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyContains(self.value)
 
     def __str__(self):
@@ -87,7 +87,7 @@ class DoesNotContain(Comparator):
     """
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyDoesNotContain(self.value)
 
     def __str__(self):
@@ -105,7 +105,7 @@ class Eq(Comparator):
     operator = '=='
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyEq(self.value)
 
     def negate(self):
@@ -120,7 +120,7 @@ class NotEq(Comparator):
     operator = '!='
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyNotEq(self.value)
 
     def negate(self):
@@ -135,7 +135,7 @@ class Gt(Comparator):
     operator = '>'
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyGt(self.value)
 
     def negate(self):
@@ -150,7 +150,7 @@ class Lt(Comparator):
     operator = '<'
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyLt(self.value)
 
     def negate(self):
@@ -165,7 +165,7 @@ class Ge(Comparator):
     operator = '>='
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyGe(self.value)
 
     def negate(self):
@@ -180,7 +180,7 @@ class Le(Comparator):
     operator = '<='
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyLe(self.value)
 
     def negate(self):
@@ -194,7 +194,7 @@ class Any(Comparator):
     """
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyAny(self.value)
 
     def negate(self):
@@ -212,7 +212,7 @@ class NotAny(Comparator):
     operator = 'not any'
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyNotAny(self.value)
 
     def negate(self):
@@ -229,7 +229,7 @@ class All(Comparator):
     operator = 'all'
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyAll(self.value)
 
     def negate(self):
@@ -246,7 +246,7 @@ class NotAll(Comparator):
     operator = 'not all'
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyAll(self.value)
 
     def negate(self):
@@ -314,7 +314,7 @@ class InRange(_Range):
     """
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyInRange(
             self.start, self.end, self.start_exclusive, self.end_exclusive
         )
@@ -332,7 +332,7 @@ class NotInRange(_Range):
     """
 
     def apply(self, catalog):
-        index = self.get_index(catalog)
+        index = self._get_index(catalog)
         return index.applyNotInRange(
             self.start, self.end, self.start_exclusive, self.end_exclusive
         )
