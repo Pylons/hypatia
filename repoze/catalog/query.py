@@ -52,17 +52,26 @@ class Comparator(Query):
     """
     def __init__(self, index_name, value):
         self.index_name = index_name
-        self.value = value
+        self._value = value
 
     def _get_index(self, catalog):
         return catalog[self.index_name]
 
+    def _get_value(self, names):
+        value = self._value
+        if isinstance(value, Name):
+            name = value.name
+            if name not in names:
+                raise NameError("No value passed in for name: %s" % name)
+            return names[name]
+        return value
+
     def __str__(self):
-        return ' '.join((self.index_name, self.operator, repr(self.value)))
+        return ' '.join((self.index_name, self.operator, repr(self._value)))
 
     def __eq__(self, other):
         return (self.index_name == other.index_name and
-                self.value == other.value)
+                self._value == other._value)
 
 
 class Contains(Comparator):
@@ -71,30 +80,30 @@ class Contains(Comparator):
     CQE equivalent: 'foo' in index
     """
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyContains(self.value)
+        return index.applyContains(self._get_value(names))
 
     def __str__(self):
-        return '%s in %s' % (repr(self.value), self.index_name)
+        return '%s in %s' % (repr(self._value), self.index_name)
 
     def negate(self):
-        return DoesNotContain(self.index_name, self.value)
+        return DoesNotContain(self.index_name, self._value)
 
 
 class DoesNotContain(Comparator):
     """CQE equivalent: 'foo' not in index
     """
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyDoesNotContain(self.value)
+        return index.applyDoesNotContain(self._get_value(names))
 
     def __str__(self):
-        return '%s not in %s' % (repr(self.value), self.index_name)
+        return '%s not in %s' % (repr(self._value), self.index_name)
 
     def negate(self):
-        return Contains(self.index_name, self.value)
+        return Contains(self.index_name, self._value)
 
 
 class Eq(Comparator):
@@ -104,12 +113,12 @@ class Eq(Comparator):
     """
     operator = '=='
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyEq(self.value)
+        return index.applyEq(self._get_value(names))
 
     def negate(self):
-        return NotEq(self.index_name, self.value)
+        return NotEq(self.index_name, self._value)
 
 
 class NotEq(Comparator):
@@ -119,12 +128,12 @@ class NotEq(Comparator):
     """
     operator = '!='
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyNotEq(self.value)
+        return index.applyNotEq(self._get_value(names))
 
     def negate(self):
-        return Eq(self.index_name, self.value)
+        return Eq(self.index_name, self._value)
 
 
 class Gt(Comparator):
@@ -134,12 +143,12 @@ class Gt(Comparator):
     """
     operator = '>'
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyGt(self.value)
+        return index.applyGt(self._get_value(names))
 
     def negate(self):
-        return Le(self.index_name, self.value)
+        return Le(self.index_name, self._value)
 
 
 class Lt(Comparator):
@@ -149,12 +158,12 @@ class Lt(Comparator):
     """
     operator = '<'
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyLt(self.value)
+        return index.applyLt(self._get_value(names))
 
     def negate(self):
-        return Ge(self.index_name, self.value)
+        return Ge(self.index_name, self._value)
 
 
 class Ge(Comparator):
@@ -164,12 +173,12 @@ class Ge(Comparator):
     """
     operator = '>='
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyGe(self.value)
+        return index.applyGe(self._get_value(names))
 
     def negate(self):
-        return Lt(self.index_name, self.value)
+        return Lt(self.index_name, self._value)
 
 
 class Le(Comparator):
@@ -179,12 +188,12 @@ class Le(Comparator):
     """
     operator = '<='
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyLe(self.value)
+        return index.applyLe(self._get_value(names))
 
     def negate(self):
-        return Gt(self.index_name, self.value)
+        return Gt(self.index_name, self._value)
 
 
 class Any(Comparator):
@@ -193,15 +202,15 @@ class Any(Comparator):
     CQE equivalent: index in any(['foo', 'bar'])
     """
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyAny(self.value)
+        return index.applyAny(self._get_value(names))
 
     def negate(self):
-        return NotAny(self.index_name, self.value)
+        return NotAny(self.index_name, self._value)
 
     def __str__(self):
-        return '%s in any(%s)' % (self.index_name, repr(self.value))
+        return '%s in any(%s)' % (self.index_name, repr(self._value))
 
 
 class NotAny(Comparator):
@@ -211,15 +220,15 @@ class NotAny(Comparator):
     """
     operator = 'not any'
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyNotAny(self.value)
+        return index.applyNotAny(self._get_value(names))
 
     def negate(self):
-        return Any(self.index_name, self.value)
+        return Any(self.index_name, self._value)
 
     def __str__(self):
-        return '%s not in any(%s)' % (self.index_name, repr(self.value))
+        return '%s not in any(%s)' % (self.index_name, repr(self._value))
 
 class All(Comparator):
     """All query.
@@ -228,15 +237,15 @@ class All(Comparator):
     """
     operator = 'all'
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyAll(self.value)
+        return index.applyAll(self._get_value(names))
 
     def negate(self):
-        return NotAll(self.index_name, self.value)
+        return NotAll(self.index_name, self._value)
 
     def __str__(self):
-        return '%s in all(%s)' % (self.index_name, repr(self.value))
+        return '%s in all(%s)' % (self.index_name, repr(self._value))
 
 class NotAll(Comparator):
     """NotAll query.
@@ -245,15 +254,15 @@ class NotAll(Comparator):
     """
     operator = 'not all'
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
-        return index.applyAll(self.value)
+        return index.applyAll(self._get_value(names))
 
     def negate(self):
-        return All(self.index_name, self.value)
+        return All(self.index_name, self._value)
 
     def __str__(self):
-        return '%s not in all(%s)' % (self.index_name, repr(self.value))
+        return '%s not in all(%s)' % (self.index_name, repr(self._value))
 
 class _Range(Comparator):
     @classmethod
@@ -271,19 +280,37 @@ class _Range(Comparator):
             end_exclusive = False
 
         assert start.index_name == end.index_name
-        return cls(start.index_name, start.value, end.value,
+        return cls(start.index_name, start._value, end._value,
                    start_exclusive, end_exclusive)
 
     def __init__(self, index_name, start, end,
                  start_exclusive=False, end_exclusive=False):
         self.index_name = index_name
-        self.start = start
-        self.end = end
+        self._start = start
+        self._end = end
         self.start_exclusive = start_exclusive
         self.end_exclusive = end_exclusive
 
+    def _get_start(self, names):
+        value = self._start
+        if isinstance(value, Name):
+            name = value.name
+            if name not in names:
+                raise NameError("No value passed in for name: %s" % name)
+            return names[name]
+        return value
+
+    def _get_end(self, names):
+        value = self._end
+        if isinstance(value, Name):
+            name = value.name
+            if name not in names:
+                raise NameError("No value passed in for name: %s" % name)
+            return names[name]
+        return value
+
     def __str__(self):
-        s = [repr(self.start)]
+        s = [repr(self._start)]
         if self.start_exclusive:
             s.append('<')
         else:
@@ -293,15 +320,15 @@ class _Range(Comparator):
             s.append('<')
         else:
             s.append('<=')
-        s.append(repr(self.end))
+        s.append(repr(self._end))
         return ' '.join(s)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return False
         return (self.index_name == other.index_name and
-                self.start == other.start and
-                self.end == other.end and
+                self._start == other._start and
+                self._end == other._end and
                 self.start_exclusive == other.start_exclusive and
                 self.end_exclusive == other.end_exclusive)
 
@@ -313,14 +340,15 @@ class InRange(_Range):
                    lower <= index <= upper
     """
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
         return index.applyInRange(
-            self.start, self.end, self.start_exclusive, self.end_exclusive
+            self._get_start(names), self._get_end(names),
+            self.start_exclusive, self.end_exclusive
         )
 
     def negate(self):
-        return NotInRange(self.index_name, self.start, self.end,
+        return NotInRange(self.index_name, self._start, self._end,
                           self.start_exclusive, self.end_exclusive)
 
 
@@ -331,17 +359,18 @@ class NotInRange(_Range):
                    not(lower <= index <= upper)
     """
 
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         index = self._get_index(catalog)
         return index.applyNotInRange(
-            self.start, self.end, self.start_exclusive, self.end_exclusive
+            self._get_start(names), self._get_end(names),
+            self.start_exclusive, self.end_exclusive
         )
 
     def __str__(self):
         return 'not(%s)' % _Range.__str__(self)
 
     def negate(self):
-        return InRange(self.index_name, self.start, self.end,
+        return InRange(self.index_name, self._start, self._end,
                        self.start_exclusive, self.end_exclusive)
 
 
@@ -387,12 +416,12 @@ class BoolOp(Query):
         if type(query) != Eq:
             return None
         index_name = query.index_name
-        values = [query.value]
+        values = [query._value]
         while queries:
             query = queries.pop(0)
             if type(query) != Eq or query.index_name != index_name:
                 return None
-            values.append(query.value)
+            values.append(query._value)
 
         # All queries are Eq operators for the same index.
         if type(self) == Or:
@@ -407,12 +436,12 @@ class BoolOp(Query):
         if type(query) != NotEq:
             return None
         index_name = query.index_name
-        values = [query.value]
+        values = [query._value]
         while queries:
             query = queries.pop(0)
             if type(query) != NotEq or query.index_name != index_name:
                 return None
-            values.append(query.value)
+            values.append(query._value)
 
         # All queries are Eq operators for the same index.
         if type(self) == Or:
@@ -422,13 +451,13 @@ class BoolOp(Query):
 
 class Or(BoolOp):
     """Boolean Or of multiple queries."""
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         # XXX Try to figure out when we need weightedOr and when we can
         # just use union or multiunion.
         queries = self.queries
-        result = queries[0].apply(catalog)
+        result = queries[0]._apply(catalog, names)
         for query in queries[1:]:
-            next_result = query.apply(catalog)
+            next_result = query._apply(catalog, names)
             if len(result) == 0:
                 result = next_result
             elif len(next_result) > 0:
@@ -451,8 +480,6 @@ class Or(BoolOp):
         queries = list(self.queries)
 
         def process_range(i_lower, query_lower, i_upper, query_upper):
-            if query_lower.value >= query_upper.value:
-                return
             queries[i_lower] = NotInRange.fromGTLT(
                 query_lower.negate(), query_upper.negate())
             queries[i_upper] = None
@@ -485,16 +512,16 @@ class Or(BoolOp):
 
 class And(BoolOp):
     """Boolean And of multiple queries."""
-    def apply(self, catalog):
+    def _apply(self, catalog, names):
         # XXX Try to figure out when we need weightedIntersection and when we
         # can just use intersection.
         IF = self.family.IF
         queries = self.queries
-        result = queries[0].apply(catalog)
+        result = queries[0]._apply(catalog, names)
         for query in queries[1:]:
             if len(result) == 0:
                 return IF.Set()
-            next_result = query.apply(catalog)
+            next_result = query._apply(catalog, names)
             if len(next_result) == 0:
                 return IF.Set()
             _, result = IF.weightedIntersection(result, next_result)
@@ -516,8 +543,6 @@ class And(BoolOp):
         queries = list(self.queries)
 
         def process_range(i_lower, query_lower, i_upper, query_upper):
-            if query_lower.value >= query_upper.value:
-                return
             queries[i_lower] = InRange.fromGTLT(query_lower, query_upper)
             queries[i_upper] = None
 
@@ -561,11 +586,27 @@ class Not(Query):
     def negate(self):
         return self.query
 
-    def apply(self, catalog):
-        return self.query.negate().apply(catalog)
+    def _apply(self, catalog, names):
+        return self.query.negate()._apply(catalog, names)
 
     def _optimize(self):
         return self.query.negate()._optimize()
+
+
+class Name(object):
+    """
+    A variable name in an expression, evaluated at query time.
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.name)
+
+    def __eq__(self, right):
+        if isinstance(right, Name):
+            return right.name == self.name
+        return False
 
 
 class _AstParser(object):
@@ -616,9 +657,8 @@ class _AstParser(object):
     current node and its children which have already been processed.  In this
     way the query tree is built from the ast from the bottom up.
     """
-    def __init__(self, expr, names):
+    def __init__(self, expr):
         self.expr = expr
-        self.names = names
 
     def parse(self):
         statements = ast.parse(self.expr).body
@@ -828,7 +868,7 @@ class _AstParser(object):
     def _value(self, node):
         if isinstance(node, ast.Name):
             try:
-                return self.names[node.id]
+                return Name(node.id)
             except:
                 raise NameError(node.id)
         return node
@@ -840,16 +880,13 @@ def optimize(query):
     return query
 
 
-def parse_query(expr, names=None, optimize_query=True):
+def parse_query(expr, optimize_query=True):
     """
-    Parses the given expression string into a catalog query.  The `names` dict
-    provides local variable names that can be used in the expression.
+    Parses the given expression string into a catalog query.
     """
     if not ast_support:
         raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")
-    if names is None:
-        names = {}
-    query = _AstParser(expr, names).parse()
+    query = _AstParser(expr).parse()
     if optimize_query:
         query = optimize(query)
     return query

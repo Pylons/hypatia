@@ -146,10 +146,10 @@ class Catalog(PersistentMapping):
         try:
             from repoze.catalog.query import parse_query
             if isinstance(queryobject, basestring):
-                queryobject = parse_query(queryobject, names)
+                queryobject = parse_query(queryobject)
         except ImportError: #pragma NO COVERAGE
             pass
-        results = queryobject.apply(self)
+        results = queryobject._apply(self, names)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
 
     def apply(self, query):
@@ -183,7 +183,7 @@ class FileStorageCatalogFactory(CatalogFactory):
         cache_size = kw.get('cache_size')
         if cache_size is None:
             kw['cache_size'] = 50000
-        
+
         from ZODB.FileStorage.FileStorage import FileStorage
         from ZODB.DB import DB
         f = FileStorage(filename)
