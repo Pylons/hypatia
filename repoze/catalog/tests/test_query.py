@@ -378,6 +378,21 @@ class TestInRange(ComparatorTestBase):
         self.assertEqual(
             catalog.index.range, ('begin', 'end', False, False))
 
+    def test_apply_w_names(self):
+        from repoze.catalog.query import Name
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', Name('foo'), Name('bar'))
+        result = inst._apply(catalog, {'foo': 'begin', 'foo': 'bar'})
+        self.assertEqual(result, ('begin', 'end', False, False))
+        self.assertEqual(
+            catalog.index.range, ('begin', 'end', False, False))
+
+    def test_apply_w_names_missing(self):
+        from repoze.catalog.query import Name
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', Name('foo'), Name('bar'))
+        self.assertRaises(NameError, inst._apply, catalog, {})
+
     def test_apply_exclusive(self):
         catalog = DummyCatalog()
         inst = self._makeOne('index', 'begin', 'end', True, True)
