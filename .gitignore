@@ -12,3 +12,6 @@ repoze/catalog/coverage.xml
 distribute-*.gz
 env
 .build
+bin
+include
+lib

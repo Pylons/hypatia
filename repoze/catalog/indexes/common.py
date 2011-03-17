@@ -138,4 +138,5 @@ class CatalogIndex(object):
         I'm sorry.
         """
         docids = self.family.IF.Set(docids)
-        self._not_indexed = self.family.IF.difference(docids, self._indexed())
+        indexed = self.family.IF.Set(self._indexed())
+        self._not_indexed = self.family.IF.difference(docids, indexed)
