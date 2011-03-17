@@ -26,8 +26,8 @@ def migrate_to_0_8_0_from_document_map(catalog, document_map):
 
 
 def migrate_to_0_8_0(catalog):
-    docids = IF.multiunion([IF.Set(index.docids()) for index
-                            in catalog.values()])
+    docids = IF.multiunion([IF.Set(index._indexed()) for index
+                            in catalog.values() if hasattr(index, '_indexed')])
     migrate_to_0_8_0_from_docids(catalog, docids)
 
 
