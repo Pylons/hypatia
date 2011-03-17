@@ -185,6 +185,17 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.value, 'abc')
         self.assertEqual(set(index.docids()), set([1]))
 
+    def test_migrate_to_0_8_0(self):
+        klass = self._getTargetClass()
+        class Test(klass, DummyIndex):
+            pass
+        index = Test('abc')
+        index._docids = index.family.IF.Set([1, 2])
+        self.assertEqual(set(index.docids()), set([1, 2]))
+        all_docids = set([1, 2, 3, 4])
+        index._migrate_to_0_8_0(all_docids)
+        self.assertEqual(set(index.docids()), set([1, 2, 3, 4]))
+
 
 from repoze.catalog.interfaces import ICatalogIndex
 from zope.interface import implements

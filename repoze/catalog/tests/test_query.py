@@ -95,6 +95,20 @@ class TestContains(ComparatorTestBase):
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.contains, 'val')
 
+    def test_apply_w_name(self):
+        from repoze.catalog.query import Name
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', Name('foo'))
+        result = inst._apply(catalog, {'foo': 'val'})
+        self.assertEqual(result, 'val')
+        self.assertEqual(catalog.index.contains, 'val')
+
+    def test_apply_w_missing_name(self):
+        from repoze.catalog.query import Name
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', Name('foo'))
+        self.assertRaises(NameError, inst._apply, catalog, {})
+
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
         self.assertEqual(str(inst), "'val' in index")

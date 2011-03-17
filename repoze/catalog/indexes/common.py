@@ -132,3 +132,10 @@ class CatalogIndex(object):
 
     def applyNotInRange(self, *args, **kw):
         return self._negate(self.applyInRange, *args, **kw)
+
+    def _migrate_to_0_8_0(self, docids):
+        """
+        I'm sorry.
+        """
+        docids = self.family.IF.Set(docids)
+        self._not_indexed = self.family.IF.difference(docids, self._indexed())

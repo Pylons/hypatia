@@ -1,6 +1,7 @@
 import unittest
 from repoze.catalog import query as q
 
+
 class TestQueryBase(object):
     def test_it(self):
         from repoze.catalog.catalog import Catalog
@@ -27,6 +28,7 @@ class TestQueryBase(object):
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])
 
+
 class TestQueryWithCQE(unittest.TestCase, TestQueryBase):
     query = (
         "(allowed == 'a' and allowed == 'b' and "
@@ -35,6 +37,7 @@ class TestQueryWithCQE(unittest.TestCase, TestQueryBase):
         "body in text"
         )
 
+
 class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
     query = (
         q.All('allowed', ['a', 'b']) &
@@ -42,6 +45,7 @@ class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
         q.Not(q.Eq('title', 'title3')) &
         q.Contains('text', 'body')
         )
+
 
 try:
     import ast
