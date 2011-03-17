@@ -603,6 +603,8 @@ class Name(object):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.name)
 
+    __str__ = __repr__
+
     def __eq__(self, right):
         if isinstance(right, Name):
             return right.name == self.name
@@ -867,10 +869,7 @@ class _AstParser(object):
 
     def _value(self, node):
         if isinstance(node, ast.Name):
-            try:
-                return Name(node.id)
-            except:
-                raise NameError(node.id)
+            return Name(node.id)
         return node
 
 

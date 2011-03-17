@@ -382,7 +382,7 @@ class TestInRange(ComparatorTestBase):
         from repoze.catalog.query import Name
         catalog = DummyCatalog()
         inst = self._makeOne('index', Name('foo'), Name('bar'))
-        result = inst._apply(catalog, {'foo': 'begin', 'foo': 'bar'})
+        result = inst._apply(catalog, {'foo': 'begin', 'bar': 'end'})
         self.assertEqual(result, ('begin', 'end', False, False))
         self.assertEqual(
             catalog.index.range, ('begin', 'end', False, False))
@@ -392,6 +392,7 @@ class TestInRange(ComparatorTestBase):
         catalog = DummyCatalog()
         inst = self._makeOne('index', Name('foo'), Name('bar'))
         self.assertRaises(NameError, inst._apply, catalog, {})
+        self.assertRaises(NameError, inst._apply, catalog, {'foo': 'begin'})
 
     def test_apply_exclusive(self):
         catalog = DummyCatalog()
@@ -625,6 +626,24 @@ class TestNot(BoolOpTestBase):
         query = DummyQuery('foo')
         o = self._makeOne(query)
         self.assertEqual(list(o.iter_children()), [query])
+
+
+class TestName(unittest.TestCase):
+
+    def _makeOne(self):
+        from repoze.catalog.query import Name as cls
+        return cls('foo')
+
+    def test_to_str(self):
+        o = self._makeOne()
+        self.assertEqual(str(o), "Name('foo')")
+
+    def test_eq(self):
+        o1 = self._makeOne()
+        o2 = self._makeOne()
+        self.failIf(o1 is o2)
+        self.failUnless(o1 == o2)
+        self.failIf(o1 == 'foo')
 
 
 class Test_parse_query(unittest.TestCase):
@@ -938,9 +957,27 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.start_exclusive, True)
         self.assertEqual(op.end_exclusive, True)
 
+    def test_convert_ltgt_to_range(self):
+        from repoze.catalog.query import InRange
+        op = self._call_fut("a > 0 and a < 1")
+        self.failUnless(isinstance(op, InRange))
+        self.assertEqual(op._start, 0)
+        self.assertEqual(op._end, 1)
+        self.assertEqual(op.start_exclusive, True)
+        self.assertEqual(op.end_exclusive, True)
+
     def test_convert_gtlt_to_not_in_range(self):
         from repoze.catalog.query import NotInRange
         op = self._call_fut("a < 0 or a > 1")
+        self.failUnless(isinstance(op, NotInRange))
+        self.assertEqual(op._start, 0)
+        self.assertEqual(op._end, 1)
+        self.assertEqual(op.start_exclusive, False)
+        self.assertEqual(op.end_exclusive, False)
+
+    def test_convert_ltgt_to_not_in_range(self):
+        from repoze.catalog.query import NotInRange
+        op = self._call_fut("a > 1 or a < 0")
         self.failUnless(isinstance(op, NotInRange))
         self.assertEqual(op._start, 0)
         self.assertEqual(op._end, 1)
