@@ -595,7 +595,28 @@ class Not(Query):
 
 class Name(object):
     """
-    A variable name in an expression, evaluated at query time.
+    A variable name in an expression, evaluated at query time.  Can be used
+    to defer evaluation of variables used inside of expressions until query
+    time.
+
+    Example::
+
+        from repoze.catalog.query import Eq
+        from repoze.catalog.query import Name
+
+        # Define query at module scope
+        find_cats = Eq('color', Name('color')) & Eq('sex', Name('sex'))
+
+        # Use query in a search function, evaluating color and sex at the
+        # time of the query
+        def search_cats(catalog, resolver, color='tabby', sex='female'):
+            # Let resolver be some function which can retrieve a cat object
+            # from your application given a docid.
+            params = dict(color=color, sex=sex)
+            count, docids = catalog.query(find_cats, params)
+            for docid in docids:
+                yield resolver(docid)
+
     """
     def __init__(self, name):
         self.name = name
@@ -881,7 +902,8 @@ def optimize(query):
 
 def parse_query(expr, optimize_query=True):
     """
-    Parses the given expression string into a catalog query.
+    Parses the given expression string and returns a query object.  Requires
+    Python >= 2.6.
     """
     if not ast_support:
         raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")

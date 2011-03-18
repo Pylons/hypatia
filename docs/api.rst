@@ -66,6 +66,13 @@ Boolean Operators
 
    .. autoclass:: Not
 
+Other Helpers
+~~~~~~~~~~~~~
+
+.. autoclass:: Name
+
+.. autofunction:: parse_query
+
 .. _api_fieldindex_section:
 
 :mod:`repoze.catalog.indexes.field`
