@@ -236,7 +236,7 @@ Query objects may also be created by parsing a :term:`CQE` string.
 The query parser uses Python's internal code parser to parse CQE query
 expression strings, so the syntax is just like Python::
 
-    mycatalog.query("'crossi' and 'biscuits' in body")
+    mycatalog.query("author == 'crossi' and 'biscuits' in body")
 
 The query parser allows name substitution in expressions.  Names are
 resolved using a dict passed into
