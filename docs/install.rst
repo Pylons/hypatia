@@ -10,7 +10,7 @@ done primarily under Python 2.6, so that version is recommended.
 :mod:`repoze.catalog` also runs under Python 2.4 and 2.5 with limited
 functionality.  It does *not* run under Python 3.X.
 
-.. warning:: To succesfully install :mod:`repoze.catalog`, you will an
+.. warning:: To succesfully install :mod:`repoze.catalog`, you will need an
    environment capable of compiling Python C code.  See the
    documentation about installing, e.g. ``gcc`` and ``python-devel``
    for your system.  You will also need :term:`setuptools` installed
