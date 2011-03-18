@@ -14,7 +14,7 @@ functionality.  It does *not* run under Python 3.X.
    environment capable of compiling Python C code.  See the
    documentation about installing, e.g. ``gcc`` and ``python-devel``
    for your system.  You will also need :term:`setuptools` installed
-   on within your Python system in order to run the ``easy_install``
+   within your Python system in order to run the ``easy_install``
    command.
 
 It is advisable to install :mod:`repoze.catalog` into a
