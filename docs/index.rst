@@ -20,6 +20,7 @@ Narrative documentation explaining how to use :mod:`repoze.catalog`.
 
    overview
    install
+   upgrade
    usage
    genealogy
    glossary
