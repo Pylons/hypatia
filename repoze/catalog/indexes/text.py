@@ -13,7 +13,11 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
     - Contains
 
+    - DoesNotContain
+
     - Eq
+
+    - NotEq
     """
 
     implements(ICatalogIndex, IIndexSort)
