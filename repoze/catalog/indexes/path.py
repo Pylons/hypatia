@@ -28,7 +28,9 @@ class CatalogPathIndex(CatalogIndex):
 
     Query types supported:
 
-    Eq
+    - Eq
+
+    - NotEq
 
     """
     implements(ICatalogIndex)

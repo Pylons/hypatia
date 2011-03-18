@@ -22,9 +22,15 @@ class CatalogFacetIndex(CatalogKeywordIndex):
 
     - In
 
+    - NotIn
+
     - Any
 
+    - NotAny
+
     - All
+
+    - NotAll
     """
     implements(ICatalogIndex)
 

@@ -18,9 +18,15 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
 
     - In
 
+    - NotIn
+
     - Any
 
+    - NotAny
+
     - All
+
+    - NotAll
 
     """
     implements(ICatalogIndex)

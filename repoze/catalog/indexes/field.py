@@ -26,7 +26,11 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
     - NotEq
 
+    - Gt
+
     - Ge
+
+    - Lt
 
     - Le
 
