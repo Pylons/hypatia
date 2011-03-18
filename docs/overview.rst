@@ -116,22 +116,19 @@ within the catalog with the flavor of peach and a description of nuts.
 Index Types
 -----------
 
-Out of the box, ``repoze.catalog`` supports five index types: field
-indexes, keyword indexes, text indexes, facet indexes, and path
-indexes.  Field indexes are meant to index single discrete values, and
-queries to a field index will only match if the value which was
-indexed matches the query exactly.  Keyword indexes are essentially
-field indexes which index sequences of values, and which can be
-queried for any of the values in each sequence indexed.  Text indexes
-index text using the ``zope.index.text`` index type, and can be
-queried with arbitrary textual terms.  Text indexes can use various
-splitting and normalizing strategies to collapse indexed texts for
-better querying.  Facet indexes are much like keyword indexes, but
-also allow for "faceted" indexing and searching, useful for performing
-narrowing searches when there is a well-known set of allowable values
-(the "facets").  Path indexes allow you to index documents as part of
-a graph, and return documents that are contained in a portion of the
-graph.
+Out of the box, ``repoze.catalog`` supports five index types: field indexes,
+keyword indexes, text indexes, facet indexes, and path indexes. Field indexes
+are meant to index single discrete values. Keys are stored in order, allowing
+for the full suite of range and comparison operators to be used. Keyword
+indexes index sequences of values which can be queried for any of the values
+in each sequence indexed. Text indexes index text using the
+``zope.index.text`` index type, and can be queried with arbitrary textual
+terms. Text indexes can use various splitting and normalizing strategies to
+collapse indexed texts for better querying. Facet indexes are much like
+keyword indexes, but also allow for "faceted" indexing and searching, useful
+for performing narrowing searches when there is a well-known set of allowable
+values (the "facets"). Path indexes allow you to index documents as part of a
+graph, and return documents that are contained in a portion of the graph.
 
 .. note:: The existing facet index implementation narrowing support is
    naive.  It is not meant to be used in catalogs that must use it to
