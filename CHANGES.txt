@@ -1,4 +1,4 @@
-Next release (0.8)
+0.8.0 (2011-03-20)
 ==================
 
 - Deprecated ``.search``-based querying of catalog in favor of newer
