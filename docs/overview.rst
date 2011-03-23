@@ -35,7 +35,7 @@ obtain data about an object being cataloged::
   catalog['flavors'] = CatalogFieldIndex(get_flavor)
   catalog['descriptions'] = CatalogTextIndex(get_description)
 
-Note that ``get_flavor`` and ``get_text`` will be called for each
+Note that ``get_flavor`` and ``get_description`` will be called for each
 object you attempt to index.  Each of them attempts to grab an
 attribute from the object being indexed, and returns a default if no
 such attribute exists.
