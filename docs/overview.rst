@@ -33,7 +33,7 @@ obtain data about an object being cataloged::
 
   catalog = Catalog()
   catalog['flavors'] = CatalogFieldIndex(get_flavor)
-  catalog['descriptions'] = CatalogTextIndex(get_description)
+  catalog['description'] = CatalogTextIndex(get_description)
 
 Note that ``get_flavor`` and ``get_description`` will be called for each
 object you attempt to index.  Each of them attempts to grab an
