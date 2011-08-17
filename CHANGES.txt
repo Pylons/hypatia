@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.8.1 (2011-08-17)
+==================
 
 - Harmonized index name / discriminator in catalog setup with content schema
   and queries used in later examples.  Thanks to Douglas Cerna.
