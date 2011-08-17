@@ -48,12 +48,12 @@ class CatalogKeywordIndex(CatalogIndex, KeywordIndex):
         return self._rev_index.keys()
 
     def applyAny(self, values):
-        return self.apply({'query': values, 'operator':'or'})
+        return self.apply({'query': values, 'operator': 'or'})
 
     applyIn = applyAny
 
     def applyAll(self, values):
-        return self.apply({'query': values, 'operator':'and'})
+        return self.apply({'query': values, 'operator': 'and'})
 
     def applyEq(self, value):
-        return self.apply(value)
+        return self.apply([value])
