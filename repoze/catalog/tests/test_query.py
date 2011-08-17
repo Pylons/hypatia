@@ -352,6 +352,14 @@ class TestAny(ComparatorTestBase):
         self.assertEqual(result, ['one', 'two'])
         self.assertEqual(catalog.index.any, ['one', 'two'])
 
+    def test_apply_with_names_in_tuple(self):
+        from repoze.catalog.query import Name
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', (Name('foo'), Name('bar')))
+        result = inst._apply(catalog, names={'foo': 'one', 'bar': 'two'})
+        self.assertEqual(result, ('one', 'two'))
+        self.assertEqual(catalog.index.any, ('one', 'two'))
+
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
         self.assertEqual(str(inst), "index in any([1, 2, 3])")

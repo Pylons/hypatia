@@ -8,6 +8,9 @@ except ImportError:  # pragma NO COVERAGE
     ast_support = False
 
 
+_marker = object()
+
+
 class Query(object):
     """
     Base class for all elements that make up queries.
@@ -57,9 +60,14 @@ class Comparator(Query):
     def _get_index(self, catalog):
         return catalog[self.index_name]
 
-    def _get_value(self, names):
-        value = self._value
-        if isinstance(value, Name):
+    def _get_value(self, names, value=_marker):
+        if value is _marker:
+            value = self._value
+        if isinstance(value, list):
+            return [self._get_value(names, child) for child in value]
+        elif isinstance(value, tuple):
+            return tuple(self._get_value(names, child) for child in value)
+        elif isinstance(value, Name):
             name = value.name
             if name not in names:
                 raise NameError("No value passed in for name: %s" % name)

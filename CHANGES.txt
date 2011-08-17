@@ -12,6 +12,10 @@ Unreleased
 - Fixed bug in query parser where names inside of 'any' or 'all' calls were
   not being parsed properly.
 
+- When using CQEs, names may now be embedded inside of a list or tuple,
+  allowing expressions like this: "tags in any([tag1, tag2])" where tag1 and
+  tag2 are names that will be resolved at query run time.
+
 0.8.0 (2011-03-20)
 ==================
 
