@@ -24,9 +24,7 @@ try:
     README = open(os.path.join(here, 'README.txt')).read()
     CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 except IOError:
-    here = os.path.abspath(os.path.dirname(sys.argv[0]))
-    README = open(os.path.join(here, 'README.txt')).read()
-    CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+    README = CHANGES = ''
 
 setup(name='repoze.catalog',
       version=__version__,
