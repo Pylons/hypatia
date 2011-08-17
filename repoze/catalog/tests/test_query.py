@@ -3,11 +3,13 @@ from repoze.catalog.query import ast_support
 
 
 class ComparatorTestBase(unittest.TestCase):
+
     def _makeOne(self, index_name, value):
         return self._getTargetClass()(index_name, value)
 
 
 class TestQuery(unittest.TestCase):
+
     def _makeOne(self):
         from repoze.catalog.query import Query as cls
         return cls()
@@ -46,6 +48,7 @@ class TestQuery(unittest.TestCase):
         from repoze.catalog.query import Query
 
         class Derived(Query):
+
             def __init__(self, name):
                 self.name = name
                 self.children = []
@@ -69,6 +72,7 @@ class TestQuery(unittest.TestCase):
 
 
 class TestComparator(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Comparator
         return Comparator
@@ -84,6 +88,7 @@ class TestComparator(ComparatorTestBase):
 
 
 class TestContains(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Contains
         return Contains
@@ -120,6 +125,7 @@ class TestContains(ComparatorTestBase):
 
 
 class TestDoesNotContain(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import DoesNotContain
         return DoesNotContain
@@ -142,6 +148,7 @@ class TestDoesNotContain(ComparatorTestBase):
 
 
 class TestEq(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Eq
         return Eq
@@ -162,7 +169,9 @@ class TestEq(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotEq('index', 'val'))
 
+
 class TestNotEq(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import NotEq
         return NotEq
@@ -185,6 +194,7 @@ class TestNotEq(ComparatorTestBase):
 
 
 class TestGt(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Gt
         return Gt
@@ -207,6 +217,7 @@ class TestGt(ComparatorTestBase):
 
 
 class TestLt(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Lt
         return Lt
@@ -229,6 +240,7 @@ class TestLt(ComparatorTestBase):
 
 
 class TestGe(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Ge
         return Ge
@@ -251,6 +263,7 @@ class TestGe(ComparatorTestBase):
 
 
 class TestLe(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Le
         return Le
@@ -273,6 +286,7 @@ class TestLe(ComparatorTestBase):
 
 
 class TestAll(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import All
         return All
@@ -295,6 +309,7 @@ class TestAll(ComparatorTestBase):
 
 
 class TestNotAll(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import NotAll
         return NotAll
@@ -317,6 +332,7 @@ class TestNotAll(ComparatorTestBase):
 
 
 class TestAny(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Any
         return Any
@@ -327,6 +343,14 @@ class TestAny(ComparatorTestBase):
         result = inst._apply(catalog, None)
         self.assertEqual(result, 'val')
         self.assertEqual(catalog.index.any, 'val')
+
+    def test_apply_with_names(self):
+        from repoze.catalog.query import Name
+        catalog = DummyCatalog()
+        inst = self._makeOne('index', [Name('foo'), Name('bar')])
+        result = inst._apply(catalog, names={'foo': 'one', 'bar': 'two'})
+        self.assertEqual(result, ['one', 'two'])
+        self.assertEqual(catalog.index.any, ['one', 'two'])
 
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
@@ -339,6 +363,7 @@ class TestAny(ComparatorTestBase):
 
 
 class TestNotAny(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import NotAny
         return NotAny
@@ -361,6 +386,7 @@ class TestNotAny(ComparatorTestBase):
 
 
 class TestInRange(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import InRange
         return InRange
@@ -437,6 +463,7 @@ class TestInRange(ComparatorTestBase):
 
 
 class TestNotInRange(ComparatorTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import NotInRange
         return NotInRange
@@ -481,24 +508,29 @@ class TestNotInRange(ComparatorTestBase):
 
 
 class BoolOpTestBase(unittest.TestCase):
+
     def _makeOne(self, left, right):
         return self._getTargetClass()(left, right)
 
 
 class TestBoolOp(BoolOpTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import BoolOp as cls
         return cls
 
     def test_iter_children(self):
+
         class Dummy(object):
             pass
+
         left, right = Dummy(), Dummy()
         o = self._makeOne(left, right)
         self.assertEqual(list(o.iter_children()), [left, right])
 
 
 class TestOr(BoolOpTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import Or as cls
         return cls
@@ -544,12 +576,13 @@ class TestOr(BoolOpTestBase):
         o = self._makeOne(left, right)
         neg = o.negate()
         self.failUnless(isinstance(neg, And))
-        left ,right = neg.queries
+        left, right = neg.queries
         self.failUnless(left.negated)
         self.failUnless(right.negated)
 
 
 class TestAnd(BoolOpTestBase):
+
     def _getTargetClass(self):
         from repoze.catalog.query import And as cls
         return cls
@@ -595,7 +628,7 @@ class TestAnd(BoolOpTestBase):
         o = self._makeOne(left, right)
         neg = o.negate()
         self.failUnless(isinstance(neg, Or))
-        left ,right = neg.queries
+        left, right = neg.queries
         self.failUnless(left.negated)
         self.failUnless(right.negated)
 
@@ -647,6 +680,7 @@ class TestName(unittest.TestCase):
 
 
 class Test_parse_query(unittest.TestCase):
+
     def tearDown(self):
         from repoze.catalog import query
         query.ast_support = True
@@ -863,6 +897,22 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(op.index_name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
+    def test_any_with_name(self):
+        from repoze.catalog.query import Any
+        from repoze.catalog.query import Name
+        op = self._call_fut("a in any(foo)")
+        self.failUnless(isinstance(op, Any), op)
+        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op._value, Name('foo'))
+
+    def test_any_with_names(self):
+        from repoze.catalog.query import Any
+        from repoze.catalog.query import Name
+        op = self._call_fut("a in any([foo, bar])")
+        self.failUnless(isinstance(op, Any), op)
+        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op._value, [Name('foo'), Name('bar')])
+
     def test_not_any(self):
         from repoze.catalog.query import NotAny
         op = self._call_fut("not(a == 1 or a == 2 or a == 3)")
@@ -1058,6 +1108,7 @@ class Dummy(object):
 
 
 class DummyCatalog(object):
+
     def __init__(self, index=None):
         if index is None:
             index = DummyIndex()

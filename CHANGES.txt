@@ -4,6 +4,14 @@ Unreleased
 - Harmonized index name / discriminator in catalog setup with content schema
   and queries used in later examples.  Thanks to Douglas Cerna.
 
+- Fixed semantics of 'applyEq' for the Keyword index. The 'applyEq' (and
+  'applyNotEq') methods now expect scalar values for the query. 'applyAny',
+  'applyAll' and their respective negations should be used to query multiple
+  values.
+
+- Fixed bug in query parser where names inside of 'any' or 'all' calls were
+  not being parsed properly.
+
 0.8.0 (2011-03-20)
 ==================
 

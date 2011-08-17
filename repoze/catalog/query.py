@@ -27,14 +27,13 @@ class Query(object):
         if not isinstance(operand, Query):
             raise TypeError(
                 "TypeError: unsupported operand types for %s: %s %s" %
-                (setop, type(self), type(operand))
-            )
+                (setop, type(self), type(operand)))
 
     def iter_children(self):
         return ()
 
     def print_tree(self, out=sys.stdout, level=0):
-        print >>out, '  ' * level + str(self)
+        print >> out, '  ' * level + str(self)
         for child in self.iter_children():
             child.print_tree(out, level + 1)
 
@@ -50,6 +49,7 @@ class Comparator(Query):
     """
     Base class for all comparators used in queries.
     """
+
     def __init__(self, index_name, value):
         self.index_name = index_name
         self._value = value
@@ -230,6 +230,7 @@ class NotAny(Comparator):
     def __str__(self):
         return '%s not in any(%s)' % (self.index_name, repr(self._value))
 
+
 class All(Comparator):
     """All query.
 
@@ -246,6 +247,7 @@ class All(Comparator):
 
     def __str__(self):
         return '%s in all(%s)' % (self.index_name, repr(self._value))
+
 
 class NotAll(Comparator):
     """NotAll query.
@@ -264,7 +266,9 @@ class NotAll(Comparator):
     def __str__(self):
         return '%s not in all(%s)' % (self.index_name, repr(self._value))
 
+
 class _Range(Comparator):
+
     @classmethod
     def fromGTLT(cls, start, end):
         assert isinstance(start, (Gt, Ge))
@@ -344,8 +348,7 @@ class InRange(_Range):
         index = self._get_index(catalog)
         return index.applyInRange(
             self._get_start(names), self._get_end(names),
-            self.start_exclusive, self.end_exclusive
-        )
+            self.start_exclusive, self.end_exclusive)
 
     def negate(self):
         return NotInRange(self.index_name, self._start, self._end,
@@ -363,8 +366,7 @@ class NotInRange(_Range):
         index = self._get_index(catalog)
         return index.applyNotInRange(
             self._get_start(names), self._get_end(names),
-            self.start_exclusive, self.end_exclusive
-        )
+            self.start_exclusive, self.end_exclusive)
 
     def __str__(self):
         return 'not(%s)' % _Range.__str__(self)
@@ -451,6 +453,7 @@ class BoolOp(Query):
 
 class Or(BoolOp):
     """Boolean Or of multiple queries."""
+
     def _apply(self, catalog, names):
         # XXX Try to figure out when we need weightedOr and when we can
         # just use union or multiunion.
@@ -512,6 +515,7 @@ class Or(BoolOp):
 
 class And(BoolOp):
     """Boolean And of multiple queries."""
+
     def _apply(self, catalog, names):
         # XXX Try to figure out when we need weightedIntersection and when we
         # can just use intersection.
@@ -574,6 +578,7 @@ class And(BoolOp):
 
 class Not(Query):
     """Negation of a query."""
+
     def __init__(self, query):
         self.query = query
 
@@ -616,8 +621,8 @@ class Name(object):
             count, docids = catalog.query(find_cats, params)
             for docid in docids:
                 yield resolver(docid)
-
     """
+
     def __init__(self, name):
         self.name = name
 
@@ -680,25 +685,23 @@ class _AstParser(object):
     current node and its children which have already been processed.  In this
     way the query tree is built from the ast from the bottom up.
     """
+
     def __init__(self, expr):
         self.expr = expr
 
     def parse(self):
         statements = ast.parse(self.expr).body
         if len(statements) > 1:
-            raise ValueError(
-                "Can only process single expression."
-            )
+            raise ValueError("Can only process single expression.")
         expr_tree = statements[0]
         if not isinstance(expr_tree, ast.Expr):
-            raise ValueError(
-                "Not an expression."
-            )
+            raise ValueError("Not an expression.")
 
         result = self.walk(expr_tree.value)
         return result
 
     def walk(self, tree):
+
         def visit(node):
             children = [visit(child) for child in ast.iter_child_nodes(node)]
             name = 'process_%s' % type(node).__name__
@@ -706,9 +709,9 @@ class _AstParser(object):
             if processor is None:
                 raise ValueError(
                     "Unable to parse expression.  Unhandled expression "
-                    "element: %s" % type(node).__name__
-                )
+                    "element: %s" % type(node).__name__)
             return processor(node, children)
+
         return visit(tree)
 
     def process_Load(self, node, children):
@@ -758,24 +761,30 @@ class _AstParser(object):
         return self.process_comparator(Ge)
 
     def process_comparator(self, cls):
+
         def factory(left, right):
             return cls(self._index_name(left), self._value(right))
+
         factory.type = cls
         return factory
 
     def process_In(self, node, children):
+
         def factory(left, right):
             if callable(right):  # any or all, see process_Call
                 return right(self._index_name(left))
             return Contains(self._index_name(right), self._value(left))
+
         factory.type = Contains
         return factory
 
     def process_NotIn(self, node, children):
+
         def factory(left, right):
             if callable(right):  # any or all, see process_Call
                 return right(self._index_name(left)).negate()
             return DoesNotContain(self._index_name(right), self._value(left))
+
         factory.type = DoesNotContain
         return factory
 
@@ -822,8 +831,7 @@ class _AstParser(object):
                                start_exclusive,
                                end_exclusive)
         raise ValueError(
-            "Bad expression: unsupported chaining of comparators."
-        )
+            "Bad expression: unsupported chaining of comparators.")
 
     def process_BitOr(self, node, children):
         return Or
@@ -836,13 +844,11 @@ class _AstParser(object):
         if not isinstance(left, Query):
             raise ValueError(
                 "Bad expression: left operand for %s must be a result set." %
-                operator.__name__
-            )
+                operator.__name__)
         if not isinstance(right, Query):
             raise ValueError(
                 "Bad expression: right operand for %s must be a result set." %
-                operator.__name__
-            )
+                operator.__name__)
         return operator(left, right)
 
     def process_Or(self, node, children):
@@ -879,7 +885,7 @@ class _AstParser(object):
             comparator = All
 
         def factory(index_name):
-            return comparator(index_name, values)
+            return comparator(index_name, self._value(values))
 
         return factory
 
