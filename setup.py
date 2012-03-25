@@ -26,6 +26,10 @@ try:
 except IOError:
     README = CHANGES = ''
 
+install_requires = ['setuptools', 'zope.component', 'zope.index >= 3.5.0']
+
+testing_extras = install_requires + ['nose', 'coverage']
+
 setup(name='repoze.catalog',
       version=__version__,
       description='Searching and indexing based on zope.index',
@@ -33,6 +37,9 @@ setup(name='repoze.catalog',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
         ],
       keywords='indexing catalog search',
@@ -44,18 +51,11 @@ setup(name='repoze.catalog',
       include_package_data=True,
       namespace_packages=['repoze'],
       zip_safe=False,
-      tests_require = [
-        'setuptools',
-        'zope.index >= 3.5.0',
-        'nose',
-        ],
-      install_requires = [
-        'setuptools',
-        'zope.component',
-        'zope.index >= 3.5.0',
-        ],
+      tests_require = install_requires,
+      install_requires = install_requires,
       extras_require = {
-        'benchmark': ['PyChart']
+        'benchmark': ['PyChart'],
+        'testing': testing_extras,
         },
       test_suite="repoze.catalog",
       ## entry_points = """\
