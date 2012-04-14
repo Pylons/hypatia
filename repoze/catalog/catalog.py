@@ -58,9 +58,11 @@ class Catalog(PersistentMapping):
         (num, resultseq) based on the merging of results from
         individual indexes.
 
-        .. note:: this method is deprecated as of
-                  :mod:`repoze.catalog` version 0.8.  Use
-                  :meth:`repoze.catalog.Catalog.query` instead.
+        .. note::
+
+                  this method is deprecated as of :mod:`repoze.catalog`
+                  version 0.8.  Use :meth:`repoze.catalog.Catalog.query`
+                  instead.
 
 
         """
