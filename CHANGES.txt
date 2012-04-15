@@ -1,3 +1,10 @@
+Next release
+============
+
+- Fix docs rendering.
+
+- Add "dev" and "docs" aliases to setup.cfg.
+
 0.8.1 (2011-08-17)
 ==================
 

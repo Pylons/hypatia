@@ -15,16 +15,19 @@ import sys, os
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
-parent = os.path.dirname(os.path.dirname(__file__))
-sys.path.append(os.path.abspath(parent))
-wd = os.getcwd()
-os.chdir(parent)
-os.system('%s setup.py test -q' % sys.executable)
-os.chdir(wd)
 
-for item in os.listdir(parent):
-    if item.endswith('.egg'):
-        sys.path.append(os.path.join(parent, item))
+if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
+    parent = os.path.dirname(os.path.dirname(__file__))
+    sys.path.append(os.path.abspath(parent))
+    wd = os.getcwd()
+    os.chdir(parent)
+    os.system('%s setup.py test -q' % sys.executable)
+    os.chdir(wd)
+
+    for item in os.listdir(parent):
+        if item.endswith('.egg'):
+            sys.path.append(os.path.join(parent, item))
+
 
 # General configuration
 # ---------------------
@@ -44,13 +47,13 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'repoze.catalog'
-copyright = '2008-2011, Agendaless Consulting'
+copyright = '2008-2012, Agendaless Consulting'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.8.0'
+version = '0.8.1'
 # The full version, including alpha/beta/rc tags.
 release = version
 

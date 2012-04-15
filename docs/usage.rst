@@ -498,9 +498,11 @@ CQE::
 Search Using the :meth:`repoze.catalog.Catalog.search` Method (Deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. warning:: The :meth:`repoze.catalog.Catalog.search` method is
-   deprecated as of :mod:`repoze.catalog` 0.8.  Use
-   :meth:`repoze.catalog.Catalog.query` instead.
+.. warning::
+
+   The :meth:`repoze.catalog.Catalog.search` method is deprecated as of
+   :mod:`repoze.catalog` 0.8.  Use :meth:`repoze.catalog.Catalog.query`
+   instead.
 
 We can pass a query into our catalog's ``search`` method, which is
 composed of the name of our index and a value we'd like to find a

@@ -15,20 +15,20 @@
 __version__ = '0.8.1'
 
 import os
-import sys
 
 from setuptools import setup, find_packages
 
 try:
     here = os.path.abspath(os.path.dirname(__file__))
-    README = open(os.path.join(here, 'README.txt')).read()
+    README = open(os.path.join(here, 'README.rst')).read()
     CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 except IOError:
     README = CHANGES = ''
 
 install_requires = ['setuptools', 'zope.component', 'zope.index >= 3.5.0']
 
-testing_extras = install_requires + ['nose', 'coverage']
+testing_extras = ['nose', 'coverage']
+docs_extras = ['Sphinx']
 
 setup(name='repoze.catalog',
       version=__version__,
@@ -56,6 +56,7 @@ setup(name='repoze.catalog',
       extras_require = {
         'benchmark': ['PyChart'],
         'testing': testing_extras,
+        'docs':docs_extras,
         },
       test_suite="repoze.catalog",
       ## entry_points = """\
