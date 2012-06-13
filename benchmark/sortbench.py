@@ -14,8 +14,8 @@ from pychart import legend
 from pychart import text_box
 
 from BTrees.IFBTree import IFSet
-from repoze.catalog.indexes.field import fwscan_wins
-from repoze.catalog.indexes.field import nbest_ascending_wins
+from hypatia.indexes.field import fwscan_wins
+from hypatia.indexes.field import nbest_ascending_wins
 
 theme.get_options()
 theme.use_color = True

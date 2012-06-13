@@ -7,11 +7,11 @@ import datetime
 BENCHMARK_DATA_DIR='benchmark_data'
 MAILLIST_INDEX='http://mail.python.org/pipermail/python-list/'
 
-from repoze.catalog.catalog import FileStorageCatalogFactory
-from repoze.catalog.catalog import ConnectionManager
-from repoze.catalog.indexes.field import CatalogFieldIndex
-from repoze.catalog.indexes.facet import CatalogFacetIndex
-from repoze.catalog.indexes.text import CatalogTextIndex
+from hypatia.catalog import FileStorageCatalogFactory
+from hypatia.catalog import ConnectionManager
+from hypatia.indexes.field import CatalogFieldIndex
+from hypatia.indexes.facet import CatalogFacetIndex
+from hypatia.indexes.text import CatalogTextIndex
         
 from email.Parser import Parser
 from rfc822 import parsedate_tz

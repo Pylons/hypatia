@@ -52,11 +52,11 @@ import random
 import sys
 import time
 
-from repoze.catalog.catalog import ConnectionManager
-from repoze.catalog.catalog import FileStorageCatalogFactory
-from repoze.catalog.indexes.field import CatalogFieldIndex
-from repoze.catalog.query import Eq
-from repoze.catalog.query import BoolOp
+from hypatia.catalog import ConnectionManager
+from hypatia.catalog import FileStorageCatalogFactory
+from hypatia.indexes.field import CatalogFieldIndex
+from hypatia.query import Eq
+from hypatia.query import BoolOp
 
 _marker = object()
 random.seed()
