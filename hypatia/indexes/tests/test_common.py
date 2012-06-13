@@ -2,7 +2,7 @@ import unittest
 
 class TestCatalogIndex(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.indexes.common import CatalogIndex
+        from ..common import CatalogIndex
         return CatalogIndex
 
     def test_ctor(self):
@@ -197,7 +197,7 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(set(index.docids()), set([1, 2, 3, 4]))
 
 
-from repoze.catalog.interfaces import ICatalogIndex
+from ...interfaces import ICatalogIndex
 from zope.interface import implements
 
 

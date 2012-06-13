@@ -5,7 +5,7 @@ _marker = object()
 
 class TestCatalogFieldIndex(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.indexes.field import CatalogFieldIndex
+        from ..field import CatalogFieldIndex
         return CatalogFieldIndex
 
     def _makeOne(self, discriminator=_marker):
@@ -32,12 +32,12 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyClass(ICatalogIndex, self._getTargetClass())
 
     def test_instance_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyObject
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
     def test_ctor_callback_discriminator(self):
@@ -139,7 +139,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_bad_sort_type_reverse_fwscan(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import FWSCAN
+        from ..field import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -224,7 +224,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_fwscan_no_limit(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import FWSCAN
+        from ..field import FWSCAN
         index = self._makeOne()
         index.force_scan = True
         self._populateIndex(index)
@@ -234,7 +234,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_fwscan_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import FWSCAN
+        from ..field import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -244,7 +244,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_fwscan_w_limit(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import FWSCAN
+        from ..field import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -253,7 +253,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_timsort_no_limit(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import TIMSORT
+        from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -262,7 +262,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_timsort_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import TIMSORT
+        from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -272,7 +272,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_timsort_w_limit(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import TIMSORT
+        from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -281,7 +281,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_timsort_reverse_nolimit(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import TIMSORT
+        from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -290,7 +290,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_timsort_reverse_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import TIMSORT
+        from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -300,7 +300,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_timsort_reverse_withlimit(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import TIMSORT
+        from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -309,7 +309,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_nbest_no_limit_raises(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import NBEST
+        from ..field import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -317,7 +317,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_nbest(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import NBEST
+        from ..field import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -326,7 +326,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_nbest_reverse_no_limit_raises(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import NBEST
+        from ..field import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -335,7 +335,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_nbest_reverse(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import NBEST
+        from ..field import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -344,7 +344,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_nbest_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import NBEST
+        from ..field import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -353,7 +353,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 
     def test_sort_force_nbest_reverse_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from repoze.catalog.indexes.field import NBEST
+        from ..field import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -364,7 +364,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         result = index.search([RangeValue(1,1)])
         result = sorted(list(result))
         self.assertEqual(result, [5, 50])
@@ -373,7 +373,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         result = index.search([RangeValue(1,1), RangeValue(1,2)])
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 50])
@@ -382,7 +382,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         result = index.search([RangeValue(1,1), RangeValue(1,2)], 'and')
         result = sorted(list(result))
         self.assertEqual(result, [5, 50])
@@ -413,7 +413,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_apply_dict_single_range(self):
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
@@ -422,7 +422,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [2, 5, 50])
 
     def test_apply_dict_operator_or_with_ranges(self):
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
@@ -432,7 +432,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [2, 5, 50])
 
     def test_apply_dict_operator_and_with_ranges_and(self):
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
@@ -442,7 +442,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [5, 50])
 
     def test_apply_dict_operator_and_with_ranges_or(self):
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
@@ -477,7 +477,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_apply_dict_operator_or_with_int_and_range_or(self):
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
@@ -486,7 +486,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
         self.assertEqual(result, [2,5,50])
 
     def test_apply_dict_operator_or_with_int_and_range_and(self):
-        from repoze.catalog import RangeValue
+        from hypatia import RangeValue
         index = self._makeOne()
         self._populateIndex(index)
         index.index_doc(50, 1)
@@ -697,7 +697,7 @@ class TestCatalogFieldIndex(unittest.TestCase):
 class Test_fwscan_wins(unittest.TestCase):
 
     def _callFUT(self, limit, rlen, numdocs):
-        from repoze.catalog.indexes.field import fwscan_wins
+        from ..field import fwscan_wins
         return fwscan_wins(limit, rlen, numdocs)
 
     def test_numdocs_zero_raises(self):
@@ -783,7 +783,7 @@ class Test_fwscan_wins(unittest.TestCase):
 class Test_nbest_ascending_wins(unittest.TestCase):
 
     def _callFUT(self, limit, rlen, numdocs):
-        from repoze.catalog.indexes.field import nbest_ascending_wins
+        from ..field import nbest_ascending_wins
         return nbest_ascending_wins(limit, rlen, numdocs)
 
     def test_wo_limit(self):

@@ -3,8 +3,8 @@ from zope.interface import implements
 from zope.index.interfaces import IIndexSort
 from zope.index.text import TextIndex
 
-from repoze.catalog.interfaces import ICatalogIndex
-from repoze.catalog.indexes.common import CatalogIndex
+from ..interfaces import ICatalogIndex
+from .common import CatalogIndex
 
 class CatalogTextIndex(CatalogIndex, TextIndex):
     """ Full-text index.

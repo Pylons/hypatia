@@ -1,5 +1,4 @@
 from zope.interface import Interface
-from zope.interface import Attribute
 
 from zope.index.interfaces import IInjection
 from zope.index.interfaces import IIndexSearch

@@ -7,7 +7,7 @@ class PathIndexTests(unittest.TestCase):
     """ Test PathIndex objects
     """
     def _getTargetClass(self):
-        from repoze.catalog.indexes.path import CatalogPathIndex
+        from ..path import CatalogPathIndex
         return CatalogPathIndex
 
     def _makeOne(self, values=None, discriminator=_marker):
@@ -26,12 +26,12 @@ class PathIndexTests(unittest.TestCase):
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyClass(ICatalogIndex, self._getTargetClass())
 
     def test_instance_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyObject
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
     def test_ctor_callback_discriminator(self):

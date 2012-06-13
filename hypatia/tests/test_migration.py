@@ -4,7 +4,7 @@ import unittest
 class TestMigration(unittest.TestCase):
 
     def test_migrate_to_0_8_0(self):
-        from repoze.catalog.migration import migrate_to_0_8_0
+        from ..migration import migrate_to_0_8_0
         catalog = DummyCatalog()
         migrate_to_0_8_0(catalog)
         self.assertEqual(catalog['one'].migrated, set([1, 2, 3]))
@@ -13,7 +13,7 @@ class TestMigration(unittest.TestCase):
 
 
     def test_migrate_to_0_8_0_from_document_map(self):
-        from repoze.catalog.migration import migrate_to_0_8_0_from_document_map
+        from ..migration import migrate_to_0_8_0_from_document_map
         catalog = DummyCatalog()
         migrate_to_0_8_0_from_document_map(catalog, catalog.document_map)
         self.assertEqual(catalog['one'].migrated, set([2, 3, 4]))

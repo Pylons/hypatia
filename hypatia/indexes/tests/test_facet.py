@@ -22,7 +22,7 @@ _marker = object()
 
 class TestCatalogFacetIndex(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.indexes.facet import CatalogFacetIndex
+        from ..facet import CatalogFacetIndex
         return CatalogFacetIndex
 
     def _makeOne(self, discriminator=None, facets=FACETS, family=_marker):
@@ -43,12 +43,12 @@ class TestCatalogFacetIndex(unittest.TestCase):
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyClass(ICatalogIndex, self._getTargetClass())
 
     def test_instance_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyObject
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
     def test_ctor_defaults(self):

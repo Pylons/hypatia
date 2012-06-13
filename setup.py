@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.8.2'
+__version__ = '0.0'
 
 import os
 
@@ -30,9 +30,9 @@ install_requires = ['setuptools', 'zope.component', 'zope.index >= 3.5.0']
 testing_extras = ['nose', 'coverage']
 docs_extras = ['Sphinx']
 
-setup(name='repoze.catalog',
+setup(name='hypatia',
       version=__version__,
-      description='Searching and indexing based on zope.index',
+      description='Python package for searching and indexing',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Intended Audience :: Developers",
@@ -43,13 +43,12 @@ setup(name='repoze.catalog',
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
         ],
       keywords='indexing catalog search',
-      author="Agendaless Consulting",
-      author_email="repoze-dev@lists.repoze.org",
-      url="http://www.repoze.org",
+      author="Chris McDonough, Agendaless Consulting",
+      author_email="pylons-discuss@googlegroups.com",
+      url="http://pylonsproject.org",
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
       packages=find_packages(),
       include_package_data=True,
-      namespace_packages=['repoze'],
       zip_safe=False,
       tests_require = install_requires,
       install_requires = install_requires,
@@ -58,11 +57,11 @@ setup(name='repoze.catalog',
         'testing': testing_extras,
         'docs':docs_extras,
         },
-      test_suite="repoze.catalog",
+      test_suite="hypatia",
       ## entry_points = """\
       ## [console_scripts]
-      ## catalog_benchmark = repoze.catalog.benchmark.benchmark:run
-      ## sortbench = repoze.catalog.benchmark.sortbench:main
+      ## catalog_benchmark = hypatia.benchmark.benchmark:run
+      ## sortbench = hypatia.benchmark.sortbench:main
       ## """,
       )
 

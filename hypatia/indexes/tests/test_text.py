@@ -4,7 +4,7 @@ _marker = object()
 
 class TestCatalogTextIndex(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.indexes.text import CatalogTextIndex
+        from ..text import CatalogTextIndex
         return CatalogTextIndex
 
     def _makeOne(self, discriminator=_marker):
@@ -18,12 +18,12 @@ class TestCatalogTextIndex(unittest.TestCase):
 
     def test_class_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyClass
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyClass(ICatalogIndex, self._getTargetClass())
 
     def test_instance_conforms_to_ICatalogIndex(self):
         from zope.interface.verify import verifyObject
-        from repoze.catalog.interfaces import ICatalogIndex
+        from ...interfaces import ICatalogIndex
         verifyObject(ICatalogIndex, self._makeOne())
 
     def test_class_conforms_to_IIndexSort(self):

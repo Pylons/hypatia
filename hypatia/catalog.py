@@ -4,8 +4,8 @@ import transaction
 
 from zope.interface import implements
 
-from repoze.catalog.interfaces import ICatalog
-from repoze.catalog.interfaces import ICatalogIndex
+from .interfaces import ICatalog
+from .interfaces import ICatalogIndex
 
 class Catalog(PersistentMapping):
 
@@ -47,7 +47,7 @@ class Catalog(PersistentMapping):
 
     def __setitem__(self, name, index):
         """ Add an object which implements
-        ``repoze.catalog.interfaces.ICatalogIndex`` to the catalog.
+        ``hypatia.interfaces.ICatalogIndex`` to the catalog.
         No other type of object may be added to a catalog."""
         if not ICatalogIndex.providedBy(index):
             raise ValueError('%s does not provide ICatalogIndex')
@@ -61,7 +61,7 @@ class Catalog(PersistentMapping):
         .. note::
 
                   this method is deprecated as of :mod:`repoze.catalog`
-                  version 0.8.  Use :meth:`repoze.catalog.Catalog.query`
+                  version 0.8.  Use :meth:`hypatia.Catalog.query`
                   instead.
 
 
@@ -146,7 +146,7 @@ class Catalog(PersistentMapping):
         """ Use the arguments to perform a query.  Return a tuple of
         (num, resultseq)."""
         try:
-            from repoze.catalog.query import parse_query
+            from .query import parse_query
             if isinstance(queryobject, basestring):
                 queryobject = parse_query(queryobject)
         except ImportError: #pragma NO COVERAGE

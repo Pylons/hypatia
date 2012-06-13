@@ -614,8 +614,8 @@ class Name(object):
 
     Example::
 
-        from repoze.catalog.query import Eq
-        from repoze.catalog.query import Name
+        from hypatia.query import Eq
+        from hypatia.query import Name
 
         # Define query at module scope
         find_cats = Eq('color', Name('color')) & Eq('sex', Name('sex'))

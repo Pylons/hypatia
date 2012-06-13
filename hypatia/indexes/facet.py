@@ -6,8 +6,8 @@ except: # pragma no cover
 from persistent import Persistent
 from zope.interface import implements
 
-from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-from repoze.catalog.interfaces import ICatalogIndex
+from .keyword import CatalogKeywordIndex
+from ..interfaces import ICatalogIndex
 
 _marker = ()
 

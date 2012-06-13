@@ -6,9 +6,9 @@ from zope.interface import implements
 
 from zope.index.field import FieldIndex
 
-from repoze.catalog.interfaces import ICatalogIndex
-from repoze.catalog.indexes.common import CatalogIndex
-from repoze.catalog import RangeValue
+from ..interfaces import ICatalogIndex
+from .common import CatalogIndex
+from .. import RangeValue
 
 _marker = []
 

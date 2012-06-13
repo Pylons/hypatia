@@ -4,7 +4,7 @@ _marker = object()
 
 class TestCatalog(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.catalog import Catalog
+        from ..catalog import Catalog
         return Catalog
 
     def _makeOne(self, family=_marker):
@@ -16,13 +16,13 @@ class TestCatalog(unittest.TestCase):
     def test_klass_provides_ICatalog(self):
         klass = self._getTargetClass()
         from zope.interface.verify import verifyClass
-        from repoze.catalog.catalog import ICatalog
+        from ..catalog import ICatalog
         verifyClass(ICatalog, klass)
         
     def test_inst_provides_ICatalog(self):
         klass = self._getTargetClass()
         from zope.interface.verify import verifyObject
-        from repoze.catalog.catalog import ICatalog
+        from ..catalog import ICatalog
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
 
@@ -192,7 +192,7 @@ class TestCatalog(unittest.TestCase):
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
-        from repoze.catalog.indexes.field import FWSCAN
+        from ..indexes.field import FWSCAN
         numdocs, result = catalog.search(name1={}, sort_index='name1',
                                          limit=1, sort_type=FWSCAN)
         self.assertEqual(idx1.sort_type, FWSCAN)
@@ -209,10 +209,10 @@ class TestCatalog(unittest.TestCase):
 
     def _test_functional_merge(self, **extra):
         catalog = self._makeOne()
-        from repoze.catalog.indexes.field import CatalogFieldIndex
-        from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-        from repoze.catalog.indexes.text import CatalogTextIndex
-        from repoze.catalog.indexes.path2 import CatalogPathIndex2
+        from ..indexes.field import CatalogFieldIndex
+        from ..indexes.keyword import CatalogKeywordIndex
+        from ..indexes.text import CatalogTextIndex
+        from ..indexes.path2 import CatalogPathIndex2
         class Content(object):
             def __init__(self, field, keyword, text, path):
                 self.field = field
@@ -267,7 +267,7 @@ class TestCatalog(unittest.TestCase):
 
 class TestFileStorageCatalogFactory(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.catalog import FileStorageCatalogFactory
+        from ..catalog import FileStorageCatalogFactory
         return FileStorageCatalogFactory
 
     def _makeOne(self, filename, appname, **kw):
@@ -284,14 +284,14 @@ class TestFileStorageCatalogFactory(unittest.TestCase):
 
     def test_no_conn_handler(self):
         factory = self._makeOne(self.tempfile, 'catalog')
-        from repoze.catalog.catalog import Catalog
+        from ..catalog import Catalog
         catalog = factory()
         self.failUnless(isinstance(catalog, Catalog))
         factory.db.close()
 
     def test_with_cache_size(self):
         factory = self._makeOne(self.tempfile, 'catalog', cache_size=1000)
-        from repoze.catalog.catalog import Catalog
+        from ..catalog import Catalog
         catalog = factory()
         self.failUnless(isinstance(catalog, Catalog))
         self.assertEqual(factory.db._cache_size, 1000)
@@ -299,7 +299,7 @@ class TestFileStorageCatalogFactory(unittest.TestCase):
 
     def test_with_conn_handler(self):
         factory = self._makeOne(self.tempfile, 'catalog')
-        from repoze.catalog.catalog import Catalog
+        from ..catalog import Catalog
         e = {}
         def handle(conn):
             e['conn'] = conn
@@ -310,7 +310,7 @@ class TestFileStorageCatalogFactory(unittest.TestCase):
 
 class TestConnectionManager(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.catalog import ConnectionManager
+        from ..catalog import ConnectionManager
         return ConnectionManager
 
     def _makeOne(self):
@@ -353,7 +353,7 @@ class DummyTransaction:
     def commit(self):
         self.committed = True
 
-from repoze.catalog.catalog import ICatalogIndex
+from ..catalog import ICatalogIndex
 from zope.interface import implements
 
 class DummyIndex(object):

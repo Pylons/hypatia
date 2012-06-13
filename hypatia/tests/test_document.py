@@ -2,7 +2,7 @@ import unittest
 
 class TestDocumentMap(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.catalog.document import DocumentMap
+        from ..document import DocumentMap
         return DocumentMap
 
     def _makeOne(self):

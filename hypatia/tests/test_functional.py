@@ -1,13 +1,13 @@
 import unittest
-from repoze.catalog import query as q
+from .. import query as q
 
 
 class TestQueryBase(object):
     def test_it(self):
-        from repoze.catalog.catalog import Catalog
-        from repoze.catalog.indexes.field import CatalogFieldIndex
-        from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-        from repoze.catalog.indexes.text import CatalogTextIndex
+        from ..catalog import Catalog
+        from ..indexes.field import CatalogFieldIndex
+        from ..indexes.keyword import CatalogKeywordIndex
+        from ..indexes.text import CatalogTextIndex
 
         catalog = Catalog()
         catalog['name'] = CatalogFieldIndex('name')
