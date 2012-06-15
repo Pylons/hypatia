@@ -43,7 +43,7 @@ class CatalogPathIndex(CatalogIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
     def clear(self):

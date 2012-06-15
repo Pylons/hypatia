@@ -44,7 +44,7 @@ class CatalogFacetIndex(CatalogKeywordIndex):
         self.discriminator = discriminator
         self.family = family
         self.facets = self.family.OO.Set(facets)
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
     def index_doc(self, docid, object):

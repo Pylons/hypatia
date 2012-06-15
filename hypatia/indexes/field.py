@@ -57,7 +57,7 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
     def reindex_doc(self, docid, value):

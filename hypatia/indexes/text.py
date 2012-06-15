@@ -33,7 +33,7 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
     def __init__(self, discriminator, lexicon=None, index=None,
                  family=BTrees.family64):
         self.family = family
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

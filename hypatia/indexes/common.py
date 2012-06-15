@@ -15,7 +15,7 @@ class CatalogIndex(object):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
 
     def index_doc(self, docid, object):
         if callable(self.discriminator):

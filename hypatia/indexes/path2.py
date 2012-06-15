@@ -47,6 +47,7 @@ class CatalogPathIndex2(CatalogIndex):  #pragma NO COVERAGE
                 raise ValueError('attr_discriminator value must be callable '
                                  'or a string')
         self.attr_discriminator = attr_discriminator
+        self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
     def clear(self):
