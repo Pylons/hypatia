@@ -1,5 +1,3 @@
-import BTrees
-
 import bisect
 import heapq
 from itertools import islice
@@ -50,8 +48,9 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
     """
     implements(ICatalogIndex)
 
-    def __init__(self, discriminator, family=BTrees.family64):
-        self.family = family
+    def __init__(self, discriminator, family=None):
+        if family is not None:
+            self.family = family
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

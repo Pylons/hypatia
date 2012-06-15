@@ -1,7 +1,5 @@
 from zope.interface import implements
 
-import BTrees
-
 from ..interfaces import ICatalogIndex
 from .common import CatalogIndex
 
@@ -35,8 +33,9 @@ class CatalogPathIndex2(CatalogIndex):  #pragma NO COVERAGE
     attr_discriminator = None # b/w compat
 
     def __init__(self, discriminator, attr_discriminator=None,
-                 family=BTrees.family64):
-        self.family = family
+                 family=None):
+        if family is not None:
+            self.family = family
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

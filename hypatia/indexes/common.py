@@ -1,3 +1,5 @@
+import BTrees
+
 from persistent import Persistent
 from ZODB.broken import Broken
 
@@ -6,6 +8,8 @@ _marker = ()
 
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
+
+    family = BTrees.family64
 
     def index_doc(self, docid, object):
         if callable(self.discriminator):

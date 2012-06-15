@@ -1,8 +1,6 @@
 from zope.interface import implements
 from persistent import Persistent
 
-import BTrees
-
 from BTrees.Length import Length
 
 from ..interfaces import ICatalogIndex
@@ -36,8 +34,9 @@ class CatalogPathIndex(CatalogIndex):
     implements(ICatalogIndex)
     useOperator = 'or'
 
-    def __init__(self, discriminator, family=BTrees.family64):
-        self.family = family
+    def __init__(self, discriminator, family=None):
+        if family is not None:
+            self.family = family
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

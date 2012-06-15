@@ -17,8 +17,11 @@ class DocumentMap(Persistent):
     _randrange = random.randrange
     docid_to_metadata = None # latch for b/c
 
-    def __init__(self, family=BTrees.family64):
-        self.family = family
+    family = BTrees.family64
+
+    def __init__(self, family=None):
+        if family is not None:
+            self.family = family
         self.docid_to_address = self.family.IO.BTree()
         self.address_to_docid = self.family.OI.BTree()
         self.docid_to_metadata = self.family.IO.BTree()

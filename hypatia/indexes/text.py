@@ -1,5 +1,3 @@
-import BTrees
-
 from zope.interface import implements
 
 from zope.index.interfaces import IIndexSort
@@ -31,8 +29,9 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
     implements(ICatalogIndex, IIndexSort)
 
     def __init__(self, discriminator, lexicon=None, index=None,
-                 family=BTrees.family64):
-        self.family = family
+                 family=None):
+        if family is not None:
+            self.family = family
         self._not_indexed = self.family.IF.TreeSet()
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
@@ -44,7 +43,7 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
             _explicit_lexicon = False
             lexicon = Lexicon(Splitter(), CaseNormalizer(), StopWordRemover())
         if index is None:
-            index = OkapiIndex(lexicon, family=family) # override family
+            index = OkapiIndex(lexicon, family=self.family) # override family
         self.lexicon = _explicit_lexicon and lexicon or index.lexicon
         self.index = index
         self.clear()
