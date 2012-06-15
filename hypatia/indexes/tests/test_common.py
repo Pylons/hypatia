@@ -5,42 +5,20 @@ class TestCatalogIndex(unittest.TestCase):
         from ..common import CatalogIndex
         return CatalogIndex
 
-    def test_ctor(self):
+    def _makeIndex(self, discriminator):
+        import BTrees
         klass = self._getTargetClass()
         class Test(klass, DummyIndex):
             pass
-        def callback(object, default):
-            """ """
-        index = Test(callback)
-        index._docids = set()
-        self.assertEqual(index.discriminator, callback)
-
-    def test_ctor_callback(self):
-        klass = self._getTargetClass()
-        def _discriminator(obj, default):
-            """ """
-        class Test(klass, DummyIndex):
-            pass
-        index = Test(_discriminator)
-        index._docids = set()
-        self.failUnless(index.discriminator is _discriminator)
-
-    def test_ctor_string(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
-        index._docids = set()
-        self.assertEqual(index.discriminator, 'abc')
-
-    def test_ctor_bad_discrim(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        self.assertRaises(ValueError, Test, None)
+        index = Test()
+        index.discriminator = discriminator
+        index._docids = BTrees.family64.IF.Set()
+        index._not_indexed = BTrees.family64.IF.TreeSet()
+        index.family = BTrees.family64
+        return index
 
     def test_not_implemented_applies_methods(self):
-        index = self._getTargetClass()('foo')
+        index = self._getTargetClass()()
         for name in [
             'applyContains',
             'applyDoesNotContain',
@@ -59,23 +37,15 @@ class TestCatalogIndex(unittest.TestCase):
             self.assertRaises(NotImplementedError, getattr(index, name))
 
     def test_index_doc_callback_returns_nondefault(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
         def callback(ob, default):
             return ob
-        index = Test(callback)
-        index._docids = set()
+        index = self._makeIndex(callback)
         self.assertEqual(index.index_doc(1, 'abc'), 'abc')
         self.assertEqual(index.value, 'abc')
         self.assertEqual(set(index.docids()), set([1]))
 
     def test_index_doc_string_discrim(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
-        index._docids = set()
+        index = self._makeIndex('abc')
         class Dummy:
             abc = 'abc'
         dummy = Dummy()
@@ -84,11 +54,7 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(set(index.docids()), set([1]))
 
     def test_index_doc_missing_value_unindexes(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
-        index._docids = set()
+        index = self._makeIndex('abc')
         class Dummy:
             pass
         dummy = Dummy()
@@ -102,11 +68,7 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(index.unindexed, 1)
 
     def test_index_doc_missing_value_then_with_value(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
-        index._docids = set()
+        index = self._makeIndex('abc')
         class Dummy:
             pass
         dummy = Dummy()
@@ -117,11 +79,7 @@ class TestCatalogIndex(unittest.TestCase):
         self.failUnless(20 in index.docids())
 
     def test_index_doc_missing_value_then_unindex(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
-        index._docids = set()
+        index = self._makeIndex('abc')
         class Dummy:
             pass
         dummy = Dummy()
@@ -131,25 +89,19 @@ class TestCatalogIndex(unittest.TestCase):
         self.failIf(20 in index.docids())
 
     def test_docids_with_indexed_and_not_indexed(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
-        index._docids = set()
+        index = self._makeIndex('abc')
         class Dummy:
             pass
         dummy = Dummy()
         self.assertEqual(index.index_doc(20, dummy), None)
         dummy.abc = 'foo'
         self.assertEqual(index.index_doc(21, dummy), 'foo')
-        self.assertEqual(set(index.docids()), set([20, 21]))
+        docids = index.docids()
+        self.assertEqual(set(docids), set([20, 21]))
 
     def test_index_doc_persistent_value_raises(self):
         from persistent import Persistent
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
+        index = self._makeIndex('abc')
         index._docids = set()
         class Dummy:
             pass
@@ -159,10 +111,7 @@ class TestCatalogIndex(unittest.TestCase):
 
     def test_index_doc_broken_object_raises(self):
         from ZODB.broken import Broken
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
+        index = self._makeIndex('abc')
         index._docids = set()
         class Dummy:
             pass
@@ -171,10 +120,7 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertRaises(ValueError, index.index_doc, 1, dummy)
 
     def test_reindex_doc(self):
-        klass = self._getTargetClass()
-        class Test(klass, DummyIndex):
-            pass
-        index = Test('abc')
+        index = self._makeIndex('abc')
         index._docids = set()
         class Dummy:
             abc = 'abc'

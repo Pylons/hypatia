@@ -1,21 +1,11 @@
 from persistent import Persistent
 from ZODB.broken import Broken
-import BTrees
 
 _marker = ()
 
 
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
-
-    def __init__(self, discriminator, family=BTrees.family64):
-        self.family = family
-        if not callable(discriminator):
-            if not isinstance(discriminator, basestring):
-                raise ValueError('discriminator value must be callable or a '
-                                 'string')
-        self.discriminator = discriminator
-        self._not_indexed = self.family.IF.TreeSet()
 
     def index_doc(self, docid, object):
         if callable(self.discriminator):
