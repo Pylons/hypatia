@@ -388,7 +388,7 @@ class BoolOp(Query):
     """
     Base class for Or and And operators.
     """
-    family = BTrees.family32
+    family = BTrees.family64
 
     def __init__(self, *queries):
         arguments = []

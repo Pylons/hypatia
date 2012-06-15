@@ -52,25 +52,23 @@ class TestCatalogFacetIndex(unittest.TestCase):
         verifyObject(ICatalogIndex, self._makeOne())
 
     def test_ctor_defaults(self):
-        from BTrees import family32
+        from BTrees import family64
         index = self._makeOne()
         self.failUnless(index.discriminator(self, index) is self)
         self.assertEqual(list(index.facets), sorted(FACETS))
-        self.failUnless(index.family is family32)
+        self.failUnless(index.family is family64)
 
     def test_ctor_explicit(self):
-        from BTrees import family64
+        from BTrees import family32
         OTHER_FACETS = ['foo', 'foo:bar']
         def _discriminator(obj, default):
             return default
-        index = self._makeOne(_discriminator, OTHER_FACETS, family64)
+        index = self._makeOne(_discriminator, OTHER_FACETS, family32)
         self.failUnless(index.discriminator(self, index) is index)
         self.assertEqual(list(index.facets), OTHER_FACETS)
-        self.failUnless(index.family is family64)
+        self.failUnless(index.family is family32)
 
     def test_ctor_string_discriminator(self):
-        from BTrees import family64
-        OTHER_FACETS = ['foo', 'foo:bar']
         index = self._makeOne('facets')
         self.assertEqual(index.discriminator, 'facets')
 

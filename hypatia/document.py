@@ -1,9 +1,6 @@
 import random
 
 from persistent import Persistent
-from BTrees.IOBTree import IOBTree
-from BTrees.OIBTree import OIBTree
-from BTrees.OOBTree import OOBTree
 
 import BTrees
 
@@ -17,14 +14,14 @@ class DocumentMap(Persistent):
     Additionally, the map is capable of mapping 'metadata' to docids.
     """
     _v_nextid = None
-    family = BTrees.family32
     _randrange = random.randrange
     docid_to_metadata = None # latch for b/c
 
-    def __init__(self):
-        self.docid_to_address = IOBTree()
-        self.address_to_docid = OIBTree()
-        self.docid_to_metadata = IOBTree()
+    def __init__(self, family=BTrees.family64):
+        self.family = family
+        self.docid_to_address = self.family.IO.BTree()
+        self.address_to_docid = self.family.OI.BTree()
+        self.docid_to_metadata = self.family.IO.BTree()
 
     def docid_for_address(self, address):
         """ Retrieve a document id for a given address.
@@ -161,7 +158,7 @@ class DocumentMap(Persistent):
     def _check_metadata(self):
         # backwards compatibility
         if self.docid_to_metadata is None:
-            self.docid_to_metadata = IOBTree()
+            self.docid_to_metadata = self.family.IO.BTree()
 
     def add_metadata(self, docid, data):
         """ Add metadata related to a given document id.
@@ -182,7 +179,7 @@ class DocumentMap(Persistent):
         if len(data.keys()) == 0:
             return
         self._check_metadata()
-        meta = self.docid_to_metadata.setdefault(docid, OOBTree())
+        meta = self.docid_to_metadata.setdefault(docid, self.family.OO.BTree())
         for k in data:
             meta[k] = data[k]
 

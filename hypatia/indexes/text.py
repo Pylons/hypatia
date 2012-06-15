@@ -1,3 +1,5 @@
+import BTrees
+
 from zope.interface import implements
 
 from zope.index.interfaces import IIndexSort
@@ -5,6 +7,12 @@ from zope.index.text import TextIndex
 
 from ..interfaces import ICatalogIndex
 from .common import CatalogIndex
+
+from zope.index.text.okapiindex import OkapiIndex
+from zope.index.text.lexicon import CaseNormalizer
+from zope.index.text.lexicon import Lexicon
+from zope.index.text.lexicon import Splitter
+from zope.index.text.lexicon import StopWordRemover
 
 class CatalogTextIndex(CatalogIndex, TextIndex):
     """ Full-text index.
@@ -22,14 +30,23 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
     implements(ICatalogIndex, IIndexSort)
 
-    def __init__(self, discriminator, lexicon=None, index=None):
+    def __init__(self, discriminator, lexicon=None, index=None,
+                 family=BTrees.family64):
+        self.family = family
+        self._not_indexed = self.family.IF.Set()
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self._not_indexed = self.family.IF.Set()
-        TextIndex.__init__(self, lexicon, index)
+        _explicit_lexicon = True
+        if lexicon is None:
+            _explicit_lexicon = False
+            lexicon = Lexicon(Splitter(), CaseNormalizer(), StopWordRemover())
+        if index is None:
+            index = OkapiIndex(lexicon, family=family) # override family
+        self.lexicon = _explicit_lexicon and lexicon or index.lexicon
+        self.index = index
         self.clear()
 
     def reindex_doc(self, docid, object):

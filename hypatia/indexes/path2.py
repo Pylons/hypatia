@@ -34,9 +34,9 @@ class CatalogPathIndex2(CatalogIndex):  #pragma NO COVERAGE
     implements(ICatalogIndex)
     attr_discriminator = None # b/w compat
 
-    family = BTrees.family32
-
-    def __init__(self, discriminator, attr_discriminator=None):
+    def __init__(self, discriminator, attr_discriminator=None,
+                 family=BTrees.family64):
+        self.family = family
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

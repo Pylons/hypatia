@@ -8,9 +8,8 @@ _marker = ()
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
 
-    family = BTrees.family32
-
-    def __init__(self, discriminator):
+    def __init__(self, discriminator, family=BTrees.family64):
+        self.family = family
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '
@@ -133,10 +132,3 @@ class CatalogIndex(object):
     def applyNotInRange(self, *args, **kw):
         return self._negate(self.applyInRange, *args, **kw)
 
-    def _migrate_to_0_8_0(self, docids):
-        """
-        I'm sorry.
-        """
-        docids = self.family.IF.Set(docids)
-        indexed = self.family.IF.Set(self._indexed())
-        self._not_indexed = self.family.IF.difference(docids, indexed)

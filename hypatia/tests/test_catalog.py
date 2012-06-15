@@ -20,21 +20,20 @@ class TestCatalog(unittest.TestCase):
         verifyClass(ICatalog, klass)
         
     def test_inst_provides_ICatalog(self):
-        klass = self._getTargetClass()
         from zope.interface.verify import verifyObject
         from ..catalog import ICatalog
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
 
     def test_ctor_defaults(self):
-        from BTrees import family32
+        from BTrees import family64
         catalog = self._makeOne()
-        self.failUnless(catalog.family is family32)
+        self.failUnless(catalog.family is family64)
 
     def test_ctor_explicit_family(self):
-        from BTrees import family64
-        catalog = self._makeOne(family64)
-        self.failUnless(catalog.family is family64)
+        from BTrees import family32
+        catalog = self._makeOne(family32)
+        self.failUnless(catalog.family is family32)
 
     def test_clear(self):
         catalog = self._makeOne()
@@ -77,7 +76,8 @@ class TestCatalog(unittest.TestCase):
         self.assertRaises(ValueError, catalog.__setitem__, 'a', None)
 
     def test_search(self):
-        from BTrees.IFBTree import IFSet
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
         c1 = IFSet([1, 2, 3])
         idx1 = DummyIndex(c1)
@@ -90,7 +90,8 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(list(result), [3])
 
     def test_search_index_returns_empty(self):
-        from BTrees.IFBTree import IFSet
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
         c1 = IFSet([])
         idx1 = DummyIndex(c1)
@@ -103,7 +104,8 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(list(result), [])
 
     def test_search_no_intersection(self):
-        from BTrees.IFBTree import IFSet
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
         c1 = IFSet([1, 2])
         idx1 = DummyIndex(c1)
@@ -116,7 +118,8 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(list(result), [])
 
     def test_search_index_query_order_returns_empty(self):
-        from BTrees.IFBTree import IFSet
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
         c1 = IFSet([1, 2])
         idx1 = DummyIndex(c1)
@@ -145,8 +148,9 @@ class TestCatalog(unittest.TestCase):
                           index_query_order=['name1'])
 
     def test_apply(self):
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
-        from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
@@ -158,8 +162,9 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(list(result), [3])
 
     def test_search_with_sortindex_ascending(self):
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
-        from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
@@ -172,8 +177,9 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(list(result), ['sorted1', 'sorted2', 'sorted3'])
 
     def test_search_with_sortindex_reverse(self):
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
-        from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
@@ -187,8 +193,9 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(list(result), ['sorted3', 'sorted2', 'sorted1'])
 
     def test_search_with_sort_type(self):
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
-        from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
@@ -198,8 +205,9 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(idx1.sort_type, FWSCAN)
 
     def test_limited(self):
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
         catalog = self._makeOne()
-        from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1

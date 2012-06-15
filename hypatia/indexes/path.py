@@ -36,9 +36,8 @@ class CatalogPathIndex(CatalogIndex):
     implements(ICatalogIndex)
     useOperator = 'or'
 
-    family = BTrees.family32
-
-    def __init__(self, discriminator):
+    def __init__(self, discriminator, family=BTrees.family64):
+        self.family = family
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '

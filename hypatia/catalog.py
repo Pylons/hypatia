@@ -11,12 +11,9 @@ class Catalog(PersistentMapping):
 
     implements(ICatalog)
 
-    family = BTrees.family32
-
-    def __init__(self, family=None):
+    def __init__(self, family=BTrees.family64):
         PersistentMapping.__init__(self)
-        if family is not None:
-            self.family = family
+        self.family = family
 
     def clear(self):
         """ Clear all indexes in this catalog. """

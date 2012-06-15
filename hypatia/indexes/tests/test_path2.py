@@ -953,7 +953,7 @@ class DummyAttrChecker(object):
     def __call__(self, results):
         import BTrees
         self.results = results
-        return BTrees.family32.IF.multiunion([x[1] for x in results])
+        return BTrees.family64.IF.multiunion([x[1] for x in results])
 
 class Dummy:
 

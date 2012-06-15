@@ -1,3 +1,5 @@
+import BTrees
+
 try:
     from hashlib import md5
 except: # pragma no cover
@@ -34,14 +36,13 @@ class CatalogFacetIndex(CatalogKeywordIndex):
     """
     implements(ICatalogIndex)
 
-    def __init__(self, discriminator, facets, family=None):
+    def __init__(self, discriminator, facets, family=BTrees.family64):
         if not callable(discriminator):
             if not isinstance(discriminator, basestring):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        if family is not None:
-            self.family = family
+        self.family = family
         self.facets = self.family.OO.Set(facets)
         self._not_indexed = self.family.IF.Set()
         self.clear()
