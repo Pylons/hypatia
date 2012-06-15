@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from zope.index.interfaces import IIndexSort
 from zope.index.text import TextIndex
@@ -12,6 +12,7 @@ from zope.index.text.lexicon import Lexicon
 from zope.index.text.lexicon import Splitter
 from zope.index.text.lexicon import StopWordRemover
 
+@implementer(ICatalogIndex, IIndexSort)
 class CatalogTextIndex(CatalogIndex, TextIndex):
     """ Full-text index.
 
@@ -25,8 +26,6 @@ class CatalogTextIndex(CatalogIndex, TextIndex):
 
     - NotEq
     """
-
-    implements(ICatalogIndex, IIndexSort)
 
     def __init__(self, discriminator, lexicon=None, index=None,
                  family=None):

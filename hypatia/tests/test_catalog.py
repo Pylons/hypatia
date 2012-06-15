@@ -362,10 +362,10 @@ class DummyTransaction:
         self.committed = True
 
 from ..catalog import ICatalogIndex
-from zope.interface import implements
+from zope.interface import implementer
 
+@implementer(ICatalogIndex)
 class DummyIndex(object):
-    implements(ICatalogIndex)
 
     value = None
     docid = None

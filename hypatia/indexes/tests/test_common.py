@@ -132,11 +132,10 @@ class TestCatalogIndex(unittest.TestCase):
         self.assertEqual(set(index.docids()), set([1]))
 
 from ...interfaces import ICatalogIndex
-from zope.interface import implements
+from zope.interface import implementer
 
-
+@implementer(ICatalogIndex)
 class DummyIndex(object):
-    implements(ICatalogIndex)
 
     value = None
 

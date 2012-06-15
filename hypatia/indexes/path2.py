@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from ..interfaces import ICatalogIndex
 from .common import CatalogIndex
@@ -6,6 +6,7 @@ from .common import CatalogIndex
 _marker = object()
 
 
+@implementer(ICatalogIndex)
 class CatalogPathIndex2(CatalogIndex):  #pragma NO COVERAGE
     """
     DEPRECATED
@@ -29,7 +30,6 @@ class CatalogPathIndex2(CatalogIndex):  #pragma NO COVERAGE
     Eq
 
     """
-    implements(ICatalogIndex)
     attr_discriminator = None # b/w compat
 
     def __init__(self, discriminator, attr_discriminator=None,
