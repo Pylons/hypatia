@@ -5,13 +5,13 @@ from .. import query as q
 class TestQueryBase(object):
     def test_it(self):
         from ..catalog import Catalog
-        from ..indexes.field import CatalogFieldIndex
+        from ..indexes.field import FieldIndex
         from ..indexes.keyword import CatalogKeywordIndex
         from ..indexes.text import CatalogTextIndex
 
         catalog = Catalog()
-        catalog['name'] = CatalogFieldIndex('name')
-        catalog['title'] = CatalogFieldIndex('title')
+        catalog['name'] = FieldIndex('name')
+        catalog['title'] = FieldIndex('title')
         catalog['text'] = CatalogTextIndex('text')
         catalog['allowed'] = CatalogKeywordIndex('allowed')
 

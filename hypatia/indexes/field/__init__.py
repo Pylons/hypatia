@@ -1,14 +1,34 @@
+##############################################################################
+#
+# Copyright (c) 2002 Zope Foundation and Contributors.
+# All Rights Reserved.
+#
+# This software is subject to the provisions of the Zope Public License,
+# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+# FOR A PARTICULAR PURPOSE
+#
+##############################################################################
+"""Field index
+"""
+from persistent import Persistent
+from ZODB.broken import Broken
+
+import persistent
+from BTrees.Length import Length
+
 import bisect
 import heapq
 from itertools import islice
 
 from zope.interface import implementer
 
-from zope.index.field import FieldIndex
+from hypatia import interfaces
+from hypatia import RangeValue
 
-from ..interfaces import ICatalogIndex
-from .common import CatalogIndex
-from .. import RangeValue
+from ..common import CatalogIndex
 
 _marker = []
 
@@ -16,8 +36,13 @@ FWSCAN = 'fwscan'
 NBEST = 'nbest'
 TIMSORT = 'timsort'
 
-@implementer(ICatalogIndex)
-class CatalogFieldIndex(CatalogIndex, FieldIndex):
+@implementer(
+        interfaces.IInjection,
+        interfaces.IStatistics,
+        interfaces.IIndexSearch,
+        interfaces.ICatalogIndex,
+        )
+class FieldIndex(CatalogIndex, persistent.Persistent):
     """ Field indexing.
 
     Query types supported:
@@ -55,17 +80,77 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
-    def reindex_doc(self, docid, value):
-        # the base index's index_doc method special-cases a reindex
-        return self.index_doc(docid, value)
+    def clear(self):
+        """Initialize forward and reverse mappings."""
+        # The forward index maps indexed values to a sequence of docids
+        self._fwd_index = self.family.OO.BTree()
+        # The reverse index maps a docid to its index value
+        self._rev_index = self.family.IO.BTree()
+        self._num_docs = Length(0)
+        self._not_indexed = self.family.IF.TreeSet()
+
+    def documentCount(self):
+        """See interface IStatistics"""
+        return self._num_docs()
+
+    def wordCount(self):
+        """See interface IStatistics"""
+        return len(self._fwd_index)
+
+    def index_doc(self, docid, value):
+        """See interface IInjection"""
+        if callable(self.discriminator):
+            value = self.discriminator(value, _marker)
+        else:
+            value = getattr(value, self.discriminator, _marker)
+
+        if value is _marker:
+            # unindex the previous value
+            self.unindex_doc(docid)
+
+            # Store docid in set of unindexed docids
+            self._not_indexed.add(docid)
+
+            return None
+
+        if isinstance(value, Persistent):
+            raise ValueError('Catalog cannot index persistent object %s' %
+                             value)
+
+        if isinstance(value, Broken):
+            raise ValueError('Catalog cannot index broken object %s' %
+                             value)
+
+        if docid in self._not_indexed:
+            # Remove from set of unindexed docs if it was in there.
+            self._not_indexed.remove(docid)
+        
+        rev_index = self._rev_index
+        if docid in rev_index:
+            if docid in self._fwd_index.get(value, ()):
+                # no need to index the doc, its already up to date
+                return
+            # unindex doc if present
+            self.unindex_doc(docid)
+
+        # Insert into forward index.
+        set = self._fwd_index.get(value)
+        if set is None:
+            set = self.family.IF.TreeSet()
+            self._fwd_index[value] = set
+            
+        set.insert(docid)
+
+        # increment doc count
+        self._num_docs.change(1)
+
+        # Insert into reverse index.
+        rev_index[docid] = value
 
     def unindex_doc(self, docid):
         """See interface IInjection.
-
-        Base class overridden to be able to unindex None values.
         """
         _not_indexed = self._not_indexed
         if docid in _not_indexed:
@@ -92,21 +177,25 @@ class CatalogFieldIndex(CatalogIndex, FieldIndex):
 
         self._num_docs.change(-1)
 
+    def reindex_doc(self, docid, value):
+        # the base index's index_doc method special-cases a reindex
+        return self.index_doc(docid, value)
+
     def _indexed(self):
         return self._rev_index.keys()
 
     def sort(self, docids, reverse=False, limit=None, sort_type=None):
+        if limit is not None:
+            limit = int(limit)
+            if limit < 1:
+                raise ValueError('limit must be 1 or greater')
+
         if not docids:
             return []
 
         numdocs = self._num_docs.value
         if not numdocs:
             return []
-
-        if limit is not None:
-            limit = int(limit)
-            if limit < 1:
-                raise ValueError('limit must be 1 or greater')
 
         if reverse:
             return self.sort_reverse(docids, limit, numdocs, sort_type)
@@ -391,3 +480,5 @@ def nbest_ascending_wins(limit, rlen, numdocs):
         return True
 
     return False
+
+
