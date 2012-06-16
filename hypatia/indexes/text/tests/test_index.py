@@ -197,7 +197,7 @@ class OkapiIndexTest32(IndexTestBase, unittest.TestCase):
 class CosineIndexTest64(IndexTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
-        from zope.index.text.cosineindex import CosineIndex
+        from hypatia.indexes.text.cosineindex import CosineIndex
         return CosineIndex
 
     def _getBTreesFamily(self):
@@ -207,7 +207,7 @@ class CosineIndexTest64(IndexTestBase, unittest.TestCase):
 class OkapiIndexTest64(IndexTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
-        from zope.index.text.okapiindex import OkapiIndex
+        from hypatia.indexes.text.okapiindex import OkapiIndex
         return OkapiIndex
 
     def _getBTreesFamily(self):

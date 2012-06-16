@@ -1,14 +1,14 @@
 ##############################################################################
 #
-# Copyright (c) 2008 Agendaless Consulting and Contributors.
+# Copyright (c) 2012 Zope Foundation and Contributors.
 # All Rights Reserved.
 #
-# This software is subject to the provisions of the BSD-like license at
-# http://www.repoze.org/LICENSE.txt.  A copy of the license should accompany
-# this distribution.  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL
-# EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND
-# FITNESS FOR A PARTICULAR PURPOSE
+# This software is subject to the provisions of the Zope Public License,
+# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+# FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
 
@@ -52,8 +52,6 @@ class optional_build_ext(build_ext):
         print >> sys.stderr, e
         print >> sys.stderr, '*' * 80
 
-
-
 try:
     here = os.path.abspath(os.path.dirname(__file__))
     README = open(os.path.join(here, 'README.rst')).read()
@@ -61,7 +59,10 @@ try:
 except IOError:
     README = CHANGES = ''
 
-install_requires = ['setuptools', 'zope.component', 'zope.index >= 3.5.0']
+install_requires = [
+    'ZODB3>=3.8',
+    'zope.interface',
+    ]
 
 testing_extras = ['nose', 'coverage']
 docs_extras = ['Sphinx']
