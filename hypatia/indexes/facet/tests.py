@@ -22,8 +22,8 @@ _marker = object()
 
 class TestCatalogFacetIndex(unittest.TestCase):
     def _getTargetClass(self):
-        from ..facet import CatalogFacetIndex
-        return CatalogFacetIndex
+        from . import FacetIndex
+        return FacetIndex
 
     def _makeOne(self, discriminator=None, facets=FACETS, family=_marker):
         def _discriminator(obj, default):
