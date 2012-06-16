@@ -15,8 +15,44 @@
 __version__ = '0.0'
 
 import os
+import sys
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
+from distutils.command.build_ext import build_ext
+from distutils.errors import CCompilerError
+from distutils.errors import DistutilsExecError
+from distutils.errors import DistutilsPlatformError
+
+class optional_build_ext(build_ext):
+    """This class subclasses build_ext and allows
+       the building of C extensions to fail.
+    """
+    def run(self):
+        try:
+            build_ext.run(self)
+        
+        except DistutilsPlatformError, e:
+            self._unavailable(e)
+
+    def build_extension(self, ext):
+       try:
+           build_ext.build_extension(self, ext)
+        
+       except (CCompilerError, DistutilsExecError), e:
+           self._unavailable(e)
+
+    def _unavailable(self, e):
+        print >> sys.stderr, '*' * 80
+        print >> sys.stderr, """WARNING:
+
+        An optional code optimization (C extension) could not be compiled.
+
+        Optimizations for this package will not be available!"""
+        print >> sys.stderr
+        print >> sys.stderr, e
+        print >> sys.stderr, '*' * 80
+
+
 
 try:
     here = os.path.abspath(os.path.dirname(__file__))
@@ -43,10 +79,10 @@ setup(name='hypatia',
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
         ],
       keywords='indexing catalog search',
-      author="Chris McDonough, Agendaless Consulting",
+      author="Zope Foundation and Contributors",
       author_email="pylons-discuss@googlegroups.com",
       url="http://pylonsproject.org",
-      license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
+      license="ZPL 2.1",
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
@@ -57,6 +93,11 @@ setup(name='hypatia',
         'testing': testing_extras,
         'docs':docs_extras,
         },
+      ext_modules=[
+          Extension('hypatia.indexes.text.okascore',
+              [os.path.join('hypatia', 'indexes', 'text', 'okascore.c')]),
+      ],
+      cmdclass = {'build_ext':optional_build_ext},
       test_suite="hypatia",
       ## entry_points = """\
       ## [console_scripts]

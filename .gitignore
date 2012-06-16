@@ -1,4 +1,3 @@
-env26/
 *.egg
 *.egg-info
 *.pyc
@@ -6,12 +5,13 @@ env26/
 .coverage
 dist/
 *~
-.tox
+.tox/
 nosetests.xml
-repoze/catalog/coverage.xml
+hypatia/coverage.xml
 distribute-*.gz
-env
-.build
-bin
-include
-lib
+env*/
+.build/
+bin/
+include/
+lib/
+build/
