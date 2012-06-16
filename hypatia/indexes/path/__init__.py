@@ -3,8 +3,8 @@ from persistent import Persistent
 
 from BTrees.Length import Length
 
-from ..interfaces import ICatalogIndex
-from .common import CatalogIndex
+from ...interfaces import ICatalogIndex
+from ..common import CatalogIndex
 
 _marker = ()
 
