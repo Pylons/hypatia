@@ -7,12 +7,12 @@ class TestQueryBase(object):
         from ..catalog import Catalog
         from ..indexes.field import FieldIndex
         from ..indexes.keyword import KeywordIndex
-        from ..indexes.text import CatalogTextIndex
+        from ..indexes.text import TextIndex
 
         catalog = Catalog()
         catalog['name'] = FieldIndex('name')
         catalog['title'] = FieldIndex('title')
-        catalog['text'] = CatalogTextIndex('text')
+        catalog['text'] = TextIndex('text')
         catalog['allowed'] = KeywordIndex('allowed')
 
         catalog.index_doc(1, Content('name1', 'title1', 'body one', ['a']))

@@ -219,7 +219,7 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne()
         from ..indexes.field import FieldIndex
         from ..indexes.keyword import KeywordIndex
-        from ..indexes.text import CatalogTextIndex
+        from ..indexes.text import TextIndex
         from ..indexes.path2 import CatalogPathIndex2
         class Content(object):
             def __init__(self, field, keyword, text, path):
@@ -229,7 +229,7 @@ class TestCatalog(unittest.TestCase):
                 self.path = path
         field = FieldIndex('field')
         keyword = KeywordIndex('keyword')
-        text = CatalogTextIndex('text')
+        text = TextIndex('text')
         path = CatalogPathIndex2('path')
         catalog['field'] = field
         catalog['keyword'] = keyword
