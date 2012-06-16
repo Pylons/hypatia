@@ -6,13 +6,13 @@ except: # pragma no cover
 from persistent import Persistent
 from zope.interface import implementer
 
-from .keyword import CatalogKeywordIndex
+from .keyword import KeywordIndex
 from ..interfaces import ICatalogIndex
 
 _marker = ()
 
 @implementer(ICatalogIndex)
-class CatalogFacetIndex(CatalogKeywordIndex):
+class CatalogFacetIndex(KeywordIndex):
     """Facet index.
 
     Query types supported:

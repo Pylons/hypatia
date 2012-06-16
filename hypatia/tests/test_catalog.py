@@ -218,7 +218,7 @@ class TestCatalog(unittest.TestCase):
     def _test_functional_merge(self, **extra):
         catalog = self._makeOne()
         from ..indexes.field import FieldIndex
-        from ..indexes.keyword import CatalogKeywordIndex
+        from ..indexes.keyword import KeywordIndex
         from ..indexes.text import CatalogTextIndex
         from ..indexes.path2 import CatalogPathIndex2
         class Content(object):
@@ -228,7 +228,7 @@ class TestCatalog(unittest.TestCase):
                 self.text = text
                 self.path = path
         field = FieldIndex('field')
-        keyword = CatalogKeywordIndex('keyword')
+        keyword = KeywordIndex('keyword')
         text = CatalogTextIndex('text')
         path = CatalogPathIndex2('path')
         catalog['field'] = field
