@@ -5,9 +5,9 @@ from .. import query as q
 class TestQueryBase(object):
     def test_it(self):
         from ..catalog import Catalog
-        from ..indexes.field import FieldIndex
-        from ..indexes.keyword import KeywordIndex
-        from ..indexes.text import TextIndex
+        from ..field import FieldIndex
+        from ..keyword import KeywordIndex
+        from ..text import TextIndex
 
         catalog = Catalog()
         catalog['name'] = FieldIndex('name')
