@@ -46,25 +46,17 @@ class FacetIndex(KeywordIndex):
         self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
-    def index_doc(self, docid, object):
+    def index_doc(self, docid, obj):
         """ Pass in an integer document id and an object supporting a
         sequence of facet specifiers ala ['style:gucci:handbag'] via
         the discriminator"""
-
-        if callable(self.discriminator):
-            value = self.discriminator(object, _marker)
-        else:
-            value = getattr(object, self.discriminator, _marker)
+        value = self.discriminate(obj, _marker)
 
         if value is _marker:
             # unindex the previous value
             self.unindex_doc(docid)
             self._not_indexed.add(docid)
             return None
-
-        if isinstance(value, Persistent):
-            raise ValueError('Catalog cannot index persistent object %s' %
-                             value)
 
         if docid in self._not_indexed:
             self._not_indexed.remove(docid)

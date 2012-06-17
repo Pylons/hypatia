@@ -134,17 +134,32 @@ class TestCatalogIndex(unittest.TestCase):
 from ..interfaces import ICatalogIndex
 from zope.interface import implementer
 
+_marker = object()
+
 @implementer(ICatalogIndex)
 class DummyIndex(object):
 
     value = None
 
     def index_doc(self, docid, value):
+        value = self.discriminate(value, _marker)
+        if value is _marker:
+            # unindex the previous value
+            self.unindex_doc(docid)
+            # Store docid in set of unindexed docids
+            self._not_indexed.add(docid)
+            return None
+        if docid in self._not_indexed:
+            # Remove from set of unindexed docs if it was in there.
+            self._not_indexed.remove(docid)
         self._docids.add(docid)
         self.value = value
         return value
 
     def unindex_doc(self, docid):
+        _not_indexed = self._not_indexed
+        if docid in _not_indexed:
+            _not_indexed.remove(docid)
         if docid in self._docids:
             self._docids.remove(docid)
             self.unindexed = docid

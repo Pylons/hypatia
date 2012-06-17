@@ -104,35 +104,20 @@ class KeywordIndex(CatalogIndex, Persistent):
         """
         return seq
 
-    def index_doc(self, docid, value):
-        if callable(self.discriminator):
-            value = self.discriminator(value, _marker)
-        else:
-            value = getattr(value, self.discriminator, _marker)
+    def index_doc(self, docid, obj):
+        seq = self.discriminate(obj, _marker)
 
-        if value is _marker:
+        if seq is _marker:
             # unindex the previous value
             self.unindex_doc(docid)
-
             # Store docid in set of unindexed docids
             self._not_indexed.add(docid)
-
             return None
-
-        if isinstance(value, Persistent):
-            raise ValueError('Catalog cannot index persistent object %s' %
-                             value)
-
-        if isinstance(value, Broken):
-            raise ValueError('Catalog cannot index broken object %s' %
-                             value)
 
         if docid in self._not_indexed:
             # Remove from set of unindexed docs if it was in there.
             self._not_indexed.remove(docid)
 
-        seq = value
-        
         if isinstance(seq, basestring):
             raise TypeError('seq argument must be a list/tuple of strings')
 

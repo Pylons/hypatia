@@ -5,27 +5,20 @@ from ZODB.broken import Broken
 
 _marker = ()
 
-
 class CatalogIndex(object):
     """ Abstract class for interface-based lookup """
 
     family = BTrees.family64
 
-    def index_doc(self, docid, object):
+    def discriminate(self, obj, default):
         if callable(self.discriminator):
-            value = self.discriminator(object, _marker)
+            value = self.discriminator(obj, _marker)
         else:
-            value = getattr(object, self.discriminator, _marker)
+            value = getattr(obj, self.discriminator, _marker)
 
         if value is _marker:
-            # unindex the previous value
-            super(CatalogIndex, self).unindex_doc(docid)
-
-            # Store docid in set of unindexed docids
-            self._not_indexed.add(docid)
-
-            return None
-
+            return default
+        
         if isinstance(value, Persistent):
             raise ValueError('Catalog cannot index persistent object %s' %
                              value)
@@ -34,22 +27,12 @@ class CatalogIndex(object):
             raise ValueError('Catalog cannot index broken object %s' %
                              value)
 
-        if docid in self._not_indexed:
-            # Remove from set of unindexed docs if it was in there.
-            self._not_indexed.remove(docid)
+        return value
 
-        return super(CatalogIndex, self).index_doc(docid, value)
-
-    def unindex_doc(self, docid):
-        _not_indexed = self._not_indexed
-        if docid in _not_indexed:
-            _not_indexed.remove(docid)
-        super(CatalogIndex, self).unindex_doc(docid)
-
-    def reindex_doc(self, docid, object):
+    def reindex_doc(self, docid, obj):
         """ Default reindex_doc implementation """
         self.unindex_doc(docid)
-        self.index_doc(docid, object)
+        self.index_doc(docid, obj)
 
     def docids(self):
         not_indexed = self._not_indexed

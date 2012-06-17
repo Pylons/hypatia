@@ -69,30 +69,19 @@ class CatalogPathIndex(CatalogIndex):
         if level > self._depth:
             self._depth = level
 
-    def index_doc(self, docid, object):
-        if callable(self.discriminator):
-            value = self.discriminator(object, _marker)
-        else:
-            value = getattr(object, self.discriminator, _marker)
+    def index_doc(self, docid, obj):
+        path = self.discriminate(obj, _marker)
 
-        if value is _marker:
+        if path is _marker:
             # unindex the previous value
             self.unindex_doc(docid)
-
             # Store docid in set of unindexed docids
             self._not_indexed.add(docid)
-
             return None
-
-        if isinstance(value, Persistent):
-            raise ValueError('Catalog cannot index persistent object %s' %
-                             value)
 
         if docid in self._not_indexed:
             # Remove from set of unindexed docs if it was in there.
             self._not_indexed.remove(docid)
-
-        path = value
 
         if isinstance(path, (list, tuple)):
             path = '/'+ '/'.join(path[1:])
