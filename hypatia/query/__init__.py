@@ -1,12 +1,6 @@
 import BTrees
 import sys
-
-try:
-    import ast
-    ast_support = True
-except ImportError:  # pragma NO COVERAGE
-    ast_support = False
-
+import ast
 
 _marker = object()
 
@@ -919,8 +913,6 @@ def parse_query(expr, optimize_query=True):
     Parses the given expression string and returns a query object.  Requires
     Python >= 2.6.
     """
-    if not ast_support:
-        raise NotImplementedError("Parsing of CQEs requires Python >= 2.6")
     query = _AstParser(expr).parse()
     if optimize_query:
         query = optimize(query)

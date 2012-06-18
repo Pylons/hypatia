@@ -1,5 +1,4 @@
 import unittest
-from . import ast_support
 
 
 class ComparatorTestBase(unittest.TestCase):
@@ -703,10 +702,6 @@ class TestName(unittest.TestCase):
 
 class Test_parse_query(unittest.TestCase):
 
-    def tearDown(self):
-        from .. import query
-        query.ast_support = True
-
     def _call_fut(self, expr):
         from . import parse_query as fut
         return fut(expr)
@@ -740,11 +735,6 @@ class Test_parse_query(unittest.TestCase):
 
     def test_wrong_number_or_args_for_any(self):
         self.assertRaises(ValueError, self._call_fut, 'a in any(1, 2)')
-
-    def test_no_ast_support(self):
-        from .. import query
-        query.ast_support = False
-        self.assertRaises(NotImplementedError, self._call_fut, None)
 
     def test_num(self):
         self.assertEqual(self._call_fut('1'), 1)
@@ -1119,10 +1109,6 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op.queries[1], And))
         self.failUnless(isinstance(op.queries[1].queries[0], Lt))
         self.failUnless(isinstance(op.queries[1].queries[1], Lt))
-
-
-if not ast_support:  # pragma NO COVERAGE
-    del Test_parse_query
 
 
 class Dummy(object):
