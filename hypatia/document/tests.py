@@ -201,9 +201,3 @@ class TestDocumentMap(unittest.TestCase):
         map.add('/whatever', 0)
         self.assertEqual(map.new_docid(), 1)
 
-    def test__check_metadata_creates_tree(self):
-        map = self._makeOne()
-        map.docid_to_metadata = None
-        map._check_metadata()
-        self.failIf(map.docid_to_metadata is None)
-        self.assertEqual(dict(map.docid_to_metadata), {})

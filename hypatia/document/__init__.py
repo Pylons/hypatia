@@ -15,7 +15,6 @@ class DocumentMap(Persistent):
     """
     _v_nextid = None
     _randrange = random.randrange
-    docid_to_metadata = None # latch for b/c
 
     family = BTrees.family64
 
@@ -107,8 +106,6 @@ class DocumentMap(Persistent):
         # little hollow when you weren't the one who broke the data in
         # the first place ;-)
 
-        self._check_metadata()
-
         address = self.docid_to_address.get(docid, _marker)
         if address is _marker:
             return False
@@ -139,8 +136,6 @@ class DocumentMap(Persistent):
         """
         # See the comment in remove_docid for complexity rationalization
         
-        self._check_metadata()
-
         docid = self.address_to_docid.get(address, _marker)
         if docid is _marker:
             return False
@@ -157,11 +152,6 @@ class DocumentMap(Persistent):
             del self.docid_to_metadata[docid]
 
         return True
-
-    def _check_metadata(self):
-        # backwards compatibility
-        if self.docid_to_metadata is None:
-            self.docid_to_metadata = self.family.IO.BTree()
 
     def add_metadata(self, docid, data):
         """ Add metadata related to a given document id.
@@ -181,7 +171,6 @@ class DocumentMap(Persistent):
             raise KeyError(docid)
         if len(data.keys()) == 0:
             return
-        self._check_metadata()
         meta = self.docid_to_metadata.setdefault(docid, self.family.OO.BTree())
         for k in data:
             meta[k] = data[k]
@@ -198,7 +187,6 @@ class DocumentMap(Persistent):
 
         If no keys are specified, remove all metadata related to the docid.
         """
-        self._check_metadata()
         if keys:
             meta = self.docid_to_metadata.get(docid, _marker)
             if meta is _marker:
