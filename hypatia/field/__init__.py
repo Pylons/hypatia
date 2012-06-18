@@ -13,9 +13,6 @@
 ##############################################################################
 """Field index
 """
-from persistent import Persistent
-from ZODB.broken import Broken
-
 import persistent
 from BTrees.Length import Length
 
@@ -25,8 +22,8 @@ from itertools import islice
 
 from zope.interface import implementer
 
-from hypatia import interfaces
-from hypatia import RangeValue
+from .. import interfaces
+from .. import RangeValue
 
 from ..common import CatalogIndex
 

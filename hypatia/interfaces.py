@@ -143,6 +143,9 @@ class INBest(Interface):
         """
 
 class ICatalog(IIndexSearch, IInjection):
+    pass
+
+class ICatalogSearch(Interface):
     def search(**query):
         """Search on the query provided.  Each query key is an index
         name, each query value is the value that the index expects as

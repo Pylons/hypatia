@@ -6,6 +6,9 @@ from zope.interface import implementer
 
 from ..interfaces import ICatalog
 from ..interfaces import ICatalogIndex
+from ..interfaces import ICatalogSearch
+
+from ..query import parse_query
 
 @implementer(ICatalog)
 class Catalog(PersistentMapping):
@@ -59,9 +62,47 @@ class Catalog(PersistentMapping):
 
         .. note::
 
-                  this method is deprecated as of :mod:`repoze.catalog`
-                  version 0.8.  Use :meth:`hypatia.Catalog.query`
+                  this method is deprecated. Use :meth:`hypatia.Catalog.query`
                   instead.
+
+
+        """
+        return CatalogSearch(self, family=self.family).search(**query)
+
+    def apply(self, query):
+        return self.search(**query)
+
+    def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
+              reverse=False, names=None):
+        """ Use the arguments to perform a query.  Return a tuple of
+        (num, resultseq)."""
+        return CatalogSearch(self, family=self.family).query(
+            queryobject,
+            sort_index=sort_index,
+            limit=limit,
+            sort_type=sort_type,
+            reverse=reverse,
+            names=names
+            )
+
+@implementer(ICatalogSearch)
+class CatalogSearch(object):
+    
+    family = BTrees.family64
+    
+    def __init__(self, catalog, family=None):
+        self.catalog = catalog
+        if family is not None:
+            self.family = family
+
+    def search(self, **query):
+        """ Use the query terms to perform a query.  Return a tuple of
+        (num, resultseq) based on the merging of results from
+        individual indexes.
+
+        .. note::
+
+           This method is deprecated. Use :func:`hypatia.query` instead.
 
 
         """
@@ -86,7 +127,7 @@ class Catalog(PersistentMapping):
             # unordered query (use apply)
             results = []
             for index_name, index_query in query.items():
-                index = self.get(index_name)
+                index = self.catalog.get(index_name)
                 if index is None:
                     raise ValueError('No such index %s' % index_name)
                 r = index.apply(index_query)
@@ -115,7 +156,7 @@ class Catalog(PersistentMapping):
                 index_query = query.get(index_name, _marker)
                 if index_query is _marker:
                     continue
-                index = self.get(index_name)
+                index = self.catalog.get(index_name)
                 if index is None:
                     raise ValueError('No such index %s' % index_name)
                 result = index.apply_intersect(index_query, result)
@@ -131,9 +172,10 @@ class Catalog(PersistentMapping):
         numdocs = len(result)
 
         if sort_index:
-            index = self[sort_index]
-            result = index.sort(result, reverse=reverse, limit=limit,
-                                sort_type=sort_type)
+            index = self.catalog[sort_index]
+            result = index.sort(
+                result, reverse=reverse, limit=limit, sort_type=sort_type
+                )
             if limit:
                 numdocs = min(numdocs, limit)
             return numdocs, result
@@ -144,22 +186,11 @@ class Catalog(PersistentMapping):
               reverse=False, names=None):
         """ Use the arguments to perform a query.  Return a tuple of
         (num, resultseq)."""
-        try:
-            from ..query import parse_query
-            if isinstance(queryobject, basestring):
-                queryobject = parse_query(queryobject)
-        except ImportError: #pragma NO COVERAGE
-            pass
-        results = queryobject._apply(self, names)
+        if isinstance(queryobject, basestring):
+            queryobject = parse_query(queryobject)
+        results = queryobject._apply(self.catalog, names)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
 
-    def apply(self, query):
-        return self.search(**query)
-
-def assertint(docid):
-    if not isinstance(docid, int):
-        raise ValueError('%r is not an integer value; document ids must be '
-                         'integers' % docid)
 
 class CatalogFactory(object):
     def __call__(self, connection_handler=None):
@@ -206,4 +237,9 @@ class ConnectionManager(object):
 
     def commit(self, transaction=transaction):
         transaction.commit()
+
+def assertint(docid):
+    if not isinstance(docid, int):
+        raise ValueError('%r is not an integer value; document ids must be '
+                         'integers' % docid)
 
