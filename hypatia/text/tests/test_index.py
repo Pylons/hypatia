@@ -214,10 +214,3 @@ class OkapiIndexTest64(IndexTestBase, unittest.TestCase):
         import BTrees
         return BTrees.family64
 
-def test_suite():
-    return unittest.TestSuite((
-                      unittest.makeSuite(CosineIndexTest32),
-                      unittest.makeSuite(OkapiIndexTest32),
-                      unittest.makeSuite(CosineIndexTest64),
-                      unittest.makeSuite(OkapiIndexTest64),
-                    ))

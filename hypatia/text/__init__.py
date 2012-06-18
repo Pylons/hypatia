@@ -18,8 +18,6 @@ import sys
 from persistent import Persistent
 from zope.interface import implementer
 
-from ZODB.broken import Broken
-
 from hypatia.interfaces import (
     IIndexSearch,
     IInjection,

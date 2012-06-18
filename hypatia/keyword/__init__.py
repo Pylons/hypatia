@@ -6,7 +6,6 @@ from ..common import CatalogIndex
 from persistent import Persistent
 
 from BTrees.Length import Length
-from ZODB.broken import Broken
 
 from hypatia.interfaces import IInjection, IStatistics, IIndexSearch
 from .interfaces import IKeywordQuerying

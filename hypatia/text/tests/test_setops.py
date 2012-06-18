@@ -259,8 +259,3 @@ class Test_mass_weightedUnion(unittest.TestCase):
         got = self._callFUT(L)
         self.assertEqual(expected, list(got.items()))
 
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(Test_mass_weightedIntersection),
-        unittest.makeSuite(Test_mass_weightedUnion),
-    ))

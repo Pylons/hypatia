@@ -247,11 +247,11 @@ class SplitterTests(unittest.TestCase):
         self._old_locale = locale.setlocale(locale.LC_ALL)
         # set German locale
         try:
-            if sys.platform == 'win32':
+            if sys.platform == 'win32': # pragma: no cover
                 locale.setlocale(locale.LC_ALL, 'German_Germany.1252')
             else:
                 locale.setlocale(locale.LC_ALL, 'de_DE.ISO8859-1')
-        except locale.Error:
+        except locale.Error: # pragma: no cover
             return # This test doesn't work here :-(
         expected = ['m\xfclltonne', 'waschb\xe4r',
                     'beh\xf6rde', '\xfcberflieger']
@@ -404,11 +404,3 @@ class StopWordPipelineElement(object):
                 res.append(term)
         return res
 
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(LexiconTests),
-        unittest.makeSuite(SplitterTests),
-        unittest.makeSuite(CaseNormalizerTests),
-        unittest.makeSuite(StopWordRemoverTests),
-        unittest.makeSuite(StopWordAndSingleCharRemoverTests),
-    ))

@@ -23,7 +23,8 @@ class TextIndexTests(unittest.TestCase):
         from .. import TextIndex
         return TextIndex
 
-    def _makeOne(self, discriminator=_marker, lexicon=_marker, index=_marker):
+    def _makeOne(self, discriminator=_marker, lexicon=_marker, index=_marker,
+                 family=None):
         def _discriminator(obj, default):
             if obj is _marker:
                 return default
@@ -32,34 +33,20 @@ class TextIndexTests(unittest.TestCase):
             discriminator = _discriminator
         if lexicon is _marker:
             if index is _marker: # defaults
-                return self._getTargetClass()(discriminator=discriminator)
+                return self._getTargetClass()(discriminator=discriminator,
+                                              family=family)
             else:
                 return self._getTargetClass()(discriminator=discriminator,
-                                              index=index)
+                                              index=index, family=family)
         else:
             if index is _marker:
                 return self._getTargetClass()(discriminator=discriminator,
-                                              lexicon=lexicon)
+                                              lexicon=lexicon, family=family)
             else:
                 return self._getTargetClass()(discriminator=discriminator,
                                               lexicon=lexicon,
-                                              index=index)
-
-    def _makeLexicon(self, *pipeline):
-        from ..lexicon import Lexicon
-        from ..lexicon import Splitter
-        if not pipeline:
-            pipeline = (Splitter(),)
-        return Lexicon(*pipeline)
-
-    def _makeOkapi(self, lexicon=None, family=None):
-        import BTrees
-        from ..okapiindex import OkapiIndex
-        if lexicon is None:
-            lexicon = self._makeLexicon()
-        if family is None:
-            family = BTrees.family64
-        return OkapiIndex(lexicon, family=family)
+                                              index=index,
+                                              family=family)
 
     def test_class_conforms_to_IInjection(self):
         from zope.interface.verify import verifyClass
@@ -134,6 +121,11 @@ class TextIndexTests(unittest.TestCase):
         self.failUnless(index.lexicon is lexicon)
         self.failUnless(isinstance(index.index, OkapiIndex))
         self.failUnless(index.index._lexicon is lexicon)
+
+    def test_ctor_explicit_family(self):
+        import BTrees
+        index = self._makeOne(family=BTrees.family32)
+        self.failUnless(index.family is BTrees.family32)
 
     def test_ctor_explicit_index(self):
         lexicon = object()
@@ -398,9 +390,4 @@ class DummyLexicon:
 class DummyIndex:
     def clear(self):
         self.cleared = True
-
-def test_suite():
-    return unittest.TestSuite((
-                      unittest.makeSuite(TextIndexTests),
-                    ))
 

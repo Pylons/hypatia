@@ -9,7 +9,7 @@ from ..common import CatalogIndex
 _marker = ()
 
 @implementer(ICatalogIndex)
-class CatalogPathIndex(CatalogIndex):
+class CatalogPathIndex(CatalogIndex, Persistent):
 
     """Index for model paths (tokens separated by '/' characters)
 

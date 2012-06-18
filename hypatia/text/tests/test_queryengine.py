@@ -73,5 +73,3 @@ class TestQueryEngine(unittest.TestCase):
         tree = NotNode(AtomNode("foo"))
         self.assertRaises(QueryError, tree.executeQuery, index)
 
-def test_suite():
-    return unittest.makeSuite(TestQueryEngine)

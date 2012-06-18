@@ -417,8 +417,3 @@ class FakeStopWordRemover(object):
         return [word for word in list if word != "stop"]
 
 
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(TestQueryParser),
-        unittest.makeSuite(StopWordTestQueryParser),
-    ))

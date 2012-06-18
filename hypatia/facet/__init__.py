@@ -1,9 +1,4 @@
-try:
-    from hashlib import md5
-except: # pragma no cover
-    from md5 import new as md5
-
-from persistent import Persistent
+from hashlib import md5
 from zope.interface import implementer
 
 from ..keyword import KeywordIndex

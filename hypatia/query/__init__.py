@@ -4,6 +4,8 @@ import ast
 
 _marker = object()
 
+from ..util import RichComparisonMixin
+
 
 class Query(object):
     """
@@ -269,7 +271,7 @@ class NotAll(Comparator):
         return '%s not in all(%s)' % (self.index_name, repr(self._value))
 
 
-class _Range(Comparator):
+class _Range(Comparator, RichComparisonMixin):
 
     @classmethod
     def fromGTLT(cls, start, end):
@@ -337,7 +339,6 @@ class _Range(Comparator):
                 self._end == other._end and
                 self.start_exclusive == other.start_exclusive and
                 self.end_exclusive == other.end_exclusive)
-
 
 class InRange(_Range):
     """ Index value falls within a range.

@@ -47,12 +47,6 @@ class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
         )
 
 
-try:
-    import ast
-except ImportError: #pragma NO COVERAGE
-    del TestQueryWithCQE
-    del TestQueryWithPythonQueryObjects
-
 class Content(object):
     def __init__(self, name, title, text, allowed):
         self.name = name

@@ -176,7 +176,7 @@ class BaseIndexTestBase:
         index.index_doc(1, 'one two three')
 
         # Don't mutate _wordinfo if no changes
-        def _dont_go_here(*args, **kw):
+        def _dont_go_here(*args, **kw): # pragma: no cover
             assert 0
         index._add_wordinfo = index._del_wordinfo = _dont_go_here
 
@@ -478,8 +478,3 @@ class BaseIndexTest64(BaseIndexTestBase, unittest.TestCase):
         import BTrees
         return BTrees.family64
 
-def test_suite():
-    return unittest.TestSuite((
-                      unittest.makeSuite(BaseIndexTest32),
-                      unittest.makeSuite(BaseIndexTest64),
-                    ))

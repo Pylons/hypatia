@@ -58,25 +58,15 @@ class Test_widcode(unittest.TestCase):
     def test__decode_other_one_byte_asserts(self):
         from ..widcode import _decode
         for wid in range(1, 128):
-            try:
-                _decode(chr(128 + wid))
-            except AssertionError:
-                pass
-            else:
-                self.fail("Didn't assert: %d" % wid)
+            self.assertRaises(AssertionError, _decode, chr(128+wid))
 
     def test__decode_two_bytes_asserts(self):
         from ..widcode import _decode
         for wid in range(128, 2**14):
-            try:
-                hi, lo = divmod(wid, 128)
-                code = chr(hi + 128) + chr(lo)
-                _decode(code)
-            except AssertionError:
-                pass
-            else:
-                self.fail("Didn't assert: %d" % wid)
-
+            hi, lo = divmod(wid, 128)
+            code = chr(hi + 128) + chr(lo)
+            self.assertRaises(AssertionError, _decode, code)
+                
     def test__decode_three_bytes(self):
         from ..widcode import _decode
         for wid in range(2**14, 2**21, 247):
@@ -98,13 +88,8 @@ class Test_widcode(unittest.TestCase):
     def test_symmetric(self):
         from ..widcode import decode
         from ..widcode import encode
-        for wid in xrange(2**28, 1117):
+        for wid in xrange(2**14, 2**21, 247):
             wids = [wid]
             code = encode(wids)
             self.assertEqual(decode(code), wids)
-
-def test_suite():
-    return unittest.TestSuite((
-                      unittest.makeSuite(Test_widcode),
-                    ))
 

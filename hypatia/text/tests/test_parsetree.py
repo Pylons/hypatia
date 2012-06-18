@@ -1,17 +1,3 @@
-##############################################################################
-#
-# Copyright (c) 2009 Zope Foundation and Contributors.
-# All Rights Reserved.
-#
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-#
-##############################################################################
-
 import unittest
 
 class ConformsToIQueryParseTree:
@@ -254,33 +240,18 @@ class FauxValue:
         self._terms = terms[:]
     def terms(self):
         return self._terms
-    def __eq__(self, other):
-        return self._terms == other._terms
     def __repr__(self):
         return 'FV:%s' % ' '.join(self._terms)
 
 
 class FauxSubnode:
-    def __init__(self, node_type, query_results, value=None):
+    def __init__(self, node_type, query_results):
         self._nodeType = node_type
         self._query_results = query_results
-        self._value = value
     def nodeType(self):
         return self._nodeType
     def executeQuery(self, index):
         return self._query_results
     def getValue(self):
-        if self._value is not None:
-            return self._value
         return self
 
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(ParseTreeNodeTests),
-        unittest.makeSuite(NotNodeTests),
-        unittest.makeSuite(AndNodeTests),
-        unittest.makeSuite(OrNodeTests),
-        unittest.makeSuite(AtomNodeTests),
-        unittest.makeSuite(PhraseNodeTests),
-        unittest.makeSuite(GlobNodeTests),
-    ))

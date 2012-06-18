@@ -565,8 +565,3 @@ class FrozenDict(dict):
         assert 0 # pragma: no cover
     __setitem__ = __delitem__ = clear = update = _forbidden
 
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(KeywordIndexTests32),
-        unittest.makeSuite(KeywordIndexTests64),
-    ))

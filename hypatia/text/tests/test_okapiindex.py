@@ -150,8 +150,3 @@ class OkapiIndexTest64(OkapiIndexTestBase, unittest.TestCase):
         import BTrees
         return BTrees.family64
 
-def test_suite():
-    return unittest.TestSuite((
-                      unittest.makeSuite(OkapiIndexTest32),
-                      unittest.makeSuite(OkapiIndexTest64),
-                    ))
