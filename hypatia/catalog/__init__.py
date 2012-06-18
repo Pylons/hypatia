@@ -20,7 +20,7 @@ class Catalog(PersistentMapping):
         if family is not None:
             self.family = family
 
-    def clear(self):
+    def clear_indexes(self):
         """ Clear all indexes in this catalog. """
         for index in self.values():
             index.clear()
