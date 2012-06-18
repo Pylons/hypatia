@@ -1,6 +1,5 @@
 import BTrees
 from persistent.mapping import PersistentMapping
-import transaction
 
 from zope.interface import implementer
 
@@ -190,53 +189,6 @@ class CatalogSearch(object):
             queryobject = parse_query(queryobject)
         results = queryobject._apply(self.catalog, names)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
-
-
-class CatalogFactory(object):
-    def __call__(self, connection_handler=None):
-        conn = self.db.open()
-        if connection_handler:
-            connection_handler(conn)
-        root = conn.root()
-        if root.get(self.appname) is None:
-            root[self.appname] = Catalog()
-        return root[self.appname]
-
-class FileStorageCatalogFactory(CatalogFactory):
-    def __init__(self, filename, appname, **kw):
-        """ ``filename`` is a filename to the FileStorage storage,
-        ``appname`` is a key name in the root of the FileStorage in
-        which to store the catalog, and ``**kw`` is passed as extra
-        keyword arguments to :class:`ZODB.DB.DB` when creating a
-        database.  Note that when we create a :class:`ZODB.DB.DB`
-        instance, if a ``cache_size`` is not passed in ``*kw``, we
-        override the default ``cache_size`` value with ``50000`` in
-        order to provide a more realistic cache size for modern apps"""
-        cache_size = kw.get('cache_size')
-        if cache_size is None:
-            kw['cache_size'] = 50000
-
-        from ZODB.FileStorage.FileStorage import FileStorage
-        from ZODB.DB import DB
-        f = FileStorage(filename)
-        self.db = DB(f, **kw)
-        self.appname = appname
-
-    def __del__(self):
-        self.db.close()
-
-class ConnectionManager(object):
-    def __call__(self, conn):
-        self.conn = conn
-
-    def close(self):
-        self.conn.close()
-
-    def __del__(self):
-        self.close()
-
-    def commit(self, transaction=transaction):
-        transaction.commit()
 
 def assertint(docid):
     if not isinstance(docid, int):
