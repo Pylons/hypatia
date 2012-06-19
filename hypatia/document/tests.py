@@ -5,8 +5,13 @@ class TestDocumentMap(unittest.TestCase):
         from . import DocumentMap
         return DocumentMap
 
-    def _makeOne(self):
-        return self._getTargetClass()()
+    def _makeOne(self, family=None):
+        return self._getTargetClass()(family=family)
+
+    def test_ctor_explicit_family(self):
+        from BTrees import family32
+        catalog = self._makeOne(family=family32)
+        self.failUnless(catalog.family is family32)
 
     def test_docid_for_address_nonesuch(self):
         map = self._makeOne()
