@@ -1,4 +1,4 @@
-:mod:`repoze.catalog` Change History
-====================================
+:mod:`hypatia` Change History
+=============================
 
 .. literalinclude:: ../CHANGES.txt

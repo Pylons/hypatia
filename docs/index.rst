@@ -1,35 +1,32 @@
 .. _index:
 
-==============
-repoze.catalog
-==============
+=======
+Hypatia
+=======
 
-:mod:`repoze.catalog` is a Python indexing and searching framework.
-It relies on :term:`zope.index` and most of its internals are taken
-from :term:`zope.app.catalog`.  Unlike ``zope.app.catalog``, however,
-it is meant to be useful outside of the larger Zope framework within
-arbitrary Python applications.
+:mod:`hypatia` is a Python indexing and searching framework.
 
 Narrative documentation
 -----------------------
 
-Narrative documentation explaining how to use :mod:`repoze.catalog`.
+Narrative documentation explaining how to use :mod:`hypatia`.
+
+.. warning::
+
+   This is under construction during the alpha phase of Hypatia.
 
 .. toctree::
    :maxdepth: 2
 
-   overview
-   install
-   upgrade
-   usage
    genealogy
+   install
    glossary
    changes
 
 API documentation
 -----------------
 
-API documentation for :mod:`repoze.catalog`.
+API documentation for :mod:`hypatia`.
 
 .. toctree::
    :maxdepth: 2
@@ -39,9 +36,10 @@ API documentation for :mod:`repoze.catalog`.
 Source Code and Issue Tracking
 ------------------------------
 
-Source code is available from https://github.com/repoze/repoze.catalog
+Source code is available from https://github.com/Pylons/hypatia
 
-File bugs via https://github.com/repoze/repoze.catalog/issues
+File bugs via https://github.com/Pylons/hypatia/issues
+
 
 Indices and tables
 ==================

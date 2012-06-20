@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# repoze.catalog documentation build configuration file
+# hypatia documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -16,18 +16,25 @@ import sys, os
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 
+# Add and use Pylons theme
 if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
-    parent = os.path.dirname(os.path.dirname(__file__))
-    sys.path.append(os.path.abspath(parent))
-    wd = os.getcwd()
-    os.chdir(parent)
-    os.system('%s setup.py test -q' % sys.executable)
-    os.chdir(wd)
+    from subprocess import call, Popen, PIPE
 
-    for item in os.listdir(parent):
-        if item.endswith('.egg'):
-            sys.path.append(os.path.join(parent, item))
+    p = Popen('which git', shell=True, stdout=PIPE)
+    git = p.stdout.read().strip()
+    cwd = os.getcwd()
+    _themes = os.path.join(cwd, '_themes')
 
+    if not os.path.isdir(_themes):
+        call([git, 'clone', 'git://github.com/Pylons/pylons_sphinx_theme.git',
+                '_themes'])
+    else:
+        os.chdir(_themes)
+        call([git, 'checkout', 'master'])
+        call([git, 'pull'])
+        os.chdir(cwd)
+
+    sys.path.append(os.path.abspath('_themes'))
 
 # General configuration
 # ---------------------
@@ -46,14 +53,14 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'repoze.catalog'
-copyright = '2008-2012, Agendaless Consulting'
+project = 'hypatia'
+copyright = '2008-2012, Zope Foundation and Contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.8.2'
+version = '0.1a1'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -69,6 +76,8 @@ today_fmt = '%B %d, %Y'
 # List of directories, relative to source directories, that shouldn't be searched
 # for source files.
 #exclude_dirs = []
+
+exclude_patterns = ['_themes/README.rst',]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -91,10 +100,18 @@ pygments_style = 'sphinx'
 # Options for HTML output
 # -----------------------
 
+# Add and use Pylons theme
+html_theme_path = ['_themes']
+html_theme = 'pylons'
+html_theme_options = dict(
+    github_url='https://github.com/Pylons/hypatia',
+#    in_progress='true'
+    )
+
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'repoze.css'
+#html_style = 'repoze.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -105,7 +122,7 @@ html_style = 'repoze.css'
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.
-html_logo = '.static/logo_hi.gif'
+#html_logo = '.static/logo_hi.gif'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -115,7 +132,7 @@ html_logo = '.static/logo_hi.gif'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['.static']
+#html_static_path = ['.static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -153,7 +170,7 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'repozecatalogdoc'
+htmlhelp_basename = 'hypatiadoc'
 
 
 # Options for LaTeX output
@@ -168,7 +185,7 @@ htmlhelp_basename = 'repozecatalogdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'repozecatalog.tex', 'repoze.catalog Documentation', 'Agendaless Consulting', 'manual'),
+  ('index', 'hypatia.tex', 'hypatia Documentation', 'Agendaless Consulting', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

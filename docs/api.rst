@@ -1,9 +1,9 @@
 .. _api_catalog_section:
 
-:mod:`repoze.catalog.catalog`
------------------------------
+:mod:`hypatia.catalog`
+----------------------
 
-.. automodule:: repoze.catalog.catalog
+.. automodule:: hypatia.catalog
 
   .. autoclass:: Catalog
      :members:
@@ -18,11 +18,23 @@
 
         Retrieve an index or return failobj.
 
+     .. automethod:: clear_indexes
 
-:mod:`repoze.catalog.query`
----------------------------
+     .. automethod:: index_doc
 
-.. module:: repoze.catalog.query
+     .. automethod:: unindex_doc
+
+     .. automethod:: reindex_doc
+
+  .. autoclass:: CatalogQuery
+     :members:
+
+     .. automethod:: __call__
+
+:mod:`hypatia.query`
+--------------------
+
+.. module:: hypatia.query
 
 Comparators
 ~~~~~~~~~~~
@@ -75,59 +87,49 @@ Other Helpers
 
 .. _api_fieldindex_section:
 
-:mod:`repoze.catalog.indexes.field`
------------------------------------
+:mod:`hypatia.field`
+--------------------
 
-.. automodule:: repoze.catalog.indexes.field
+.. automodule:: hypatia.field
 
-   .. autoclass:: CatalogFieldIndex
+   .. autoclass:: FieldIndex
       :members:
 
 .. _api_keywordindex_section:
 
-:mod:`repoze.catalog.indexes.keyword`
+:mod:`hypatia.keyword`
 -------------------------------------
 
-.. automodule:: repoze.catalog.indexes.keyword
+.. automodule:: hypatia.keyword
 
-   .. autoclass:: CatalogKeywordIndex
+   .. autoclass:: KeywordIndex
       :members:
 
 .. _api_textindex_section:
 
-:mod:`repoze.catalog.indexes.text`
+:mod:`hypatia.text`
 -----------------------------------
 
-.. automodule:: repoze.catalog.indexes.text
+.. automodule:: hypatia.text
 
-   .. autoclass:: CatalogTextIndex
+   .. autoclass:: TextIndex
       :members:
 
 .. _api_facetindex_section:
 
-:mod:`repoze.catalog.indexes.facet`
+:mod:`hypatia.facet`
 -------------------------------------
 
-.. automodule:: repoze.catalog.indexes.facet
+.. automodule:: hypatia.facet
 
-   .. autoclass:: CatalogFacetIndex
+   .. autoclass:: FacetIndex
       :members:
 
-:mod:`repoze.catalog.indexes.path`
+:mod:`hypatia.path`
 ----------------------------------
 
-.. automodule:: repoze.catalog.indexes.path
+.. automodule:: hypatia.path
 
-   .. autoclass:: CatalogPathIndex
+   .. autoclass:: PathIndex
       :members:
-
-.. _api_document_section:
-
-:mod:`repoze.catalog.document`
-------------------------------
-
-.. automodule:: repoze.catalog.document
-
-  .. autoclass:: DocumentMap
-     :members:
 

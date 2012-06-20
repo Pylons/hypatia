@@ -44,15 +44,12 @@ Glossary
     documents can be searched for by their position in the graph.
 
   zope.index
-    The `underlying indexing machinery
-    <http://pypi.python.org/pypi/zope.index>`_ that
-    :mod:`repoze.catalog` uses.
+    One `package
+    <http://pypi.python.org/pypi/zope.index>`_ that hypatia was forked from.
 
-  zope.app.catalog
-    The `cataloging implementation
-    <http://pypi.python.org/pypi/zope.app.catalog>`_ on which
-    :mod:`repoze.catalog` is based (although it doesn't use any of
-    its code).
+  repoze.catalog
+    `Another package
+    <http://pypi.python.org/pypi/repoze.catalog>`_ that hypatia was forked from.
 
   Virtualenv
     An isolated Python environment.  Allows you to control which
@@ -65,6 +62,6 @@ Glossary
     expression which is used to generate a query object.
 
   Query Object
-    An object used as an argument to the :meth:`repoze.catalog.Catalog.query` 
-    method's ``queryobject`` parameter.
+    An object used as an argument to the
+    :meth:`hypatia.CatalogQuery.__call__` method's ``queryobject`` parameter.
 
