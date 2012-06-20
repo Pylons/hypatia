@@ -1,7 +1,7 @@
 from zope.interface import implementer
 
 from ..interfaces import ICatalogIndex
-from ..common import CatalogIndex
+from ..util import BaseIndexMixin
 
 from persistent import Persistent
 
@@ -14,7 +14,7 @@ _marker = object()
 
 @implementer(ICatalogIndex, IInjection, IStatistics, IIndexSearch,
              IKeywordQuerying)
-class KeywordIndex(CatalogIndex, Persistent):
+class KeywordIndex(BaseIndexMixin, Persistent):
     """
     Keyword index.
 

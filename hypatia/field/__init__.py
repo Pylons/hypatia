@@ -25,7 +25,7 @@ from zope.interface import implementer
 from .. import interfaces
 from .. import RangeValue
 
-from ..common import CatalogIndex
+from ..util import BaseIndexMixin
 
 _marker = []
 
@@ -39,7 +39,7 @@ TIMSORT = 'timsort'
         interfaces.IIndexSearch,
         interfaces.ICatalogIndex,
         )
-class FieldIndex(CatalogIndex, persistent.Persistent):
+class FieldIndex(BaseIndexMixin, persistent.Persistent):
     """ Field indexing.
 
     Query types supported:

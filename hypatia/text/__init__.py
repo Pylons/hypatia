@@ -35,12 +35,12 @@ from .lexicon import (
 from .okapiindex import OkapiIndex
 from .queryparser import QueryParser
 
-from ..common import CatalogIndex
+from ..util import BaseIndexMixin 
 
 _marker = object()
 
 @implementer(IInjection, IIndexSearch, IStatistics, ICatalogIndex, IIndexSort)
-class TextIndex(CatalogIndex, Persistent):
+class TextIndex(BaseIndexMixin, Persistent):
     def __init__(self, discriminator, lexicon=None, index=None,
                  family=None):
         if family is not None:
