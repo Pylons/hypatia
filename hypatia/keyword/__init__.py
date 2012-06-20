@@ -85,8 +85,11 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
-    def _indexed(self):
+    def indexed(self):
         return self._rev_index.keys()
+
+    def not_indexed(self):
+        return self._not_indexed
 
     def applyAny(self, values):
         return self.apply({'query': values, 'operator': 'or'})

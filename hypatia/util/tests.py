@@ -236,8 +236,11 @@ class DummyIndex(object):
             self._docids.remove(docid)
             self.unindexed = docid
 
-    def _indexed(self):
+    def indexed(self):
         return self._docids
+
+    def not_indexed(self):
+        return self._not_indexed
 
 class RichComparer(RichComparisonMixin):
 

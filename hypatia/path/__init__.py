@@ -42,7 +42,6 @@ class PathIndex(BaseIndexMixin, Persistent):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self._not_indexed = self.family.IF.TreeSet()
         self.clear()
 
     def clear(self):
@@ -50,6 +49,7 @@ class PathIndex(BaseIndexMixin, Persistent):
         self._index = self.family.OO.BTree()
         self._unindex = self.family.IO.BTree()
         self._length = Length(0)
+        self._not_indexed = self.family.IF.TreeSet()
 
     def insertEntry(self, comp, id, level):
         """Insert an entry.
@@ -124,8 +124,11 @@ class PathIndex(BaseIndexMixin, Persistent):
         self._length.change(-1)
         del self._unindex[docid]
 
-    def _indexed(self):
+    def indexed(self):
         return self._unindex.keys()
+
+    def not_indexed(self):
+        return self._not_indexed
 
     def search(self, path, default_level=0):
         """

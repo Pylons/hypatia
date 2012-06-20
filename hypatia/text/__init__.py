@@ -92,8 +92,11 @@ class TextIndex(BaseIndexMixin, Persistent):
         # index_doc knows enough about reindexing to do the right thing
         return self.index_doc(docid, object)
 
-    def _indexed(self):
+    def indexed(self):
         return self.index._docwords.keys()
+
+    def not_indexed(self):
+        return self._not_indexed
 
     def documentCount(self):
         """Return the number of documents in the index."""

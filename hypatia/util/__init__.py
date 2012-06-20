@@ -57,8 +57,8 @@ class BaseIndexMixin(object):
         self.index_doc(docid, obj)
 
     def docids(self):
-        not_indexed = self._not_indexed
-        indexed = self._indexed()
+        not_indexed = self.not_indexed()
+        indexed = self.indexed()
         if len(not_indexed) == 0:
             return self.family.IF.Set(indexed)
         elif len(indexed) == 0:

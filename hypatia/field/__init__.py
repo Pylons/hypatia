@@ -86,6 +86,9 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         self._num_docs = Length(0)
         self._not_indexed = self.family.IF.TreeSet()
 
+    def not_indexed(self):
+        return self._not_indexed
+
     def documentCount(self):
         """See interface IIndexStatistics"""
         return self._num_docs()
@@ -164,7 +167,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         # the base index's index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
-    def _indexed(self):
+    def indexed(self):
         return self._rev_index.keys()
 
     def sort(self, docids, reverse=False, limit=None, sort_type=None):
