@@ -71,103 +71,111 @@ class TestCatalog(unittest.TestCase):
         catalog.unindex_doc(1)
         self.assertEqual(idx.unindexed, 1)
 
+class TestCatalogQuery(unittest.TestCase):
+    def _makeOne(self, catalog, family=None):
+        from . import CatalogQuery
+        return CatalogQuery(catalog, family=family)
+    
+    def _makeCatalog(self, family=None):
+        from . import Catalog
+        return Catalog(family=family)
+
+    def test_with_alternate_family(self):
+        from BTrees import family32
+        search = self._makeOne(None, family=family32)
+        self.assertEqual(search.family, family32)
+
     def test_search(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2, 3])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        numdocs, result = catalog.search(name1={}, name2={})
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(name1={}, name2={})
         self.assertEqual(numdocs, 1)
         self.assertEqual(list(result), [3])
 
     def test_search_index_returns_empty(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        numdocs, result = catalog.search(name1={}, name2={})
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(name1={}, name2={})
         self.assertEqual(numdocs, 0)
         self.assertEqual(list(result), [])
 
     def test_search_no_intersection(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        numdocs, result = catalog.search(name1={}, name2={})
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(name1={}, name2={})
         self.assertEqual(numdocs, 0)
         self.assertEqual(list(result), [])
 
     def test_search_index_query_order_returns_empty(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         c2 = IFSet([])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        numdocs, result = catalog.search(name1={}, name2={},
-                                         index_query_order=['name2', 'name1'])
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(name1={}, name2={},
+                                   index_query_order=['name2', 'name1'])
         self.assertEqual(numdocs, 0)
         self.assertEqual(list(result), [])
 
     def test_search_no_indexes_in_search(self):
-        catalog = self._makeOne()
-        numdocs, result = catalog.search()
+        catalog = self._makeCatalog()
+        q = self._makeOne(catalog)
+        numdocs, result = q.search()
         self.assertEqual(numdocs, 0)
         self.assertEqual(list(result), [])
 
     def test_search_noindex(self):
-        catalog = self._makeOne()
-        self.assertRaises(ValueError, catalog.search, name1={})
+        catalog = self._makeCatalog()
+        q = self._makeOne(catalog)
+        self.assertRaises(ValueError, q.search, name1={})
 
     def test_search_noindex_ordered(self):
-        catalog = self._makeOne()
-        self.assertRaises(ValueError, catalog.search, name1={},
+        catalog = self._makeCatalog()
+        q = self._makeOne(catalog)
+        self.assertRaises(ValueError, q.search, name1={},
                           index_query_order=['name1'])
-
-    def test_apply(self):
-        import BTrees
-        IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
-        c1 = IFSet([1, 2, 3])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([3, 4, 5])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result = catalog.apply({'name1':{}, 'name2':{}})
-        self.assertEqual(numdocs, 1)
-        self.assertEqual(list(result), [3])
 
     def test_search_with_sortindex_ascending(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        numdocs, result = catalog.search(
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(
             name1={}, name2={}, sort_index='name1')
         self.assertEqual(numdocs, 3)
         self.assertEqual(list(result), ['sorted1', 'sorted2', 'sorted3'])
@@ -175,14 +183,15 @@ class TestCatalog(unittest.TestCase):
     def test_search_with_sortindex_reverse(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         c2 = IFSet([3, 4, 5])
         idx2 = DummyIndex(c2)
         catalog['name2'] = idx2
-        numdocs, result = catalog.search(
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(
             name1={}, name2={}, sort_index='name1',
             reverse=True)
         self.assertEqual(numdocs, 3)
@@ -191,28 +200,30 @@ class TestCatalog(unittest.TestCase):
     def test_search_with_sort_type(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
         from ..field import FWSCAN
-        numdocs, result = catalog.search(name1={}, sort_index='name1',
-                                         limit=1, sort_type=FWSCAN)
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(name1={}, sort_index='name1',
+                                   limit=1, sort_type=FWSCAN)
         self.assertEqual(idx1.sort_type, FWSCAN)
 
     def test_limited(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
-        numdocs, result = catalog.search(name1={}, sort_index='name1', limit=1)
+        q = self._makeOne(catalog)
+        numdocs, result = q.search(name1={}, sort_index='name1', limit=1)
         self.assertEqual(numdocs, 1)
         self.assertEqual(idx1.limit, 1)
 
     def _test_functional_merge(self, **extra):
-        catalog = self._makeOne()
+        catalog = self._makeCatalog()
         from ..field import FieldIndex
         from ..keyword import KeywordIndex
         from ..text import TextIndex
@@ -234,21 +245,24 @@ class TestCatalog(unittest.TestCase):
             }
         for num, doc in map.items():
             catalog.index_doc(num, doc)
-        num, result = catalog.search(field=('field1', 'field1'), **extra)
+
+        q = self._makeOne(catalog)
+        
+        num, result = q.search(field=('field1', 'field1'), **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [1])
-        num, result = catalog.search(field=('field2', 'field2'), **extra)
+        num, result = q.search(field=('field2', 'field2'), **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = catalog.search(field=('field2', 'field2'),
-                                     keyword='keyword2', **extra)
+        num, result = q.search(field=('field2', 'field2'),
+                               keyword='keyword2', **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = catalog.search(field=('field2', 'field2'), text='two',
-                                     **extra)
+        num, result = q.search(field=('field2', 'field2'), text='two',
+                               **extra)
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = catalog.search(text='text', keyword='same', **extra)
+        num, result = q.search(text='text', keyword='same', **extra)
         self.assertEqual(num, 3)
         self.assertEqual(list(result), [1,2,3])
 

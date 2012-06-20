@@ -5,6 +5,7 @@ from .. import query as q
 class TestQueryBase(object):
     def test_it(self):
         from ..catalog import Catalog
+        from ..catalog import CatalogQuery
         from ..field import FieldIndex
         from ..keyword import KeywordIndex
         from ..text import TextIndex
@@ -23,7 +24,9 @@ class TestQueryBase(object):
                                      ['a', 'b', 'c']))
         catalog.index_doc(6, Content('name6', 'title6', 'body six',['d']))
 
-        numdocs, result = catalog.query(
+        q = CatalogQuery(catalog)
+
+        numdocs, result = q.query(
             self.query, sort_index='name', limit=5, names=dict(body='body'))
         self.assertEqual(numdocs, 2)
         self.assertEqual(list(result), [4, 5])

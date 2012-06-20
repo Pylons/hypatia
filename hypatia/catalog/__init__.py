@@ -45,35 +45,6 @@ class Catalog(PersistentMapping):
         for index in self.values():
             index.reindex_doc(docid, obj)
 
-    def search(self, **query):
-        """ Use the query terms to perform a query.  Return a tuple of
-        (num, resultseq) based on the merging of results from
-        individual indexes.
-
-        .. note::
-
-                  this method is deprecated. Use :meth:`hypatia.Catalog.query`
-                  instead.
-
-
-        """
-        return CatalogQuery(self, family=self.family).search(**query)
-
-    def apply(self, query):
-        return self.search(**query)
-
-    def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
-              reverse=False, names=None):
-        """ Use the arguments to perform a query.  Return a tuple of
-        (num, resultseq)."""
-        return CatalogQuery(self, family=self.family).query(
-            queryobject,
-            sort_index=sort_index,
-            limit=limit,
-            sort_type=sort_type,
-            reverse=reverse,
-            names=names
-            )
 
 @implementer(ICatalogQuery)
 class CatalogQuery(object):
@@ -92,7 +63,8 @@ class CatalogQuery(object):
 
         .. note::
 
-           This method is deprecated. Use :func:`hypatia.query` instead.
+           This method is deprecated. Use
+           :func:`hypatia.catalog.CatalogQuery.__call__` instead.
 
 
         """
