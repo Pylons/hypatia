@@ -41,15 +41,15 @@ class TestCatalogFacetIndex(unittest.TestCase):
                           'style:gucci'])
         idx.index_doc(4, ['size:large'])
 
-    def test_class_conforms_to_ICatalogIndex(self):
+    def test_class_conforms_to_IIndex(self):
         from zope.interface.verify import verifyClass
-        from ..interfaces import ICatalogIndex
-        verifyClass(ICatalogIndex, self._getTargetClass())
+        from ..interfaces import IIndex
+        verifyClass(IIndex, self._getTargetClass())
 
-    def test_instance_conforms_to_ICatalogIndex(self):
+    def test_instance_conforms_to_IIndex(self):
         from zope.interface.verify import verifyObject
-        from ..interfaces import ICatalogIndex
-        verifyObject(ICatalogIndex, self._makeOne())
+        from ..interfaces import IIndex
+        verifyObject(IIndex, self._makeOne())
 
     def test_ctor_defaults(self):
         from BTrees import family64

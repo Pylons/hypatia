@@ -2,11 +2,11 @@ from hashlib import md5
 from zope.interface import implementer
 
 from ..keyword import KeywordIndex
-from ..interfaces import ICatalogIndex
+from ..interfaces import IIndex
 
 _marker = ()
 
-@implementer(ICatalogIndex)
+@implementer(IIndex)
 class FacetIndex(KeywordIndex):
     """Facet index.
 

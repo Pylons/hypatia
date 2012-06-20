@@ -19,10 +19,8 @@ from persistent import Persistent
 from zope.interface import implementer
 
 from hypatia.interfaces import (
-    IIndexSearch,
-    IInjection,
-    IStatistics,
-    ICatalogIndex,
+    IIndex,
+    IIndexStatistics,
     IIndexSort,
     )
 
@@ -39,7 +37,11 @@ from ..util import BaseIndexMixin
 
 _marker = object()
 
-@implementer(IInjection, IIndexSearch, IStatistics, ICatalogIndex, IIndexSort)
+@implementer(
+    IIndex,
+    IIndexSort,
+    IIndexStatistics
+    )
 class TextIndex(BaseIndexMixin, Persistent):
     def __init__(self, discriminator, lexicon=None, index=None,
                  family=None):

@@ -71,10 +71,6 @@ class TestCatalog(unittest.TestCase):
         catalog.unindex_doc(1)
         self.assertEqual(idx.unindexed, 1)
 
-    def test_setitem_guard(self):
-        catalog = self._makeOne()
-        self.assertRaises(ValueError, catalog.__setitem__, 'a', None)
-
     def test_search(self):
         import BTrees
         IFSet = BTrees.family64.IF.Set
@@ -263,10 +259,10 @@ class TestCatalog(unittest.TestCase):
         return self._test_functional_merge(
             index_query_order=['field', 'keyword', 'text'])
 
-from ..catalog import ICatalogIndex
+from ..interfaces import IIndex
 from zope.interface import implementer
 
-@implementer(ICatalogIndex)
+@implementer(IIndex)
 class DummyIndex(object):
 
     value = None

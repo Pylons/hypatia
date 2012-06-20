@@ -1,19 +1,24 @@
 from zope.interface import implementer
 
-from ..interfaces import ICatalogIndex
+from ..interfaces import (
+    IIndex,
+    IIndexStatistics,
+    )
 from ..util import BaseIndexMixin
 
 from persistent import Persistent
 
 from BTrees.Length import Length
 
-from hypatia.interfaces import IInjection, IStatistics, IIndexSearch
 from .interfaces import IKeywordQuerying
 
 _marker = object()
 
-@implementer(ICatalogIndex, IInjection, IStatistics, IIndexSearch,
-             IKeywordQuerying)
+@implementer(
+    IIndex,
+    IIndexStatistics,
+    IKeywordQuerying,
+    )
 class KeywordIndex(BaseIndexMixin, Persistent):
     """
     Keyword index.

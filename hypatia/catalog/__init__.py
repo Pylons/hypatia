@@ -4,8 +4,7 @@ from persistent.mapping import PersistentMapping
 from zope.interface import implementer
 
 from ..interfaces import ICatalog
-from ..interfaces import ICatalogIndex
-from ..interfaces import ICatalogSearch
+from ..interfaces import ICatalogQuery
 
 from ..query import parse_query
 
@@ -46,14 +45,6 @@ class Catalog(PersistentMapping):
         for index in self.values():
             index.reindex_doc(docid, obj)
 
-    def __setitem__(self, name, index):
-        """ Add an object which implements
-        ``hypatia.interfaces.ICatalogIndex`` to the catalog.
-        No other type of object may be added to a catalog."""
-        if not ICatalogIndex.providedBy(index):
-            raise ValueError('%s does not provide ICatalogIndex')
-        return PersistentMapping.__setitem__(self, name, index)
-
     def search(self, **query):
         """ Use the query terms to perform a query.  Return a tuple of
         (num, resultseq) based on the merging of results from
@@ -66,7 +57,7 @@ class Catalog(PersistentMapping):
 
 
         """
-        return CatalogSearch(self, family=self.family).search(**query)
+        return CatalogQuery(self, family=self.family).search(**query)
 
     def apply(self, query):
         return self.search(**query)
@@ -75,7 +66,7 @@ class Catalog(PersistentMapping):
               reverse=False, names=None):
         """ Use the arguments to perform a query.  Return a tuple of
         (num, resultseq)."""
-        return CatalogSearch(self, family=self.family).query(
+        return CatalogQuery(self, family=self.family).query(
             queryobject,
             sort_index=sort_index,
             limit=limit,
@@ -84,8 +75,8 @@ class Catalog(PersistentMapping):
             names=names
             )
 
-@implementer(ICatalogSearch)
-class CatalogSearch(object):
+@implementer(ICatalogQuery)
+class CatalogQuery(object):
     
     family = BTrees.family64
     
@@ -189,6 +180,8 @@ class CatalogSearch(object):
             queryobject = parse_query(queryobject)
         results = queryobject._apply(self.catalog, names)
         return self.sort_result(results, sort_index, limit, sort_type, reverse)
+
+    __call__ = query
 
 def assertint(docid):
     if not isinstance(docid, int):

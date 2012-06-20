@@ -3,13 +3,13 @@ from persistent import Persistent
 
 from BTrees.Length import Length
 
-from ..interfaces import ICatalogIndex
+from ..interfaces import IIndex
 from ..util import BaseIndexMixin
 
 _marker = ()
 
-@implementer(ICatalogIndex)
-class CatalogPathIndex(BaseIndexMixin, Persistent):
+@implementer(IIndex)
+class PathIndex(BaseIndexMixin, Persistent):
 
     """Index for model paths (tokens separated by '/' characters)
 

@@ -5,9 +5,8 @@ from ZODB.broken import Broken
 
 _marker = ()
 
-# Stolen from http://www.voidspace.org.uk/python/recipebook.shtml#comparison
-
 class RichComparisonMixin(object):
+    # Stolen from http://www.voidspace.org.uk/python/recipebook.shtml#comparison
 
     def __eq__(self, other):
         raise NotImplementedError("Equality not implemented")
@@ -26,13 +25,14 @@ class RichComparisonMixin(object):
 
     def __ge__(self, other):
         return self.__eq__(other) or self.__gt__(other)
-    
+
 class BaseIndexMixin(object):
     """ Mixin class for indexes that implements common behavior """
 
     family = BTrees.family64
 
     def discriminate(self, obj, default):
+        """ See interface IIndexInjection """
         if callable(self.discriminator):
             value = self.discriminator(obj, _marker)
         else:
@@ -52,7 +52,7 @@ class BaseIndexMixin(object):
         return value
 
     def reindex_doc(self, docid, obj):
-        """ Default reindex_doc implementation """
+        """ See interface IIndexInjection """
         self.unindex_doc(docid)
         self.index_doc(docid, obj)
 

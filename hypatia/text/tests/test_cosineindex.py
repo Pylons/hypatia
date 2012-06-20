@@ -27,25 +27,25 @@ class CosineIndexTestBase:
         lexicon = Lexicon(Splitter())
         return self._getTargetClass()(lexicon, family=self._getBTreesFamily())
 
-    def test_class_conforms_to_IInjection(self):
+    def test_class_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyClass
-        from hypatia.interfaces import IInjection
-        verifyClass(IInjection, self._getTargetClass())
+        from hypatia.interfaces import IIndexInjection
+        verifyClass(IIndexInjection, self._getTargetClass())
 
-    def test_instance_conforms_to_IInjection(self):
+    def test_instance_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyObject
-        from hypatia.interfaces import IInjection
-        verifyObject(IInjection, self._makeOne())
+        from hypatia.interfaces import IIndexInjection
+        verifyObject(IIndexInjection, self._makeOne())
 
-    def test_class_conforms_to_IStatistics(self):
+    def test_class_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyClass
-        from hypatia.interfaces import IStatistics
-        verifyClass(IStatistics, self._getTargetClass())
+        from hypatia.interfaces import IIndexStatistics
+        verifyClass(IIndexStatistics, self._getTargetClass())
 
-    def test_instance_conforms_to_IStatistics(self):
+    def test_instance_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyObject
-        from hypatia.interfaces import IStatistics
-        verifyObject(IStatistics, self._makeOne())
+        from hypatia.interfaces import IIndexStatistics
+        verifyObject(IIndexStatistics, self._makeOne())
 
     def test_class_conforms_to_ILexiconBasedIndex(self):
         from zope.interface.verify import verifyClass

@@ -7,8 +7,8 @@ class PathIndexTests(unittest.TestCase):
     """ Test PathIndex objects
     """
     def _getTargetClass(self):
-        from . import CatalogPathIndex
-        return CatalogPathIndex
+        from . import PathIndex
+        return PathIndex
 
     def _makeOne(self, values=None, discriminator=_marker):
         if values is None:
@@ -24,15 +24,15 @@ class PathIndexTests(unittest.TestCase):
             index.index_doc(doc_id, path)
         return index
 
-    def test_class_conforms_to_ICatalogIndex(self):
+    def test_class_conforms_to_IIndex(self):
         from zope.interface.verify import verifyClass
-        from ..interfaces import ICatalogIndex
-        verifyClass(ICatalogIndex, self._getTargetClass())
+        from ..interfaces import IIndex
+        verifyClass(IIndex, self._getTargetClass())
 
-    def test_instance_conforms_to_ICatalogIndex(self):
+    def test_instance_conforms_to_IIndex(self):
         from zope.interface.verify import verifyObject
-        from ..interfaces import ICatalogIndex
-        verifyObject(ICatalogIndex, self._makeOne())
+        from ..interfaces import IIndex
+        verifyObject(IIndex, self._makeOne())
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):

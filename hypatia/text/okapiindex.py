@@ -227,9 +227,9 @@ class OkapiIndex(BaseIndex):
         self._change_doc_len(count)
         return count
 
-    def _reindex_doc(self, docid, text):
+    def reindex_doc(self, docid, text):
         self._change_doc_len(-self._docweight[docid])
-        return BaseIndex._reindex_doc(self, docid, text)
+        return BaseIndex.reindex_doc(self, docid, text)
 
     def unindex_doc(self, docid):
         if docid not in self._docwords:

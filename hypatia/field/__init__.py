@@ -34,10 +34,8 @@ NBEST = 'nbest'
 TIMSORT = 'timsort'
 
 @implementer(
-        interfaces.IInjection,
-        interfaces.IStatistics,
-        interfaces.IIndexSearch,
-        interfaces.ICatalogIndex,
+        interfaces.IIndex,
+        interfaces.IIndexStatistics,
         )
 class FieldIndex(BaseIndexMixin, persistent.Persistent):
     """ Field indexing.
@@ -89,15 +87,15 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         self._not_indexed = self.family.IF.TreeSet()
 
     def documentCount(self):
-        """See interface IStatistics"""
+        """See interface IIndexStatistics"""
         return self._num_docs()
 
     def wordCount(self):
-        """See interface IStatistics"""
+        """See interface IIndexStatistics"""
         return len(self._fwd_index)
 
     def index_doc(self, docid, value):
-        """See interface IInjection"""
+        """See interface IIndexInjection"""
         value = self.discriminate(value, _marker)
 
         if value is _marker:
@@ -134,7 +132,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         rev_index[docid] = value
 
     def unindex_doc(self, docid):
-        """See interface IInjection.
+        """See interface IIndexInjection.
         """
         _not_indexed = self._not_indexed
         if docid in _not_indexed:
@@ -162,6 +160,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         self._num_docs.change(-1)
 
     def reindex_doc(self, docid, value):
+        """ See interface IIndexInjection """
         # the base index's index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 

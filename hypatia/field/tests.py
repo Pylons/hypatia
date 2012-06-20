@@ -31,45 +31,45 @@ class FieldIndexTests(unittest.TestCase):
         index.index_doc(11, 10)
         index.index_doc(10, 11)
 
-    def test_class_conforms_to_IInjection(self):
+    def test_class_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyClass
-        from ..interfaces import IInjection
-        verifyClass(IInjection, self._getTargetClass())
+        from ..interfaces import IIndexInjection
+        verifyClass(IIndexInjection, self._getTargetClass())
 
-    def test_instance_conforms_to_IInjection(self):
+    def test_instance_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyObject
-        from ..interfaces import IInjection
-        verifyObject(IInjection, self._makeOne())
+        from ..interfaces import IIndexInjection
+        verifyObject(IIndexInjection, self._makeOne())
 
-    def test_class_conforms_to_IIndexSearch(self):
+    def test_class_conforms_to_IIndexQuery(self):
         from zope.interface.verify import verifyClass
-        from ..interfaces import IIndexSearch
-        verifyClass(IIndexSearch, self._getTargetClass())
+        from ..interfaces import IIndexQuery
+        verifyClass(IIndexQuery, self._getTargetClass())
 
-    def test_instance_conforms_to_IIndexSearch(self):
+    def test_instance_conforms_to_IIndexQuery(self):
         from zope.interface.verify import verifyObject
-        from ..interfaces import IIndexSearch
-        verifyObject(IIndexSearch, self._makeOne())
+        from ..interfaces import IIndexQuery
+        verifyObject(IIndexQuery, self._makeOne())
 
-    def test_class_conforms_to_IStatistics(self):
+    def test_class_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyClass
-        from ..interfaces import IStatistics
-        verifyClass(IStatistics, self._getTargetClass())
+        from ..interfaces import IIndexStatistics
+        verifyClass(IIndexStatistics, self._getTargetClass())
 
-    def test_instance_conforms_to_IStatistics(self):
+    def test_instance_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyObject
-        from ..interfaces import IStatistics
-        verifyObject(IStatistics, self._makeOne())
+        from ..interfaces import IIndexStatistics
+        verifyObject(IIndexStatistics, self._makeOne())
 
-    def test_class_conforms_to_ICatalogIndex(self):
+    def test_class_conforms_to_IIndex(self):
         from zope.interface.verify import verifyClass
-        from ..interfaces import ICatalogIndex
-        verifyClass(ICatalogIndex, self._getTargetClass())
+        from ..interfaces import IIndex
+        verifyClass(IIndex, self._getTargetClass())
 
-    def test_instance_conforms_to_ICatalogIndex(self):
+    def test_instance_conforms_to_IIndex(self):
         from zope.interface.verify import verifyObject
-        from ..interfaces import ICatalogIndex
-        verifyObject(ICatalogIndex, self._makeOne())
+        from ..interfaces import IIndex
+        verifyObject(IIndex, self._makeOne())
 
     def test_ctor_defaults(self):
         import BTrees

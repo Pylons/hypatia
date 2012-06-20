@@ -29,25 +29,25 @@ class BaseIndexTestBase:
         lexicon = Lexicon(Splitter())
         return self._getTargetClass()(lexicon, family=family)
 
-    def test_class_conforms_to_IInjection(self):
+    def test_class_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyClass
-        from hypatia.interfaces import IInjection
-        verifyClass(IInjection, self._getTargetClass())
+        from hypatia.interfaces import IIndexInjection
+        verifyClass(IIndexInjection, self._getTargetClass())
 
-    def test_instance_conforms_to_IInjection(self):
+    def test_instance_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyObject
-        from hypatia.interfaces import IInjection
-        verifyObject(IInjection, self._makeOne())
+        from hypatia.interfaces import IIndexInjection
+        verifyObject(IIndexInjection, self._makeOne())
 
-    def test_class_conforms_to_IStatistics(self):
+    def test_class_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyClass
-        from hypatia.interfaces import IStatistics
-        verifyClass(IStatistics, self._getTargetClass())
+        from hypatia.interfaces import IIndexStatistics
+        verifyClass(IIndexStatistics, self._getTargetClass())
 
-    def test_instance_conforms_to_IStatistics(self):
+    def test_instance_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyObject
-        from hypatia.interfaces import IStatistics
-        verifyObject(IStatistics, self._makeOne())
+        from hypatia.interfaces import IIndexStatistics
+        verifyObject(IIndexStatistics, self._makeOne())
 
     def test_class_conforms_to_ILexiconBasedIndex(self):
         from zope.interface.verify import verifyClass
@@ -165,7 +165,7 @@ class BaseIndexTestBase:
         self.assertEqual(index.wordCount(), 3)
         self.assertEqual(index.documentCount(), 1)
 
-    def test__reindex_doc_identity(self):
+    def test_reindex_doc_identity(self):
         index = self._makeOne()
 
         # Fake out _get_frequencies, which is supposed to be overridden.
@@ -180,7 +180,7 @@ class BaseIndexTestBase:
             assert 0
         index._add_wordinfo = index._del_wordinfo = _dont_go_here
 
-        count = index._reindex_doc(1, 'one two three')
+        count = index.reindex_doc(1, 'one two three')
 
         self.assertEqual(count, 3)
         self.assertEqual(index.wordCount(), 3)
@@ -193,7 +193,7 @@ class BaseIndexTestBase:
         self.failUnless(index._lexicon._wids['two'] in wids)
         self.failUnless(index._lexicon._wids['three'] in wids)
 
-    def test__reindex_doc_disjoint(self):
+    def test_reindex_doc_disjoint(self):
         index = self._makeOne()
         def _faux_get_frequencies(wids):
             return dict([(y, x) for x, y in enumerate(wids)]), 1
@@ -201,7 +201,7 @@ class BaseIndexTestBase:
         index._get_frequencies = _faux_get_frequencies
 
         index.index_doc(1, 'one two three')
-        count = index._reindex_doc(1, 'four five six')
+        count = index.reindex_doc(1, 'four five six')
 
         self.assertEqual(count, 3)
         self.assertEqual(index.wordCount(), 3)
@@ -220,7 +220,7 @@ class BaseIndexTestBase:
         self.failUnless(index._lexicon._wids['five'] in wids)
         self.failUnless(index._lexicon._wids['six'] in wids)
 
-    def test__reindex_doc_subset(self):
+    def test_reindex_doc_subset(self):
         index = self._makeOne()
         def _faux_get_frequencies(wids):
             return dict([(y, x) for x, y in enumerate(wids)]), 1
@@ -228,7 +228,7 @@ class BaseIndexTestBase:
         index._get_frequencies = _faux_get_frequencies
 
         index.index_doc(1, 'one two three')
-        count = index._reindex_doc(1, 'two three')
+        count = index.reindex_doc(1, 'two three')
 
         self.assertEqual(count, 2)
         self.assertEqual(index.wordCount(), 2)
@@ -241,7 +241,7 @@ class BaseIndexTestBase:
         self.failUnless(index._lexicon._wids['two'] in wids)
         self.failUnless(index._lexicon._wids['three'] in wids)
 
-    def test__reindex_doc_superset(self): # TODO
+    def test_reindex_doc_superset(self): # TODO
         index = self._makeOne()
         def _faux_get_frequencies(wids):
             return dict([(y, x) for x, y in enumerate(wids)]), 1
@@ -249,7 +249,7 @@ class BaseIndexTestBase:
         index._get_frequencies = _faux_get_frequencies
 
         index.index_doc(1, 'one two three')
-        count = index._reindex_doc(1, 'one two three four five six')
+        count = index.reindex_doc(1, 'one two three four five six')
 
         self.assertEqual(count, 6)
         self.assertEqual(index.wordCount(), 6)

@@ -22,9 +22,9 @@ import BTrees
 from BTrees import Length
 from BTrees.IOBTree import IOBTree
 
-from hypatia.interfaces import (
-    IInjection,
-    IStatistics,
+from ..interfaces import (
+    IIndexInjection,
+    IIndexStatistics,
     )
 from .interfaces import (
     IExtendedQuerying,
@@ -36,7 +36,12 @@ from .setops import (
     mass_weightedUnion,
     )
 
-@implementer(IInjection, IStatistics, ILexiconBasedIndex, IExtendedQuerying)
+@implementer(
+    IIndexInjection,
+    IIndexStatistics,
+    ILexiconBasedIndex,
+    IExtendedQuerying
+    )
 class BaseIndex(Persistent):
 
     family = BTrees.family64
@@ -100,7 +105,7 @@ class BaseIndex(Persistent):
     # A subclass may wish to extend or override this.
     def index_doc(self, docid, text):
         if docid in self._docwords:
-            return self._reindex_doc(docid, text)
+            return self.reindex_doc(docid, text)
         wids = self._lexicon.sourceToWordIds(text)
         wid2weight, docweight = self._get_frequencies(wids)
         self._mass_add_wordinfo(wid2weight, docid)
@@ -117,7 +122,7 @@ class BaseIndex(Persistent):
     # to a new version of a doc that already exists.  The goal is to be
     # faster than simply unindexing the old version in its entirety and then
     # adding the new version in its entirety.
-    def _reindex_doc(self, docid, text):
+    def reindex_doc(self, docid, text):
         # Touch as few docid->w(docid, score) maps in ._wordinfo as possible.
         old_wids = self.get_words(docid)
         old_wid2w, old_docw = self._get_frequencies(old_wids)

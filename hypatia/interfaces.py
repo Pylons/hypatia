@@ -1,11 +1,6 @@
 from zope.interface import Interface
 
-class ICatalogAdapter(Interface):
-    def __call__(default):
-        """ Return the value or the default if the object no longer
-        has any value for the adaptation"""
-
-class IInjection(Interface):
+class IIndexInjection(Interface):
     """Interface for injecting documents into an index."""
 
     def index_doc(docid, value):
@@ -13,7 +8,7 @@ class IInjection(Interface):
 
         docid: int, identifying the document
 
-        value: the value to be indexed
+        value: the (undiscriminated) value to be indexed
 
         return: None
 
@@ -31,43 +26,69 @@ class IInjection(Interface):
         after this call, the index should have no references to the docid.
         """
 
+    def reindex_doc(docid, value):
+        """Reindex a document using the (undiscriminated) value"""
+
     def clear():
         """Unindex all documents indexed by the index
         """
 
-class IIndexSearch(Interface):
+class IIndexQuery(Interface):
+    """ Interface expected to be implemented by indexes which support CQE
+    queries """
+    def applyContains(value):
+        """ Used by query.Contains comparator """
 
-    def apply(query):
-        """Apply an index to the given query
+    def applyDoesNotContain(value):
+        """ Used by query.DoesNotContain comparator """ 
 
-        The type if the query is index specific.
+    def applyEq(value):
+        """ Used by query.Eq comparator  """ 
 
-        TODO
-            This is somewhat problemetic. It means that application
-            code that calls apply has to be aware of the
-            expected query type. This isn't too much of a problem now,
-            as we have no more general query language nor do we have
-            any sort of automatic query-form generation.
+    def applyNotEq(value):
+        """ Used by query.NotEq comparator """ 
 
-            It would be nice to have a system later for having
-            query-form generation or, perhaps, sme sort of query
-            language. At that point, we'll need some sort of way to
-            determine query types, presumably through introspection of
-            the index objects.
+    def applyGt(min_value):
+        """ Used by query.Gt comparator  """ 
 
-        A result is returned that is:
+    def applyLt(max_value):
+        """ Used by query.Lt comparator  """ 
 
-        - An IFBTree or an IFBucket mapping document ids to floating-point
-          scores for document ids of documents that match the query,
+    def applyGe(min_value):
+        """ Used by query.Ge comparator  """ 
 
-        - An IFSet or IFTreeSet containing document ids of documents
-          that match the query, or
+    def applyLe(max_value):
+        """ Used by query.Le comparator  """ 
 
-        - None, indicating that the index could not use the query and
-          that the result should have no impact on determining a final
-          result.
+    def applyAny(values):
+        """ Used by query.Any comparator  """ 
 
-        """
+    def applyNotAny(values):
+        """ Used by query.NotAny comparator  """ 
+
+    def applyAll(values):
+        """ Used by query.All comparator  """ 
+
+    def applyNotAll(values):
+        """ Used by query.NotAll comparator  """ 
+
+    def applyInRange(start, end, excludemin=False, excludemax=False):
+        """ Used by query.InRange comparator  """ 
+
+    def applyNotInRange(start, end, excludemin=False, excludemax=False):
+        """ Used by query.NotInRange comparator  """ 
+
+class IIndex(IIndexQuery, IIndexInjection):
+    pass
+
+class IIndexStatistics(Interface):
+    """An index that provides statistical information about itself."""
+
+    def documentCount():
+        """Return the number of documents currently indexed."""
+
+    def wordCount():
+        """Return the number of words currently indexed."""
 
 class IIndexSort(Interface):
 
@@ -81,16 +102,6 @@ class IIndexSort(Interface):
         value of the "limit" argument and optionally
         reversed, using the "reverse" argument.
         """
-
-class IStatistics(Interface):
-    """An index that provides statistical information about itself."""
-
-    def documentCount():
-        """Return the number of documents currently indexed."""
-
-    def wordCount():
-        """Return the number of words currently indexed."""
-
 
 class INBest(Interface):
     """Interface for an N-Best chooser."""
@@ -142,24 +153,14 @@ class INBest(Interface):
         This is N (the value passed to the constructor).
         """
 
-class ICatalog(IIndexSearch, IInjection):
-    pass
+class ICatalog(IIndexInjection):
+    """ Dictionary-like object which maps index names to index instances.
+    Also supports the IIndexInjection interface."""
+    def clear_indexes():
+        """ Call .clear on all member indexes """
 
-class ICatalogSearch(Interface):
-    def search(**query):
-        """Search on the query provided.  Each query key is an index
-        name, each query value is the value that the index expects as
-        a query term."""
-
-class ICatalogIndex(IIndexSearch, IInjection):
-    """ An index that adapts objects to an attribute or callable value
-    on an object """
-    def apply_intersect(query, docids):
-        """ Run the query implied by query, and return query results
-        intersected with the ``docids`` set that is supplied.  If
-        ``docids`` is None, return the bare query results. """
-
-    def reindex_doc(docid, obj):
-        """ Reindex the document numbered ``docid`` using in the
-        information on object ``obj``"""
+class ICatalogQuery(Interface):
+    def __call__(queryobject, sort_index=None, limit=None, sort_type=None,
+              reverse=False, names=None):
+        """Search the catalog using the query and options provided.  """
 

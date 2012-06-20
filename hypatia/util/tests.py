@@ -2,9 +2,6 @@ import unittest
 
 from . import RichComparisonMixin
 
-from ..interfaces import ICatalogIndex
-from zope.interface import implementer
-
 _marker = object()
 
 class RichComparisonMixinTest(unittest.TestCase):
@@ -212,7 +209,6 @@ class TestBaseIndexMixin(unittest.TestCase):
         self.assertEqual(index.value, 'abc')
         self.assertEqual(set(index.docids()), set([1]))
 
-@implementer(ICatalogIndex)
 class DummyIndex(object):
 
     value = None
