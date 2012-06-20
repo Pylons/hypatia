@@ -1,4 +1,5 @@
-Initial release
----------------
+0.1a1
+-----
 
-- Fork of repoze.catalog and zope.index (combined).
+- Initial release: fork of repoze.catalog and zope.index, combined.
+

@@ -12,8 +12,6 @@
 #
 ##############################################################################
 
-__version__ = '0.0'
-
 import os
 import sys
 
@@ -68,7 +66,7 @@ testing_extras = ['nose', 'coverage']
 docs_extras = ['Sphinx']
 
 setup(name='hypatia',
-      version=__version__,
+      version='0.1a1',
       description='Python package for searching and indexing',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
