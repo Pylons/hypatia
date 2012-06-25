@@ -1,3 +1,9 @@
+Next release
+------------
+
+- Add `hypatia.catalog.CatalogQuery.sort` API for sorting external sets
+  of docids based on index values.
+
 0.1a1
 -----
 

@@ -126,12 +126,14 @@ class CatalogQuery(object):
                     # empty results
                     return 0, result
 
-        return self.sort_result(result, sort_index, limit, sort_type, reverse)
+        return self.sort(result, sort_index, limit, sort_type, reverse)
 
-    def sort_result(self, result, sort_index=None, limit=None, sort_type=None,
-                    reverse=False):
+    def sort(self, docidset, sort_index, limit=None, sort_type=None,
+             reverse=False):
+        """ Return ``(num, sorted-resultseq)`` for the concrete docidset. """
 
-        numdocs = len(result)
+        result = docidset
+        numdocs = len(docidset)
 
         if sort_index:
             index = self.catalog[sort_index]
@@ -151,7 +153,7 @@ class CatalogQuery(object):
         if isinstance(queryobject, basestring):
             queryobject = parse_query(queryobject)
         results = queryobject._apply(self.catalog, names)
-        return self.sort_result(results, sort_index, limit, sort_type, reverse)
+        return self.sort(results, sort_index, limit, sort_type, reverse)
 
     __call__ = query
 

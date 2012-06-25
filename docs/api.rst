@@ -31,6 +31,8 @@
 
      .. automethod:: __call__
 
+     .. automethod:: sort
+
 :mod:`hypatia.query`
 --------------------
 

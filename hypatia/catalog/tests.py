@@ -222,6 +222,19 @@ class TestCatalogQuery(unittest.TestCase):
         self.assertEqual(numdocs, 1)
         self.assertEqual(idx1.limit, 1)
 
+    def test_sort(self):
+        import BTrees
+        IFSet = BTrees.family64.IF.Set
+        catalog = self._makeCatalog()
+        c1 = IFSet([1, 2, 3, 4, 5])
+        idx1 = DummyIndex(c1)
+        catalog['name1'] = idx1
+        q = self._makeOne(catalog)
+        numdocs, result = q.sort(c1, sort_index='name1', limit=1)
+        self.assertEqual(numdocs, 1)
+        self.assertEqual(idx1.limit, 1)
+        
+
     def _test_functional_merge(self, **extra):
         catalog = self._makeCatalog()
         from ..field import FieldIndex
