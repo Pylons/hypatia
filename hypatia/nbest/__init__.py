@@ -20,8 +20,9 @@ number of comparisons performed overall is M * log2(N).
 
 from bisect import bisect_left as bisect
 
-from hypatia.interfaces import INBest
 from zope.interface import implementer
+
+from .interfaces import INBest
 
 @implementer(INBest)
 class NBest(object):

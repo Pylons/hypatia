@@ -18,6 +18,8 @@ Next release
 
   - wordCount method renamed to word_count.
 
+- Remove unused INBest interface.
+
 0.1a1
 -----
 
