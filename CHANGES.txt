@@ -1,5 +1,5 @@
-Next release
-------------
+0.1a2 (2012-07-02)
+------------------
 
 - This version of the code is incompatible with indexes produced by 0.1a1.
   There is no upgrade script.  Shame on you for using software with a 0.1a1
