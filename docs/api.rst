@@ -18,7 +18,7 @@
 
         Retrieve an index or return failobj.
 
-     .. automethod:: clear_indexes
+     .. automethod:: reset
 
      .. automethod:: index_doc
 
