@@ -257,7 +257,7 @@ class OkapiIndex(BaseIndex):
         def _search_wids(self, wids):
             if not wids:
                 return []
-            N = float(self.documentCount())  # total # of docs
+            N = float(self.indexed_count())  # total # of docs
             try:
                 doclen = self._totaldoclen()
             except TypeError:
@@ -308,7 +308,7 @@ class OkapiIndex(BaseIndex):
         def _search_wids(self, wids):
             if not wids:
                 return []
-            N = float(self.documentCount())  # total # of docs
+            N = float(self.indexed_count())  # total # of docs
             try:
                 doclen = self._totaldoclen()
             except TypeError:

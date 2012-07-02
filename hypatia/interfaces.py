@@ -76,18 +76,47 @@ class IIndexQuery(Interface):
         """ Used by query.InRange comparator  """ 
 
     def applyNotInRange(start, end, excludemin=False, excludemax=False):
-        """ Used by query.NotInRange comparator  """ 
+        """ Used by query.NotInRange comparator  """
 
-class IIndex(IIndexQuery, IIndexInjection):
+class IIndexEnumeration(Interface):
+    def not_indexed():
+        """ Return the set of document ids for which this index's
+        discriminator returned ``default`` during ``index_doc`` or
+        ``reindex_doc``, indicating that the index configuration was
+        uninterested in indexing the value."""
+
+    def not_indexed_count():
+        """Return the number of document ids currently not indexed.
+        Logically equivalent to len(self.not_indexed())."""
+
+    def indexed():
+        """ Return the set of document ids for which this index's
+        discriminator returned a non-default value during ``index_doc`` or
+        ``reindex_doc``, indicating that the index configuration as
+        interested in indexing the value."""
+
+    def indexed_count():
+        """Return the number of document ids currently indexed.  Logically
+        equivalent to len(self.indexed())."""
+
+    def docids():
+        """ Return the set of document ids which have been reported to this
+        index via its ``index_doc`` or ``reindex_doc`` method (including
+        document ids which had values which were not indexed).  This is the
+        logical union of sets returned by indexed() and not_indexed()."""
+
+    def docids_count():
+        """Return the number of document ids currently in the set of both
+        indexed and not indexed.  Logically equivalent to
+        len(self.docids())."""
+
+class IIndex(IIndexQuery, IIndexInjection, IIndexEnumeration):
     pass
 
 class IIndexStatistics(Interface):
     """An index that provides statistical information about itself."""
 
-    def documentCount():
-        """Return the number of documents currently indexed."""
-
-    def wordCount():
+    def word_count():
         """Return the number of words currently indexed."""
 
 class IIndexSort(Interface):

@@ -41,10 +41,10 @@ class Lexicon(Persistent):
         # we never saw before, and that isn't a known stopword (or otherwise
         # filtered out).  Returning a special wid value for OOV words is a
         # way to let clients know when an OOV word appears.
-        self.wordCount = Length()
+        self.word_count = Length()
         self._pipeline = pipeline
 
-    def wordCount(self):
+    def word_count(self):
         """Return the number of unique terms in the lexicon."""
         # overridden per instance
         return len(self._wids)
@@ -64,14 +64,14 @@ class Lexicon(Persistent):
         last = _text2list(text)
         for element in self._pipeline:
             last = element.process(last)
-        if not isinstance(self.wordCount, Length):
-            # Make sure wordCount is overridden with a BTrees.Length.Length
-            self.wordCount = Length(self.wordCount())        
+        if not isinstance(self.word_count, Length):
+            # Make sure word_count is overridden with a BTrees.Length.Length
+            self.word_count = Length(self.word_count())        
         # Strategically unload the length value so that we get the most
         # recent value written to the database to minimize conflicting wids
         # Because length is independent, this will load the most
         # recent value stored, regardless of whether MVCC is enabled
-        self.wordCount._p_deactivate()
+        self.word_count._p_deactivate()
         return map(self._getWordIdCreate, last)
 
     def termToWordIds(self, text):
@@ -146,7 +146,7 @@ class Lexicon(Persistent):
         return wid
 
     def _new_wid(self):
-        count = self.wordCount
+        count = self.word_count
         count.change(1)
         while self._words.has_key(count()):
             # just to be safe

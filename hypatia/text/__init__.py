@@ -95,16 +95,15 @@ class TextIndex(BaseIndexMixin, Persistent):
     def indexed(self):
         return self.index._docwords.keys()
 
+    def indexed_count(self):
+        return self.index.indexed_count()
+
     def not_indexed(self):
         return self._not_indexed
 
-    def documentCount(self):
-        """Return the number of documents in the index."""
-        return self.index.documentCount()
-
-    def wordCount(self):
+    def word_count(self):
         """Return the number of words in the index."""
-        return self.index.wordCount()
+        return self.index.word_count()
 
     def apply(self, querytext, start=0, count=None):
         parser = QueryParser(self.lexicon)

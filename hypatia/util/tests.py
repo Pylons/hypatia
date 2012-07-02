@@ -177,6 +177,24 @@ class TestBaseIndexMixin(unittest.TestCase):
         docids = index.docids()
         self.assertEqual(set(docids), set([20, 21]))
 
+    def test_indexed_count(self):
+        inst = self._makeIndex('abc')
+        def indexed(): return [1,2,3]
+        inst.indexed = indexed
+        self.assertEqual(inst.indexed_count(), 3)
+
+    def test_not_indexed_count(self):
+        inst = self._makeIndex('abc')
+        def not_indexed(): return [1,2,3]
+        inst.not_indexed = not_indexed
+        self.assertEqual(inst.not_indexed_count(), 3)
+
+    def test_docids_count(self):
+        inst = self._makeIndex('abc')
+        def docids(): return [1,2,3]
+        inst.docids = docids
+        self.assertEqual(inst.docids_count(), 3)
+
     def test_index_doc_persistent_value_raises(self):
         from persistent import Persistent
         index = self._makeIndex('abc')

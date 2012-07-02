@@ -1,8 +1,22 @@
 Next release
 ------------
 
+- This version of the code is incompatible with indexes produced by 0.1a1.
+  There is no upgrade script.  Shame on you for using software with a 0.1a1
+  version number and expecting backwards compatibility.
+
 - Add `hypatia.catalog.CatalogQuery.sort` API for sorting external sets
   of docids based on index values.
+
+- Add ``IIndexEnumeration`` interface, which all indexes must support.
+  This implied the following backwards incompatibilities:
+
+  - New interface methods: docids, docids_count, indexed, indexed_count,
+    not_indexed and not_indexed_count.
+
+  - documentCount method renamed to indexed_count.
+
+  - wordCount method renamed to word_count.
 
 0.1a1
 -----

@@ -89,11 +89,16 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
     def not_indexed(self):
         return self._not_indexed
 
-    def documentCount(self):
-        """See interface IIndexStatistics"""
+    def not_indexed_count(self):
+        return len(self._not_indexed)
+
+    def indexed(self):
+        return self._rev_index.keys()
+
+    def indexed_count(self):
         return self._num_docs()
 
-    def wordCount(self):
+    def word_count(self):
         """See interface IIndexStatistics"""
         return len(self._fwd_index)
 
@@ -166,9 +171,6 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         """ See interface IIndexInjection """
         # the base index's index_doc method special-cases a reindex
         return self.index_doc(docid, value)
-
-    def indexed(self):
-        return self._rev_index.keys()
 
     def sort(self, docids, reverse=False, limit=None, sort_type=None):
         if limit is not None:

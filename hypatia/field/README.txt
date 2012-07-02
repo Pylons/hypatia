@@ -56,9 +56,9 @@ To do an exact value search, supply equal minimum and maximum values:
 
 Field indexes support basic statistics:
 
-    >>> index.documentCount()
+    >>> index.indexed_count()
     10
-    >>> index.wordCount()
+    >>> index.word_count()
     8
 
 Documents can be reindexed:
@@ -75,14 +75,14 @@ Documents can be reindexed:
 Documents can be unindexed:
 
     >>> index.unindex_doc(7)
-    >>> index.documentCount()
+    >>> index.indexed_count()
     9
-    >>> index.wordCount()
+    >>> index.word_count()
     8
     >>> index.unindex_doc(8)
-    >>> index.documentCount()
+    >>> index.indexed_count()
     8
-    >>> index.wordCount()
+    >>> index.word_count()
     7
 
     >>> index.apply((30, 70))
@@ -92,17 +92,17 @@ Unindexing a document id that isn't present is ignored:
 
     >>> index.unindex_doc(8)
     >>> index.unindex_doc(80)
-    >>> index.documentCount()
+    >>> index.indexed_count()
     8
-    >>> index.wordCount()
+    >>> index.word_count()
     7
 
 We can also clear the index entirely:
 
     >>> index.clear()
-    >>> index.documentCount()
+    >>> index.indexed_count()
     0
-    >>> index.wordCount()
+    >>> index.word_count()
     0
 
     >>> index.apply((30, 70))

@@ -74,8 +74,8 @@ class BaseIndexTestBase:
         self.assertEqual(len(index._wordinfo), 0)
         self.assertEqual(len(index._docweight), 0)
         self.assertEqual(len(index._docwords), 0)
-        self.assertEqual(index.wordCount(), 0)
-        self.assertEqual(index.documentCount(), 0)
+        self.assertEqual(index.word_count(), 0)
+        self.assertEqual(index.indexed_count(), 0)
         self.failIf(index.has_doc(1))
 
     def test_clear_doesnt_lose_family(self):
@@ -84,19 +84,19 @@ class BaseIndexTestBase:
         index.clear()
         self.failUnless(index.family is BTrees.family64)
 
-    def test_wordCount_method_raises_NotImplementedError(self):
-        class DerviedDoesntSet_wordCount(self._getTargetClass()):
+    def test_word_count_method_raises_NotImplementedError(self):
+        class DerviedDoesntSet_word_count(self._getTargetClass()):
             def __init__(self):
                 pass
-        index = DerviedDoesntSet_wordCount()
-        self.assertRaises(NotImplementedError, index.wordCount)
+        index = DerviedDoesntSet_word_count()
+        self.assertRaises(NotImplementedError, index.word_count)
 
-    def test_documentCount_method_raises_NotImplementedError(self):
-        class DerviedDoesntSet_documentCount(self._getTargetClass()):
+    def test_indexed_count_method_raises_NotImplementedError(self):
+        class DerviedDoesntSet_indexed_count(self._getTargetClass()):
             def __init__(self):
                 pass
-        index = DerviedDoesntSet_documentCount()
-        self.assertRaises(NotImplementedError, index.documentCount)
+        index = DerviedDoesntSet_indexed_count()
+        self.assertRaises(NotImplementedError, index.indexed_count)
 
     def test_index_doc_simple(self):
         index = self._makeOne()
@@ -109,11 +109,11 @@ class BaseIndexTestBase:
         count = index.index_doc(1, 'one two three')
 
         self.assertEqual(count, 3)
-        self.assertEqual(index.wordCount(), 3)
+        self.assertEqual(index.word_count(), 3)
         self.failUnless(index._lexicon._wids['one'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.failUnless(index.has_doc(1))
         self.failUnless(1 in index._docwords)
         self.failUnless(1 in index._docweight)
@@ -135,7 +135,7 @@ class BaseIndexTestBase:
         count = index.index_doc(1, 'two three four')
 
         self.assertEqual(count, 3)
-        self.assertEqual(index.wordCount(), 3)
+        self.assertEqual(index.word_count(), 3)
         self.failIf(index._lexicon._wids['one'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
@@ -147,12 +147,12 @@ class BaseIndexTestBase:
         self.failUnless(index._lexicon._wids['three'] in wids)
         self.failUnless(index._lexicon._wids['four'] in wids)
 
-    def test_index_doc_upgrades_wordCount_documentCount(self):
+    def test_index_doc_upgrades_word_count_indexed_count(self):
         index = self._makeOne()
 
         # Simulate old instances which didn't have these as attributes
-        del index.wordCount
-        del index.documentCount
+        del index.word_count
+        del index.indexed_count
 
         # Fake out _get_frequencies, which is supposed to be overridden.
         def _faux_get_frequencies(wids):
@@ -162,8 +162,8 @@ class BaseIndexTestBase:
         count = index.index_doc(1, 'one two three')
 
         self.assertEqual(count, 3)
-        self.assertEqual(index.wordCount(), 3)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.word_count(), 3)
+        self.assertEqual(index.indexed_count(), 1)
 
     def test_reindex_doc_identity(self):
         index = self._makeOne()
@@ -183,7 +183,7 @@ class BaseIndexTestBase:
         count = index.reindex_doc(1, 'one two three')
 
         self.assertEqual(count, 3)
-        self.assertEqual(index.wordCount(), 3)
+        self.assertEqual(index.word_count(), 3)
         self.failUnless(index._lexicon._wids['one'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
@@ -204,7 +204,7 @@ class BaseIndexTestBase:
         count = index.reindex_doc(1, 'four five six')
 
         self.assertEqual(count, 3)
-        self.assertEqual(index.wordCount(), 3)
+        self.assertEqual(index.word_count(), 3)
         self.failIf(index._lexicon._wids['one'] in index._wordinfo)
         self.failIf(index._lexicon._wids['two'] in index._wordinfo)
         self.failIf(index._lexicon._wids['three'] in index._wordinfo)
@@ -231,7 +231,7 @@ class BaseIndexTestBase:
         count = index.reindex_doc(1, 'two three')
 
         self.assertEqual(count, 2)
-        self.assertEqual(index.wordCount(), 2)
+        self.assertEqual(index.word_count(), 2)
         self.failIf(index._lexicon._wids['one'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
@@ -252,7 +252,7 @@ class BaseIndexTestBase:
         count = index.reindex_doc(1, 'one two three four five six')
 
         self.assertEqual(count, 6)
-        self.assertEqual(index.wordCount(), 6)
+        self.assertEqual(index.word_count(), 6)
         self.failUnless(index._lexicon._wids['one'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
         self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
@@ -280,17 +280,17 @@ class BaseIndexTestBase:
         index._get_frequencies = _faux_get_frequencies
         index.index_doc(1, 'one two three')
         index.unindex_doc(1)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.word_count(), 0)
         self.failIf(index._lexicon._wids['one'] in index._wordinfo)
         self.failIf(index._lexicon._wids['two'] in index._wordinfo)
         self.failIf(index._lexicon._wids['three'] in index._wordinfo)
-        self.assertEqual(index.documentCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
         self.failIf(index.has_doc(1))
         self.failIf(1 in index._docwords)
         self.failIf(1 in index._docweight)
         self.assertRaises(KeyError, index.get_words, 1)
 
-    def test_unindex_doc_upgrades_wordCount_documentCount(self):
+    def test_unindex_doc_upgrades_word_count_indexed_count(self):
         index = self._makeOne()
         def _faux_get_frequencies(wids):
             return dict([(y, x) for x, y in enumerate(wids)]), 1
@@ -298,14 +298,14 @@ class BaseIndexTestBase:
         index._get_frequencies = _faux_get_frequencies
         index.index_doc(1, 'one two three')
         # Simulate old instances which didn't have these as attributes
-        del index.wordCount
-        del index.documentCount
+        del index.word_count
+        del index.indexed_count
         index.unindex_doc(1)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.word_count(), 0)
         self.failIf(index._lexicon._wids['one'] in index._wordinfo)
         self.failIf(index._lexicon._wids['two'] in index._wordinfo)
         self.failIf(index._lexicon._wids['three'] in index._wordinfo)
-        self.assertEqual(index.documentCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
         self.failIf(index.has_doc(1))
         self.failIf(1 in index._docwords)
         self.failIf(1 in index._docweight)
@@ -410,15 +410,15 @@ class BaseIndexTestBase:
         index = self._makeOne()
         # Simulate old instances which didn't have these as attributes
         index._add_wordinfo(123, 4, 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.word_count(), 1)
         self.assertEqual(index._wordinfo[123], {1: 4})
 
-    def test__add_wordinfo_upgrades_wordCount(self):
+    def test__add_wordinfo_upgrades_word_count(self):
         index = self._makeOne()
         # Simulate old instances which didn't have these as attributes
-        del index.wordCount
+        del index.word_count
         index._add_wordinfo(123, 4, 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.word_count(), 1)
 
     def test__add_wordinfo_promotes_dict_to_tree_at_DICT_CUTOFF(self):
         index = self._makeOne()
@@ -446,7 +446,7 @@ class BaseIndexTestBase:
         # Simulate old instances which didn't have these as attributes
         index._add_wordinfo(123, 4, 1)
         index._del_wordinfo(123, 1)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.word_count(), 0)
         self.assertRaises(KeyError, index._wordinfo.__getitem__, 123)
 
     def test__del_wordinfo_w_residual_docscore(self):
@@ -455,16 +455,16 @@ class BaseIndexTestBase:
         index._add_wordinfo(123, 4, 1)
         index._add_wordinfo(123, 5, 2)
         index._del_wordinfo(123, 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.word_count(), 1)
         self.assertEqual(index._wordinfo[123], {2: 5})
 
-    def test__del_wordinfo_upgrades_wordCount(self):
+    def test__del_wordinfo_upgrades_word_count(self):
         index = self._makeOne()
         index._add_wordinfo(123, 4, 1)
         # Simulate old instances which didn't have these as attributes
-        del index.wordCount
+        del index.word_count
         index._del_wordinfo(123, 1)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.word_count(), 0)
 
 class BaseIndexTest32(BaseIndexTestBase, unittest.TestCase):
 

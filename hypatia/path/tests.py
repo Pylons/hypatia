@@ -10,7 +10,7 @@ class PathIndexTests(unittest.TestCase):
         from . import PathIndex
         return PathIndex
 
-    def _makeOne(self, values=None, discriminator=_marker):
+    def _makeOne(self, values=None, discriminator=_marker, family=None):
         if values is None:
             values = {}
         def _discriminator(obj, default):
@@ -19,7 +19,7 @@ class PathIndexTests(unittest.TestCase):
             return obj.path
         if discriminator is _marker:
             discriminator = _discriminator
-        index = self._getTargetClass()(discriminator)
+        index = self._getTargetClass()(discriminator, family=family)
         for doc_id, path in values.items():
             index.index_doc(doc_id, path)
         return index
@@ -33,6 +33,12 @@ class PathIndexTests(unittest.TestCase):
         from zope.interface.verify import verifyObject
         from ..interfaces import IIndex
         verifyObject(IIndex, self._makeOne())
+
+    def test_index_with_alt_family(self):
+        import BTrees
+        family = BTrees.family32
+        inst = self._makeOne(None, family=family)
+        self.assertEqual(inst.family, family)
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):

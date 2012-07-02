@@ -399,8 +399,8 @@ class _TestCaseBase:
         
     def test_empty_index(self):
         index = self._makeOne()
-        self.assertEqual(index.documentCount(), 0)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
+        self.assertEqual(index.word_count(), 0)
         self.failIf(index.has_doc(1))
 
     def test_index_doc_string_value_raises(self):
@@ -410,8 +410,8 @@ class _TestCaseBase:
     def test_index_doc_single(self):
         index = self._makeOne()
         index.index_doc(1, ('albatross', 'cormorant'))
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 2)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 2)
         self.failUnless(index.has_doc(1))
         self.failUnless('albatross' in index._fwd_index)
         self.failUnless('cormorant' in index._fwd_index)
@@ -420,8 +420,8 @@ class _TestCaseBase:
         index = self._makeOne()
         index.index_doc(1, ('albatross', 'cormorant'))
         index.index_doc(1, ('buzzard', 'cormorant'))
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 2)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 2)
         self.failUnless(index.has_doc(1))
         self.failIf('albatross' in index._fwd_index)
         self.failUnless('buzzard' in index._fwd_index)
@@ -430,8 +430,8 @@ class _TestCaseBase:
     def test_index_doc_many(self):
         index = self._makeOne()
         self._populate(index)
-        self.assertEqual(index.documentCount(), self._populated_doc_count)
-        self.assertEqual(index.wordCount(), self._populated_word_count)
+        self.assertEqual(index.indexed_count(), self._populated_doc_count)
+        self.assertEqual(index.word_count(), self._populated_word_count)
         for docid in range(1, 6):
             if docid == 4:
                 self.failIf(index.has_doc(docid))
@@ -475,9 +475,9 @@ class _TestCaseBase:
     def test_reindex_doc_same_values(self):
         index = self._makeOne()
         index.index_doc(1, [1, 2, 3])
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         index.reindex_doc(1, [1, 2, 3])
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.failUnless(1 in index._rev_index)
         self.failUnless(1 in index._fwd_index[1])
         self.failUnless(1 in index._fwd_index[2])
@@ -487,9 +487,9 @@ class _TestCaseBase:
     def test_reindex_doc_different_values(self):
         index = self._makeOne()
         index.index_doc(1, [1, 2, 3])
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         index.reindex_doc(1, [2, 3, 4])
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.failUnless(1 in index._rev_index)
         self.failIf(1 in index._fwd_index.get(1, []))
         self.failUnless(1 in index._fwd_index[2])
@@ -500,8 +500,8 @@ class _TestCaseBase:
         index = self._makeOne()
         self._populate(index)
         index.clear()
-        self.assertEqual(index.documentCount(), 0)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
+        self.assertEqual(index.word_count(), 0)
         for docid in range(1, 6):
             self.failIf(index.has_doc(docid))
 
@@ -513,8 +513,8 @@ class _TestCaseBase:
         index = self._makeOne()
         index.index_doc(1, ('albatross', ))
         index.unindex_doc(1)
-        self.assertEqual(index.documentCount(), 0)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
+        self.assertEqual(index.word_count(), 0)
         self.failIf(index.has_doc(1))
 
     def test_unindex_w_residue(self):
@@ -522,8 +522,8 @@ class _TestCaseBase:
         index.index_doc(1, ('albatross', ))
         index.index_doc(2, ('albatross', 'cormorant'))
         index.unindex_doc(1)
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 2)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 2)
         self.failIf(index.has_doc(1))
 
     def test_unindex_doc_removes_from_docids(self):

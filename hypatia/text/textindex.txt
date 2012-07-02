@@ -103,9 +103,9 @@ We can use globbing in search strings.
 
 Text indexes support basic statistics:
 
-    >>> index.documentCount()
+    >>> index.indexed_count()
     8
-    >>> index.wordCount()
+    >>> index.word_count()
     114
 
 If we index the same document twice, once with a zero value, and then

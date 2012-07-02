@@ -56,7 +56,7 @@ class HTMLWordSplitterTests(unittest.TestCase):
                 locale.setlocale(locale.LC_ALL, 'German_Germany.1252')
             else:
                 locale.setlocale(locale.LC_ALL, 'de_DE.ISO8859-1')
-        except locale.Error: # pragma: no cove
+        except locale.Error: # pragma: no cover
             return # This test doesn't work here :-(
         expected = ['m\xfclltonne', 'waschb\xe4r',
                     'beh\xf6rde', '\xfcberflieger']

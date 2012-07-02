@@ -42,16 +42,16 @@ class LexiconTests(unittest.TestCase):
         self.assertEqual(len(lexicon.words()), 0)
         self.assertEqual(len(lexicon.wids()), 0)
         self.assertEqual(len(lexicon.items()), 0)
-        self.assertEqual(lexicon.wordCount(), 0)
+        self.assertEqual(lexicon.word_count(), 0)
 
-    def test_wordCount_legacy_instance_no_write_on_read(self):
+    def test_word_count_legacy_instance_no_write_on_read(self):
         from BTrees.Length import Length
         lexicon = self._makeOne()
         # Simulate old instance, which didn't have Length attr
-        del lexicon.wordCount
-        self.assertEqual(lexicon.wordCount(), 0)
+        del lexicon.word_count
+        self.assertEqual(lexicon.word_count(), 0)
         # No write-on-read!
-        self.failIf(isinstance(lexicon.wordCount, Length))
+        self.failIf(isinstance(lexicon.word_count, Length))
 
     def test_sourceToWordIds_empty_string(self):
         lexicon = self._makeOne()
@@ -71,15 +71,15 @@ class LexiconTests(unittest.TestCase):
         self.assertEqual(lexicon.get_word(1), 'cats')
         self.assertEqual(lexicon.get_wid('cats'), 1)
 
-    def test_sourceToWordIds_promotes_wordCount_attr(self):
+    def test_sourceToWordIds_promotes_word_count_attr(self):
         from BTrees.Length import Length
         lexicon = self._makeOne()
         # Simulate old instance, which didn't have Length attr
-        del lexicon.wordCount
+        del lexicon.word_count
         wids = lexicon.sourceToWordIds('cats and dogs')
         self.assertEqual(wids, [1, 2, 3])
-        self.assertEqual(lexicon.wordCount(), 3)
-        self.failUnless(isinstance(lexicon.wordCount, Length))
+        self.assertEqual(lexicon.word_count(), 3)
+        self.failUnless(isinstance(lexicon.word_count, Length))
 
     def test_termToWordIds_hit(self):
         lexicon = self._makeOne()
@@ -203,10 +203,10 @@ class LexiconTests(unittest.TestCase):
     def test__new_wid_recovers_from_damaged_length(self):
         lexicon = self._makeOne()
         lexicon.sourceToWordIds('cats and dogs')
-        lexicon.wordCount.set(0)
+        lexicon.word_count.set(0)
         wid = lexicon._new_wid()
         self.assertEqual(wid, 4)
-        self.assertEqual(lexicon.wordCount(), 4)
+        self.assertEqual(lexicon.word_count(), 4)
 
 class SplitterTests(unittest.TestCase):
     _old_locale = None

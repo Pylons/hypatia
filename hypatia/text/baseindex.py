@@ -83,16 +83,16 @@ class BaseIndex(Persistent):
         self._docwords = self.family.IO.BTree()
 
         # Use a BTree length for efficient length computation w/o conflicts
-        self.wordCount = Length.Length()
-        self.documentCount = Length.Length()
+        self.word_count = Length.Length()
+        self.indexed_count = Length.Length()
 
-    def wordCount(self):
+    def word_count(self):
         """Return the number of words in the index."""
         # This must be overridden by subclasses which do not set the
         # attribute on their instances.
         raise NotImplementedError
 
-    def documentCount(self):
+    def indexed_count(self):
         """Return the number of documents in the index."""
         # This must be overridden by subclasses which do not set the
         # attribute on their instances.
@@ -112,10 +112,10 @@ class BaseIndex(Persistent):
         self._docweight[docid] = docweight
         self._docwords[docid] = widcode.encode(wids)
         try:
-            self.documentCount.change(1)
+            self.indexed_count.change(1)
         except AttributeError:
-            # upgrade documentCount to Length object
-            self.documentCount = Length.Length(len(self._docweight))
+            # upgrade indexed_count to Length object
+            self.indexed_count = Length.Length(len(self._docweight))
         return len(wids)
 
     # A subclass may wish to extend or override this.  This is for adjusting
@@ -181,10 +181,10 @@ class BaseIndex(Persistent):
         del self._docwords[docid]
         del self._docweight[docid]
         try:
-            self.documentCount.change(-1)
+            self.indexed_count.change(-1)
         except AttributeError:
-            # upgrade documentCount to Length object
-            self.documentCount = Length.Length(len(self._docweight))
+            # upgrade indexed_count to Length object
+            self.indexed_count = Length.Length(len(self._docweight))
 
     def search(self, term):
         wids = self._lexicon.termToWordIds(term)
@@ -266,11 +266,11 @@ class BaseIndex(Persistent):
         if doc2score is None:
             doc2score = {} # XXX Holy ConflictError, Batman!
             try:
-                self.wordCount.change(1)
+                self.word_count.change(1)
             except AttributeError:
-                # upgrade wordCount to Length object
-                self.wordCount = Length.Length(len(self._wordinfo))
-                self.wordCount.change(1)
+                # upgrade word_count to Length object
+                self.word_count = Length.Length(len(self._wordinfo))
+                self.word_count.change(1)
         else:
             # _add_wordinfo() is called for each update.  If the map
             # size exceeds the DICT_CUTOFF, convert to an IFBTree.
@@ -306,10 +306,10 @@ class BaseIndex(Persistent):
             doc2score[docid] = weight
             self._wordinfo[wid] = doc2score # not redundant:  Persistency!
         try:
-            self.wordCount.change(new_word_count)
+            self.word_count.change(new_word_count)
         except AttributeError:
-            # upgrade wordCount to Length object
-            self.wordCount = Length.Length(len(self._wordinfo))
+            # upgrade word_count to Length object
+            self.word_count = Length.Length(len(self._wordinfo))
 
     def _del_wordinfo(self, wid, docid):
         doc2score = self._wordinfo[wid]
@@ -319,10 +319,10 @@ class BaseIndex(Persistent):
         else:
             del self._wordinfo[wid]
             try:
-                self.wordCount.change(-1)
+                self.word_count.change(-1)
             except AttributeError:
-                # upgrade wordCount to Length object
-                self.wordCount = Length.Length(len(self._wordinfo))
+                # upgrade word_count to Length object
+                self.word_count = Length.Length(len(self._wordinfo))
 
 def inverse_doc_frequency(term_count, num_items):
     """Return the inverse doc frequency for a term,

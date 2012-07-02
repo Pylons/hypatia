@@ -196,17 +196,17 @@ class TextIndexTests(unittest.TestCase):
         index.clear()
         self.failUnless(okapi._cleared)
 
-    def test_documentCount(self):
+    def test_indexed_count(self):
         lexicon = object()
         okapi = DummyOkapi(lexicon)
         index = self._makeOne(lexicon=lexicon, index=okapi)
-        self.assertEqual(index.documentCount(), 4)
+        self.assertEqual(index.indexed_count(), 4)
 
-    def test_wordCount(self):
+    def test_word_count(self):
         lexicon = object()
         okapi = DummyOkapi(lexicon)
         index = self._makeOne(lexicon=lexicon, index=okapi)
-        self.assertEqual(index.wordCount(), 45)
+        self.assertEqual(index.word_count(), 45)
 
     def test_apply_no_results(self):
         lexicon = DummyLexicon()
@@ -347,10 +347,10 @@ class DummyOkapi:
     def clear(self):
         self._cleared = True
 
-    def documentCount(self):
+    def indexed_count(self):
         return self._document_count
 
-    def wordCount(self):
+    def word_count(self):
         return self._word_count
 
     def query_weight(self, terms):

@@ -1,3 +1,4 @@
 - Extend the querytype methods offered by KeywordIndex (add Gt, Lt, etc).
 
-- Audit indices to see if they can support more query types.
+- Add data structures to return docids_count(), indexed_count() and
+  not_indexed_count() more efficiently if these methods get used frequently.

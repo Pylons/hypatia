@@ -48,7 +48,7 @@ class ILexicon(Interface):
         pattern.
         """
 
-    def wordCount():
+    def word_count():
         """Return the number of unique terms in the lexicon."""
 
     def get_word(wid):

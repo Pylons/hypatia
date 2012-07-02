@@ -56,7 +56,16 @@ class BaseIndexMixin(object):
         self.unindex_doc(docid)
         self.index_doc(docid, obj)
 
+    def indexed_count(self):
+        """ See IIndexedDocuments """
+        return len(self.indexed())
+
+    def not_indexed_count(self):
+        """ See IIndexedDocuments """
+        return len(self.not_indexed())
+
     def docids(self):
+        """ See IIndexedDocuments """
         not_indexed = self.not_indexed()
         indexed = self.indexed()
         if len(not_indexed) == 0:
@@ -65,6 +74,10 @@ class BaseIndexMixin(object):
             return not_indexed
         indexed = self.family.IF.Set(indexed)
         return self.family.IF.union(not_indexed, indexed)
+
+    def docids_count(self):
+        """ See IIndexedDocuments """
+        return len(self.docids())
 
     def apply_intersect(self, query, docids):
         """ Default apply_intersect implementation """

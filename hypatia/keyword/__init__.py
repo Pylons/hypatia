@@ -70,26 +70,22 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         self._num_docs = Length(0)
         self._not_indexed = self.family.IF.TreeSet()
 
-    def documentCount(self):
-        """Return the number of documents in the index."""
-        return self._num_docs()
-
-    def wordCount(self):
-        """Return the number of indexed words"""
-        return len(self._fwd_index)
-
-    def has_doc(self, docid):
-        return bool(self._rev_index.has_key(docid))
-
     def reindex_doc(self, docid, value):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
+
+    def has_doc(self, docid):
+        return bool(self._rev_index.has_key(docid))
 
     def indexed(self):
         return self._rev_index.keys()
 
     def not_indexed(self):
         return self._not_indexed
+
+    def word_count(self):
+        """Return the number of indexed words"""
+        return len(self._fwd_index)
 
     def applyAny(self, values):
         return self.apply({'query': values, 'operator': 'or'})

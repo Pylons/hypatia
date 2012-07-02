@@ -75,8 +75,8 @@ class FieldIndexTests(unittest.TestCase):
         import BTrees
         index = self._makeOne()
         self.failUnless(index.family is BTrees.family64)
-        self.assertEqual(index.documentCount(), 0)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
+        self.assertEqual(index.word_count(), 0)
 
     def test_ctor_explicit_family(self):
         import BTrees
@@ -86,8 +86,8 @@ class FieldIndexTests(unittest.TestCase):
     def test_index_doc_new(self):
         index = self._makeOne()
         index.index_doc(1, 'value')
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 1)
         self.failUnless(1 in index._rev_index)
         self.failUnless('value' in index._fwd_index)
 
@@ -95,8 +95,8 @@ class FieldIndexTests(unittest.TestCase):
         index = self._makeOne()
         index.index_doc(1, 'value')
         index.index_doc(1, 'value')
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 1)
         self.failUnless(1 in index._rev_index)
         self.failUnless('value' in index._fwd_index)
         self.assertEqual(list(index._fwd_index['value']), [1])
@@ -105,8 +105,8 @@ class FieldIndexTests(unittest.TestCase):
         index = self._makeOne()
         index.index_doc(1, 'value')
         index.index_doc(1, 'new_value')
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 1)
         self.failUnless(1 in index._rev_index)
         self.failIf('value' in index._fwd_index)
         self.failUnless('new_value' in index._fwd_index)
@@ -116,8 +116,8 @@ class FieldIndexTests(unittest.TestCase):
         index = self._makeOne()
         index.index_doc(1, 'value')
         index.unindex_doc(1) # doesn't raise
-        self.assertEqual(index.documentCount(), 0)
-        self.assertEqual(index.wordCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
+        self.assertEqual(index.word_count(), 0)
         self.failIf(1 in index._rev_index)
         self.failIf('value' in index._fwd_index)
 
@@ -126,8 +126,8 @@ class FieldIndexTests(unittest.TestCase):
         index.index_doc(1, 'value')
         index.index_doc(2, 'value')
         index.unindex_doc(1) # doesn't raise
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), 1)
         self.failIf(1 in index._rev_index)
         self.failUnless(2 in index._rev_index)
         self.failUnless('value' in index._fwd_index)
@@ -311,26 +311,26 @@ class FieldIndexTests(unittest.TestCase):
     def test_reindex_doc_w_existing_docid_same_value(self):
         index = self._makeOne()
         index.index_doc(5, 1)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index._rev_index[5], 1)
         index.reindex_doc(5, 1)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index._rev_index[5], 1)
 
     def test_reindex_doc_w_existing_docid_different_value(self):
         index = self._makeOne()
         index.index_doc(5, 1)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         index.reindex_doc(5, 2)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index._rev_index[5], 2)
 
     def test_reindex_doc_w_new_docid(self):
         index = self._makeOne()
         index.index_doc(5, 1)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         index.reindex_doc(6, 2)
-        self.assertEqual(index.documentCount(), 2)
+        self.assertEqual(index.indexed_count(), 2)
         self.assertEqual(index._rev_index[5], 1)
         self.assertEqual(index._rev_index[6], 2)
 
@@ -338,13 +338,13 @@ class FieldIndexTests(unittest.TestCase):
         index = self._makeOne()
         index.index_doc(5, 1)
         index.unindex_doc(6)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
 
     def test_unindex_doc_no_other_docids_for_value(self):
         index = self._makeOne()
         index.index_doc(5, 1)
         index.unindex_doc(5)
-        self.assertEqual(index.documentCount(), 0)
+        self.assertEqual(index.indexed_count(), 0)
         self.failIf(5 in index._rev_index)
         self.failIf(1 in index._fwd_index)
 
@@ -353,7 +353,7 @@ class FieldIndexTests(unittest.TestCase):
         index.index_doc(5, 1)
         index.index_doc(6, 1)
         index.unindex_doc(5)
-        self.assertEqual(index.documentCount(), 1)
+        self.assertEqual(index.indexed_count(), 1)
         self.failIf(5 in index._rev_index)
         self.failUnless(1 in index._fwd_index)
 
@@ -941,6 +941,12 @@ class FieldIndexTests(unittest.TestCase):
         index.index_doc(1, 1)
         index.index_doc(2, _marker)
         self.assertEqual(set([1, 2]), set(index.docids()))
+
+    def test_not_indexed_count(self):
+        index = self._makeOne()
+        index.index_doc(1, 1)
+        index.index_doc(2, _marker)
+        self.assertEqual(index.not_indexed_count(), 1)
         
 class Test_fwscan_wins(unittest.TestCase):
 

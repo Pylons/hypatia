@@ -24,9 +24,9 @@ class IndexTestBase:
         return self._getTargetClass()(lexicon, family=self._getBTreesFamily())
 
     def _check_index_has_document(self, index, docid, word_count=5):
-        self.assertEqual(index.documentCount(), 1)
-        self.assertEqual(index.wordCount(), word_count)
-        self.assertEqual(index._lexicon.wordCount(), word_count)
+        self.assertEqual(index.indexed_count(), 1)
+        self.assertEqual(index.word_count(), word_count)
+        self.assertEqual(index._lexicon.word_count(), word_count)
         self.assert_(index.has_doc(docid))
         self.assert_(index._docweight[docid])
         self.assertEqual(len(index._docweight), 1)
@@ -34,7 +34,7 @@ class IndexTestBase:
         self.assertEqual(len(index._docwords), 1)
         self.assertEqual(len(index.get_words(docid)), word_count)
         self.assertEqual(len(index._wordinfo),
-                         index.wordCount())
+                         index.word_count())
         for map in index._wordinfo.values():
             self.assertEqual(len(map), 1)
             self.assert_(map.has_key(docid))
@@ -44,7 +44,7 @@ class IndexTestBase:
         self.assertEqual(len(index._wordinfo), 0)
         self.assertEqual(len(index._docwords), 0)
         self.assertEqual(len(index._wordinfo),
-                         index.wordCount())
+                         index.word_count())
 
     def test_empty(self):
         index = self._makeOne()
@@ -90,7 +90,7 @@ class IndexTestBase:
         self.assertEqual(len(index._docwords), 2)
         self.assertEqual(len(index.get_words(2)), 4)
         self.assertEqual(len(index._wordinfo),
-                         index.wordCount())
+                         index.word_count())
         wids = index._lexicon.termToWordIds("document")
         self.assertEqual(len(wids), 1)
         document_wid = wids[0]
@@ -116,7 +116,7 @@ class IndexTestBase:
         self.assertEqual(len(index._docwords), 1)
         self.assertEqual(len(index.get_words(2)), 4)
         self.assertEqual(len(index._wordinfo),
-                         index.wordCount())
+                         index.word_count())
         for map in index._wordinfo.values():
             self.assertEqual(len(map), 1)
             self.assert_(map.has_key(2))
@@ -130,10 +130,9 @@ class IndexTestBase:
         self.assertEqual(len(index._docwords), 1)
         self.assertEqual(len(index.get_words(1)), 7)
         self.assertEqual(len(index._wordinfo),
-                         index.wordCount())
+                         index.word_count())
         wids = index._lexicon.termToWordIds("repeat")
         self.assertEqual(len(wids), 1)
-        repititive_wid = wids[0]
         for wid, map in index._wordinfo.items():
             self.assertEqual(len(map), 1)
             self.assert_(map.has_key(1))
