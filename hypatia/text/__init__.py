@@ -60,11 +60,11 @@ class TextIndex(BaseIndexMixin, Persistent):
             index = OkapiIndex(lexicon, family=self.family) # override family
         self.lexicon = _explicit_lexicon and lexicon or index.lexicon
         self.index = index
-        self.clear()
+        self.reset()
 
-    def clear(self):
+    def reset(self):
         self._not_indexed = self.family.IF.TreeSet()
-        self.index.clear()
+        self.index.reset()
 
     def index_doc(self, docid, obj):
         text = self.discriminate(obj, _marker)

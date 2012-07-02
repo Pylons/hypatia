@@ -189,11 +189,11 @@ class TextIndexTests(unittest.TestCase):
         index.unindex_doc = lambda *args, **kw: 1/0
         index.reindex_doc(5, 'now is the time')
 
-    def test_clear(self):
+    def test_reset(self):
         lexicon = object()
         okapi = DummyOkapi(lexicon)
         index = self._makeOne(lexicon=lexicon, index=okapi)
-        index.clear()
+        index.reset()
         self.failUnless(okapi._cleared)
 
     def test_indexed_count(self):
@@ -344,7 +344,7 @@ class DummyOkapi:
     def unindex_doc(self, docid):
         self._unindexed.append(docid)
 
-    def clear(self):
+    def reset(self):
         self._cleared = True
 
     def indexed_count(self):
@@ -368,6 +368,6 @@ class DummyLexicon:
         return term
 
 class DummyIndex:
-    def clear(self):
+    def reset(self):
         self.cleared = True
 

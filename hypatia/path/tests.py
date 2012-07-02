@@ -67,9 +67,9 @@ class PathIndexTests(unittest.TestCase):
         self.assertEqual(index.numObjects(), 18)
         self.assertEqual(index.getEntryForObject(1), '/aa/aa/aa/1.html')
 
-    def test_clear(self):
+    def test_reset(self):
         index = self._makeOne(VALUES)
-        index.clear()
+        index.reset()
         self.assertEqual(index.numObjects(), 0)
         self.assertEqual(index.getEntryForObject(1), None)
         self.assertEqual(index._depth, 0)

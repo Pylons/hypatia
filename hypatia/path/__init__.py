@@ -42,9 +42,9 @@ class PathIndex(BaseIndexMixin, Persistent):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.clear()
+        self.reset()
 
-    def clear(self):
+    def reset(self):
         self._depth = 0
         self._index = self.family.OO.BTree()
         self._unindex = self.family.IO.BTree()

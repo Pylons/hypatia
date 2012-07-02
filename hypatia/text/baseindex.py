@@ -52,9 +52,9 @@ class BaseIndex(Persistent):
         if family is not None:
             self.family = family
         self._lexicon = lexicon
-        self.clear()
+        self.reset()
 
-    def clear(self):
+    def reset(self):
         # wid -> {docid -> weight}; t -> D -> w(D, t)
         # Different indexers have different notions of term weight, but we
         # expect each indexer to use ._wordinfo to map wids to its notion

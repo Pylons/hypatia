@@ -75,9 +75,9 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.clear()
+        self.reset()
 
-    def clear(self):
+    def reset(self):
         """Initialize forward and reverse mappings."""
         # The forward index maps indexed values to a sequence of docids
         self._fwd_index = self.family.OO.BTree()

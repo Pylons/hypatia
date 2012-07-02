@@ -35,11 +35,11 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne(family32)
         self.failUnless(catalog.family is family32)
 
-    def test_clear_indexes(self):
+    def test_reset(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        catalog.clear_indexes()
+        catalog.reset()
         self.assertEqual(idx.cleared, True)
 
     def test_index_doc(self):
@@ -309,7 +309,7 @@ class DummyIndex(object):
     def unindex_doc(self, docid):
         self.unindexed = docid
 
-    def clear(self):
+    def reset(self):
         self.cleared = True
 
     def reindex_doc(self, docid, object):

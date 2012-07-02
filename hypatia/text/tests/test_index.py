@@ -71,11 +71,11 @@ class IndexTestBase:
         index.unindex_doc(2)
         self._check_index_has_document(index, 1)
 
-    def test_clear(self):
+    def test_reset(self):
         doc = "simple document contains five words"
         index = self._makeOne()
         index.index_doc(1, doc)
-        index.clear()
+        index.reset()
         self._check_index_is_empty(index)
 
     def test_index_two_documents(self):

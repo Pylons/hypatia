@@ -496,10 +496,10 @@ class _TestCaseBase:
         self.failUnless(1 in index._fwd_index[3])
         self.failUnless(1 in index._fwd_index[4])
 
-    def test_clear(self):
+    def test_reset(self):
         index = self._makeOne()
         self._populate(index)
-        index.clear()
+        index.reset()
         self.assertEqual(index.indexed_count(), 0)
         self.assertEqual(index.word_count(), 0)
         for docid in range(1, 6):

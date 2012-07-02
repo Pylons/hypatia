@@ -29,7 +29,7 @@ class IIndexInjection(Interface):
     def reindex_doc(docid, value):
         """Reindex a document using the (undiscriminated) value"""
 
-    def clear():
+    def reset():
         """Unindex all documents indexed by the index
         """
 
@@ -135,8 +135,6 @@ class IIndexSort(Interface):
 class ICatalog(IIndexInjection):
     """ Dictionary-like object which maps index names to index instances.
     Also supports the IIndexInjection interface."""
-    def clear_indexes():
-        """ Call .clear on all member indexes """
 
 class ICatalogQuery(Interface):
     def __call__(queryobject, sort_index=None, limit=None, sort_type=None,

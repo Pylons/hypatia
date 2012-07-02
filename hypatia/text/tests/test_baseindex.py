@@ -78,10 +78,10 @@ class BaseIndexTestBase:
         self.assertEqual(index.indexed_count(), 0)
         self.failIf(index.has_doc(1))
 
-    def test_clear_doesnt_lose_family(self):
+    def test_reset_doesnt_lose_family(self):
         import BTrees
         index = self._makeOne(family=BTrees.family64)
-        index.clear()
+        index.reset()
         self.failUnless(index.family is BTrees.family64)
 
     def test_word_count_method_raises_NotImplementedError(self):

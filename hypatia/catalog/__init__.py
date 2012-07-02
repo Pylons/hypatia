@@ -18,10 +18,10 @@ class Catalog(PersistentMapping):
         if family is not None:
             self.family = family
 
-    def clear_indexes(self):
+    def reset(self):
         """ Clear all indexes in this catalog. """
         for index in self.values():
-            index.clear()
+            index.reset()
 
     def index_doc(self, docid, obj):
         """Register the document represented by ``obj`` in indexes of

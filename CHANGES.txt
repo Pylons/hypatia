@@ -20,6 +20,10 @@ Next release
 
 - Remove unused INBest interface.
 
+- IIndexInjection interface ``clear`` method renamed to ``reset`` to prevent
+  confusion with dictionary ``clear`` (catalog is often dictionarylike).
+  Catalog ``clear_indexes`` method replaced with ``reset``.
+
 0.1a1
 -----
 

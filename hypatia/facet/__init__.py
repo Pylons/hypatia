@@ -39,7 +39,7 @@ class FacetIndex(KeywordIndex):
             self.family = family
         self.facets = self.family.OO.Set(facets)
         self._not_indexed = self.family.IF.TreeSet()
-        self.clear()
+        self.reset()
 
     def index_doc(self, docid, obj):
         """ Pass in an integer document id and an object supporting a

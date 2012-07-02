@@ -55,9 +55,9 @@ class KeywordIndex(BaseIndexMixin, Persistent):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
-        self.clear()
+        self.reset()
 
-    def clear(self):
+    def reset(self):
         """Initialize forward and reverse mappings."""
 
         # The forward index maps index keywords to a sequence of docids
