@@ -66,7 +66,7 @@ testing_extras = ['nose', 'coverage']
 docs_extras = ['Sphinx']
 
 setup(name='hypatia',
-      version='0.1a2',
+      version='0.1a3dev',
       description='Python package for searching and indexing',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
