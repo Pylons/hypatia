@@ -1,3 +1,9 @@
+Next release
+------------
+
+- Remove code from ``hypatia.path``.  This package no longer supports
+  PathIndex.
+
 0.1a2 (2012-07-02)
 ------------------
 
