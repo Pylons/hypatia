@@ -127,11 +127,3 @@ Other Helpers
    .. autoclass:: FacetIndex
       :members:
 
-:mod:`hypatia.path`
-----------------------------------
-
-.. automodule:: hypatia.path
-
-   .. autoclass:: PathIndex
-      :members:
-
