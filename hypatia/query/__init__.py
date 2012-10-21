@@ -829,11 +829,11 @@ class _AstParser(object):
         left, operator, right = children
         if not isinstance(left, Query):
             raise ValueError(
-                "Bad expression: left operand for %s must be a result set." %
+                "Bad expression: left operand for %s must be a query." %
                 operator.__name__)
         if not isinstance(right, Query):
             raise ValueError(
-                "Bad expression: right operand for %s must be a result set." %
+                "Bad expression: right operand for %s must be a query." %
                 operator.__name__)
         return operator(left, right)
 
@@ -848,7 +848,7 @@ class _AstParser(object):
         for child in children:
             if not isinstance(child, Query):
                 raise ValueError(
-                    "Bad expression: All operands for %s must be result sets."
+                    "Bad expression: All operands for %s must be queries."
                     % operator.__name__)
 
         return operator(*children)
@@ -870,8 +870,7 @@ class _AstParser(object):
         else:
             comparator = All
 
-        def factory(index_name):
-            index = self._get_index(index_name)
+        def factory(index):
             return comparator(index, self._value(values))
 
         return factory

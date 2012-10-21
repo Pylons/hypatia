@@ -945,7 +945,7 @@ class Test_parse_query(unittest.TestCase):
         from . import NotAny
         op = self._call_fut("a not in any([1, 2, 3])")
         self.failUnless(isinstance(op, NotAny), op)
-        self.assertEqual(op.index, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_and(self):
