@@ -5,6 +5,69 @@ from ZODB.broken import Broken
 
 _marker = object()
 
+class ResultsException(Exception):
+    def __init__(self, resultset):
+        self.resultset = resultset
+
+class MultipleResultsFound(ResultsException):
+    pass
+
+class NoResultsFound(ResultsException):
+    pass
+
+class ResultSet(object):
+    def __init__(self, ids, numids, resolver):
+        self.ids = ids # only guaranteed to be iterable, not sliceable
+        self.numids = numids
+        self.resolver = resolver
+        
+    def __len__(self):
+        return self.numids
+
+    def sort(self, index, limit=None, reverse=False, sort_type=None):
+        ids = index.sort(
+            self.ids,
+            reverse=reverse,
+            limit=limit,
+            sort_type=sort_type,
+            )
+        numids = self.numids
+        if limit:
+            numids = min(numids, limit)
+        return self.__class__(ids, numids, self.resolver)
+
+    def first(self, resolve=True):
+        # return the first object or None
+        resolver = self.resolver
+        if resolver is None:
+            for id_ in self.ids:
+                return id_
+        else:
+            for id_ in self.ids:
+                return resolver(id_)
+
+    def one(self, resolve=True):
+        if self.numdocs == 1:
+            return self.first(resolve=resolve)
+        if self.numdocs > 1:
+            raise MultipleResultsFound(self)
+        else:
+            raise NoResultsFound(self)
+
+    def _resolve_all(self, resolver):
+        for id_ in self.ids:
+            yield resolver(id_)
+
+    def all(self, resolve=True):
+        resolver = self.resolver
+        if resolver is None or not resolve:
+            return self.ids
+        else:
+            return self._resolve_all(resolver)
+
+    def __iter__(self):
+        return iter(self.all())
+
 class BaseIndexMixin(object):
     """ Mixin class for indexes that implements common behavior """
 
@@ -82,4 +145,11 @@ class BaseIndexMixin(object):
             str(self),
             )
         
+    def resultset_from_query(self, query, names=None, resolver=None):
+        # default resultset factory; meant to be overridden by systems
+        # that have a default resolver
+        docids = query._apply(names)
+        numdocs = len(docids)
+        return ResultSet(docids, numdocs, resolver)
+
 

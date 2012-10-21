@@ -1,10 +1,9 @@
 import unittest
 from .. import query
 
-class TestQueryBase(object):
-    def test_it(self):
+class _CatalogMaker(object):
+    def _makeCatalog(self):
         from ..catalog import Catalog
-        from ..catalog import CatalogQuery
         from ..field import FieldIndex
         from ..keyword import KeywordIndex
         from ..text import TextIndex
@@ -29,6 +28,15 @@ class TestQueryBase(object):
                                      ['a', 'b', 'c']))
         catalog.index_doc(6, Content('name6', 'title6', 'body six',['d']))
 
+        return catalog
+
+class TestCatalogQueryBase(_CatalogMaker):
+
+    def test_it(self):
+        from ..catalog import CatalogQuery
+
+        catalog = self._makeCatalog()
+
         q = CatalogQuery(catalog)
 
         numdocs, result = q.query(
@@ -42,7 +50,7 @@ class TestQueryBase(object):
         self.assertEqual(list(result), [4, 5])
 
 
-class TestQueryWithCQE(unittest.TestCase, TestQueryBase):
+class TestCatalogQueryWithCQE(unittest.TestCase, TestCatalogQueryBase):
     def get_query(self):
         return (
             "(allowed == 'a' and allowed == 'b' and "
@@ -51,7 +59,10 @@ class TestQueryWithCQE(unittest.TestCase, TestQueryBase):
             "and body in text"
             )
 
-class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
+class TestCatalogQueryWithPythonQueryObjects(
+    unittest.TestCase,
+    TestCatalogQueryBase
+    ):
     def get_query(self):
         return (
             query.All(self.allowed, ['a', 'b']) &
@@ -61,7 +72,10 @@ class TestQueryWithPythonQueryObjects(unittest.TestCase, TestQueryBase):
             query.Contains(self.text, 'body')
             )
 
-class TestQueryWithIndexHelpers(unittest.TestCase, TestQueryBase):
+class TestCatalogQueryWithIndexHelpers(
+    unittest.TestCase,
+    TestCatalogQueryBase
+    ):
     def get_query(self):
         return (
             self.allowed.all(['a', 'b']) &
@@ -69,6 +83,19 @@ class TestQueryWithIndexHelpers(unittest.TestCase, TestQueryBase):
             self.title.noteq('title3') &
             self.text.contains('body')
             )
+
+class TestQueryExecution(unittest.TestCase, _CatalogMaker):
+    def test_it(self):
+        self._makeCatalog()
+        query = (
+            self.allowed.all(['a', 'b']) &
+            self.name.any(['name1', 'name2', 'name3', 'name4', 'name5']) &
+            self.title.noteq('title3') &
+            self.text.contains('body')
+            )
+        resultset = query.execute().sort(self.name, limit=5)
+        self.assertEqual(len(resultset), 2)
+        self.assertEqual(list(resultset.ids), [4, 5])
 
 class Content(object):
     def __init__(self, name, title, text, allowed):

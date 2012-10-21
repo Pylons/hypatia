@@ -73,6 +73,16 @@ class Comparator(Query):
     def __eq__(self, other):
         return self.index == other.index and self._value == other._value
 
+    def execute(self, optimize=True, names=None, resolver=None):
+        if optimize:
+            query = self._optimize()
+        else:
+            query = self
+        return self.index.resultset_from_query(
+            query,
+            names=names,
+            resolver=resolver
+            )
 
 class Contains(Comparator):
     """Contains query.
@@ -381,6 +391,21 @@ class BoolOp(Query):
     def __str__(self):
         return type(self).__name__
 
+    def execute(self, optimize=True, names=None, resolver=None):
+        if not self.queries:
+            raise ValueError('No subqueries')
+        index = self.queries[0].index
+
+        if optimize:
+            query = self._optimize()
+        else:
+            query = self
+        return index.resultset_from_query(
+            query,
+            names=names,
+            resolver=resolver
+            )
+
     def iter_children(self):
         for query in self.queries:
             yield query
@@ -582,6 +607,16 @@ class Not(Query):
     def _optimize(self):
         return self.query.negate()._optimize()
 
+    def execute(self, optimize=True, names=None, resolver=None):
+        if optimize:
+            query = self._optimize()
+        else:
+            query = self
+        return self.query.index.resultset_from_query(
+            query,
+            names=names,
+            resolver=resolver
+            )
 
 class Name(object):
     """
