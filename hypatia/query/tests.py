@@ -85,6 +85,21 @@ class TestComparator(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst, self._makeOne('index', 'val'))
 
+    def test_execute(self):
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        rs = inst.execute()
+        self.assertEqual(rs['query'], inst)
+        self.assertEqual(rs['names'], None)
+        self.assertEqual(rs['resolver'], None)
+
+    def test_execute_withargs(self):
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        rs = inst.execute(optimize=False, names={'a':1}, resolver=True)
+        self.assertEqual(rs['query'], inst)
+        self.assertEqual(rs['names'], {'a':1})
+        self.assertEqual(rs['resolver'], True)
 
 class TestContains(ComparatorTestBase):
 
@@ -561,6 +576,37 @@ class TestBoolOp(BoolOpTestBase):
         o = self._makeOne(left, right)
         self.assertEqual(list(o.iter_children()), [left, right])
 
+    def _makeDummyQuery(self):
+        class DummyQuery(object):
+            index = DummyIndex()
+            def _optimize(self):
+                return self
+        return DummyQuery()
+
+    def test_execute(self):
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        inst = self._makeOne(left, right)
+        rs = inst.execute()
+        self.assertEqual(rs['query'], inst)
+        self.assertEqual(rs['names'], None)
+        self.assertEqual(rs['resolver'], None)
+
+    def test_execute_withargs(self):
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        inst = self._makeOne(left, right)
+        rs = inst.execute(optimize=False, names={'a':1}, resolver=True)
+        self.assertEqual(rs['query'], inst)
+        self.assertEqual(rs['names'], {'a':1})
+        self.assertEqual(rs['resolver'], True)
+
+    def test_execute_no_queries(self):
+        from . import BoolOp
+        inst = BoolOp()
+        self.assertRaises(ValueError, inst.execute,
+                          optimize=False, names={'a':1}, resolver=True)
+
 
 class TestOr(BoolOpTestBase):
 
@@ -693,6 +739,23 @@ class TestNot(BoolOpTestBase):
         o = self._makeOne(query)
         self.assertEqual(list(o.iter_children()), [query])
 
+    def test_execute(self):
+        index = DummyIndex()
+        query = DummyQuery('foo', index=index)
+        inst = self._makeOne(query)
+        rs = inst.execute()
+        self.assertEqual(rs['query'], query)
+        self.assertEqual(rs['names'], None)
+        self.assertEqual(rs['resolver'], None)
+
+    def test_execute_withargs(self):
+        index = DummyIndex()
+        query = DummyQuery('foo', index=index)
+        inst = self._makeOne(query)
+        rs = inst.execute(optimize=False, names={'a':1}, resolver=True)
+        self.assertEqual(rs['query'], inst)
+        self.assertEqual(rs['names'], {'a':1})
+        self.assertEqual(rs['resolver'], True)
 
 class TestName(unittest.TestCase):
 
@@ -1191,6 +1254,9 @@ class DummyIndex(object):
     def qname(self):
         return str(self.name)
 
+    def resultset_from_query(self, query, names=None, resolver=None):
+        return {'query':query, 'names':names, 'resolver':resolver}
+
 class DummyFamily(object):
     union = None
     intersection = None
@@ -1216,8 +1282,9 @@ class DummyQuery(object):
     applied = False
     negated = False
 
-    def __init__(self, results):
+    def __init__(self, results, index=None):
         self.results = results
+        self.index = index
 
     def _apply(self, names):
         self.applied = True
@@ -1226,3 +1293,7 @@ class DummyQuery(object):
     def negate(self):
         self.negated = True
         return self
+
+    def _optimize(self):
+        return self
+    

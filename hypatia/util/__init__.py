@@ -5,7 +5,7 @@ from ZODB.broken import Broken
 
 _marker = object()
 
-from .. import exceptions
+from .. import exc
 
 class ResultSet(object):
     def __init__(self, ids, numids, resolver):
@@ -42,9 +42,9 @@ class ResultSet(object):
         if self.numdocs == 1:
             return self.first(resolve=resolve)
         if self.numdocs > 1:
-            raise exceptions.MultipleResultsFound(self)
+            raise exc.MultipleResultsFound(self)
         else:
-            raise exceptions.NoResultsFound(self)
+            raise exc.NoResultsFound(self)
 
     def _resolve_all(self, resolver):
         for id_ in self.ids:
