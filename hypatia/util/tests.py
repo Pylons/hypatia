@@ -4,6 +4,102 @@ from . import RichComparisonMixin
 
 _marker = object()
 
+class TestResultSet(unittest.TestCase):
+    def _makeOne(self, ids, numids, resolver):
+        from . import ResultSet
+        return ResultSet(ids, numids, resolver)
+
+    def test___len__(self):
+        inst = self._makeOne([1], 1, None)
+        self.assertEqual(len(inst), 1)
+
+    def test_sort(self):
+        inst = self._makeOne([2, 1], 2, None)
+        index = DummyIndex()
+        result = inst.sort(index)
+        self.assertEqual(result.ids, [1,2])
+        self.assertEqual(result.numids, 2)
+        self.assertEqual(result.resolver, None)
+        self.assertEqual(index.reverse, False)
+        self.assertEqual(index.sort_type, None)
+        self.assertEqual(index.limit, None)
+
+    def test_sort_withargs(self):
+        inst = self._makeOne([2, 1], 2, None)
+        index = DummyIndex()
+        result = inst.sort(index, limit=1, reverse=True, sort_type=True)
+        self.assertEqual(result.ids, [1,2])
+        self.assertEqual(result.numids, 1)
+        self.assertEqual(result.resolver, None)
+        self.assertEqual(index.reverse, True)
+        self.assertEqual(index.sort_type, True)
+        self.assertEqual(index.limit, 1)
+
+    def test_first_no_docids(self):
+        inst = self._makeOne([], 0, None)
+        self.assertEqual(inst.first(), None)
+
+    def test_first_resolve_true_no_resolver(self):
+        inst = self._makeOne([2, 1], 2, None)
+        self.assertEqual(inst.first(), 2)
+
+    def test_first_resolve_true_with_resolver(self):
+        def resolver(val):
+            return 'a'
+        inst = self._makeOne([2, 1], 2, resolver)
+        self.assertEqual(inst.first(), 'a')
+
+    def test_first_resolve_false(self):
+        def resolver(val): return 'a'
+        inst = self._makeOne([2, 1], 2, resolver)
+        self.assertEqual(inst.first(resolve=False), 2)
+
+    def test_one_no_docids(self):
+        from ..exc import NoResultsFound
+        inst = self._makeOne([], 0, None)
+        self.assertRaises(NoResultsFound, inst.one)
+
+    def test_one_more_than_one_docid(self):
+        from ..exc import MultipleResultsFound
+        inst = self._makeOne([1, 2], 2, None)
+        self.assertRaises(MultipleResultsFound, inst.one)
+
+    def test_one_resolve_true_no_resolver(self):
+        inst = self._makeOne([1], 1, None)
+        self.assertEqual(inst.one(), 1)
+
+    def test_one_resolve_true_with_resolver(self):
+        def resolver(val):
+            return 'a'
+        inst = self._makeOne([1], 1, resolver)
+        self.assertEqual(inst.one(), 'a')
+
+    def test_one_resolve_false(self):
+        def resolver(val): return 'a'
+        inst = self._makeOne([1], 1, resolver)
+        self.assertEqual(inst.one(resolve=False), 1)
+
+    def test_all_resolve_false(self):
+        inst = self._makeOne([2, 1], 2, None)
+        self.assertEqual(inst.all(resolve=False), [2, 1])
+
+    def test_all_resolve_true_no_resolver(self):
+        inst = self._makeOne([2, 1], 2, None)
+        self.assertEqual(inst.all(), [2, 1])
+
+    def test_all_resolve_true_with_resolver(self):
+        def resolver(val):
+            return 'a'
+        inst = self._makeOne([2, 1], 2, resolver)
+        self.assertEqual(list(inst.all()), ['a', 'a'])
+
+    def test___iter__(self):
+        def resolver(val):
+            return 'a'
+        inst = self._makeOne([2, 1], 2, resolver)
+        self.assertEqual(list(iter(inst)), ['a', 'a'])
+        
+
 class TestBaseIndexMixin(unittest.TestCase):
     def _getTargetClass(self):
         from . import BaseIndexMixin
@@ -143,39 +239,6 @@ class TestBaseIndexMixin(unittest.TestCase):
         index = self._makeIndex('abc')
         self.assertEqual(index.qname(), str(index))
 
-class DummyIndex(object):
-
-    value = None
-
-    def index_doc(self, docid, value):
-        value = self.discriminate(value, _marker)
-        if value is _marker:
-            # unindex the previous value
-            self.unindex_doc(docid)
-            # Store docid in set of unindexed docids
-            self._not_indexed.add(docid)
-            return None
-        if docid in self._not_indexed:
-            # Remove from set of unindexed docs if it was in there.
-            self._not_indexed.remove(docid)
-        self._docids.add(docid)
-        self.value = value
-        return value
-
-    def unindex_doc(self, docid):
-        _not_indexed = self._not_indexed
-        if docid in _not_indexed:
-            _not_indexed.remove(docid)
-        if docid in self._docids:
-            self._docids.remove(docid)
-            self.unindexed = docid
-
-    def indexed(self):
-        return self._docids
-
-    def not_indexed(self):
-        return self._not_indexed
-
 class RichComparisonMixinTest(unittest.TestCase):
 
     def setUp(self):
@@ -266,3 +329,43 @@ class RichComparer(RichComparisonMixin):
         return self.value < other.value
 
 
+class DummyIndex(object):
+
+    value = None
+
+    def index_doc(self, docid, value):
+        value = self.discriminate(value, _marker)
+        if value is _marker:
+            # unindex the previous value
+            self.unindex_doc(docid)
+            # Store docid in set of unindexed docids
+            self._not_indexed.add(docid)
+            return None
+        if docid in self._not_indexed:
+            # Remove from set of unindexed docs if it was in there.
+            self._not_indexed.remove(docid)
+        self._docids.add(docid)
+        self.value = value
+        return value
+
+    def unindex_doc(self, docid):
+        _not_indexed = self._not_indexed
+        if docid in _not_indexed:
+            _not_indexed.remove(docid)
+        if docid in self._docids:
+            self._docids.remove(docid)
+            self.unindexed = docid
+
+    def indexed(self):
+        return self._docids
+
+    def not_indexed(self):
+        return self._not_indexed
+
+    def sort(self, ids, reverse, limit, sort_type):
+        self.ids = ids
+        self.reverse = reverse
+        self.limit = limit
+        self.sort_type = sort_type
+        return sorted(ids)
+    

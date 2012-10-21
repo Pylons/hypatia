@@ -31,7 +31,7 @@ class ResultSet(object):
     def first(self, resolve=True):
         # return the first object or None
         resolver = self.resolver
-        if resolver is None:
+        if resolver is None or not resolve:
             for id_ in self.ids:
                 return id_
         else:
@@ -39,9 +39,9 @@ class ResultSet(object):
                 return resolver(id_)
 
     def one(self, resolve=True):
-        if self.numdocs == 1:
+        if self.numids == 1:
             return self.first(resolve=resolve)
-        if self.numdocs > 1:
+        if self.numids > 1:
             raise exc.MultipleResultsFound(self)
         else:
             raise exc.NoResultsFound(self)
