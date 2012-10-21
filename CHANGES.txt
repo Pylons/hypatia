@@ -30,6 +30,11 @@ Next release
 
       catalog['flavors'].eq('peach')
 
+- Query objects refactored internally to deal in index objects rather than
+  index names.
+
+- The ``query.parse_query`` function now requires a ``catalog`` argument.
+
 0.1a2 (2012-07-02)
 ------------------
 
