@@ -11,6 +11,7 @@ from persistent import Persistent
 from BTrees.Length import Length
 
 from .interfaces import IKeywordQuerying
+from .. import query
 
 _marker = object()
 
@@ -90,13 +91,38 @@ class KeywordIndex(BaseIndexMixin, Persistent):
     def applyAny(self, values):
         return self.apply({'query': values, 'operator': 'or'})
 
-    applyIn = applyAny
+    def any(self, value):
+        return query.Any(self, value)
+
+    def applyNotAny(self, *args, **kw):
+        return self._negate(self.applyAny, *args, **kw)
+
+    def notany(self, value):
+        return query.NotAny(self, value)
 
     def applyAll(self, values):
         return self.apply({'query': values, 'operator': 'and'})
 
+    def all(self, value):
+        return query.All(self, value)
+
+    def applyNotAll(self, *args, **kw):
+        return self._negate(self.applyAll, *args, **kw)
+
+    def notall(self, value):
+        return query.NotAll(self, value)
+
     def applyEq(self, value):
         return self.apply([value])
+
+    def eq(self, value):
+        return query.Eq(self, value)
+
+    def applyNotEq(self, *args, **kw):
+        return self._negate(self.applyEq, *args, **kw)
+
+    def noteq(self, value):
+        return query.NotEq(self, value)
 
     def normalize(self, seq):
         """Perform normalization on sequence of keywords.

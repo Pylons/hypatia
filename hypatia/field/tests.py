@@ -41,16 +41,6 @@ class FieldIndexTests(unittest.TestCase):
         from ..interfaces import IIndexInjection
         verifyObject(IIndexInjection, self._makeOne())
 
-    def test_class_conforms_to_IIndexQuery(self):
-        from zope.interface.verify import verifyClass
-        from ..interfaces import IIndexQuery
-        verifyClass(IIndexQuery, self._getTargetClass())
-
-    def test_instance_conforms_to_IIndexQuery(self):
-        from zope.interface.verify import verifyObject
-        from ..interfaces import IIndexQuery
-        verifyObject(IIndexQuery, self._makeOne())
-
     def test_class_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyClass
         from ..interfaces import IIndexStatistics
@@ -947,7 +937,79 @@ class FieldIndexTests(unittest.TestCase):
         index.index_doc(1, 1)
         index.index_doc(2, _marker)
         self.assertEqual(index.not_indexed_count(), 1)
+
+    def test_eq(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.eq(1)
+        self.assertEqual(result.__class__, query.Eq)
+        self.assertEqual(result._value, 1)
         
+    def test_noteq(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.noteq(1)
+        self.assertEqual(result.__class__, query.NotEq)
+        self.assertEqual(result._value, 1)
+
+    def test_ge(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.ge(1)
+        self.assertEqual(result.__class__, query.Ge)
+        self.assertEqual(result._value, 1)
+
+    def test_le(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.le(1)
+        self.assertEqual(result.__class__, query.Le)
+        self.assertEqual(result._value, 1)
+        
+    def test_gt(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.gt(1)
+        self.assertEqual(result.__class__, query.Gt)
+        self.assertEqual(result._value, 1)
+
+    def test_lt(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.lt(1)
+        self.assertEqual(result.__class__, query.Lt)
+        self.assertEqual(result._value, 1)
+
+    def test_any(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.any(1)
+        self.assertEqual(result.__class__, query.Any)
+        self.assertEqual(result._value, 1)
+
+    def test_notany(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.notany(1)
+        self.assertEqual(result.__class__, query.NotAny)
+        self.assertEqual(result._value, 1)
+
+    def test_inrange(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.inrange(1, 2)
+        self.assertEqual(result.__class__, query.InRange)
+        self.assertEqual(result._start, 1)
+        self.assertEqual(result._end, 2)
+
+    def test_notinrange(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.notinrange(1, 2)
+        self.assertEqual(result.__class__, query.NotInRange)
+        self.assertEqual(result._start, 1)
+        self.assertEqual(result._end, 2)
+
 class Test_fwscan_wins(unittest.TestCase):
 
     def _callFUT(self, limit, rlen, numdocs):

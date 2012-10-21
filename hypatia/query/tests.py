@@ -118,23 +118,23 @@ class TestContains(ComparatorTestBase):
         self.assertEqual(str(inst), "'val' in index")
 
     def test_negate(self):
-        from . import DoesNotContain
+        from . import NotContains
         inst = self._makeOne('index', 'val')
-        self.assertEqual(inst.negate(), DoesNotContain('index', 'val'))
+        self.assertEqual(inst.negate(), NotContains('index', 'val'))
 
 
-class TestDoesNotContain(ComparatorTestBase):
+class TestNotContains(ComparatorTestBase):
 
     def _getTargetClass(self):
-        from . import DoesNotContain
-        return DoesNotContain
+        from . import NotContains
+        return NotContains
 
     def test_apply(self):
         index = DummyIndex()
         inst = self._makeOne(index, 'val')
         result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(index.does_not_contain, 'val')
+        self.assertEqual(index.not_contains, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -160,7 +160,8 @@ class TestEq(ComparatorTestBase):
         self.assertEqual(index.eq, 'val')
 
     def test_to_str(self):
-        inst = self._makeOne('index', 'val')
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 'val')
         self.assertEqual(str(inst), "index == 'val'")
 
     def test_negate(self):
@@ -183,7 +184,8 @@ class TestNotEq(ComparatorTestBase):
         self.assertEqual(index.not_eq, 'val')
 
     def test_to_str(self):
-        inst = self._makeOne('index', 'val')
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 'val')
         self.assertEqual(str(inst), "index != 'val'")
 
     def test_negate(self):
@@ -206,7 +208,8 @@ class TestGt(ComparatorTestBase):
         self.assertEqual(index.gt, 'val')
 
     def test_to_str(self):
-        inst = self._makeOne('index', 'val')
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 'val')
         self.assertEqual(str(inst), "index > 'val'")
 
     def test_negate(self):
@@ -229,7 +232,8 @@ class TestLt(ComparatorTestBase):
         self.assertEqual(index.lt, 'val')
 
     def test_to_str(self):
-        inst = self._makeOne('index', 'val')
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 'val')
         self.assertEqual(str(inst), "index < 'val'")
 
     def test_negate(self):
@@ -252,7 +256,8 @@ class TestGe(ComparatorTestBase):
         self.assertEqual(index.ge, 'val')
 
     def test_to_str(self):
-        inst = self._makeOne('index', 'val')
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 'val')
         self.assertEqual(str(inst), "index >= 'val'")
 
     def test_negate(self):
@@ -275,7 +280,8 @@ class TestLe(ComparatorTestBase):
         self.assertEqual(index.le, 'val')
 
     def test_to_str(self):
-        inst = self._makeOne('index', 'val')
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 'val')
         self.assertEqual(str(inst), "index <= 'val'")
 
     def test_negate(self):
@@ -450,26 +456,30 @@ class TestInRange(ComparatorTestBase):
             index.range, ('begin', 'end', True, True))
 
     def test_to_str(self):
-        inst = self._makeOne('index', 0, 5)
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 0, 5)
         self.assertEqual(str(inst), "0 <= index <= 5")
 
     def test_to_str_exclusive(self):
-        inst = self._makeOne('index', 0, 5, True, True)
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 0, 5, True, True)
         self.assertEqual(str(inst), "0 < index < 5")
 
     def test_from_gtlt(self):
         from . import Ge
         from . import Le
-        gt = Ge('index', 0)
-        lt = Le('index', 5)
+        index = DummyIndex('index')
+        gt = Ge(index, 0)
+        lt = Le(index, 5)
         inst = self._getTargetClass().fromGTLT(gt, lt)
         self.assertEqual(str(inst), "0 <= index <= 5")
 
     def test_from_gtlt_exclusive(self):
         from . import Gt
         from . import Lt
-        gt = Gt('index', 0)
-        lt = Lt('index', 5)
+        index = DummyIndex('index')
+        gt = Gt(index, 0)
+        lt = Lt(index, 5)
         inst = self._getTargetClass().fromGTLT(gt, lt)
         self.assertEqual(str(inst), "0 < index < 5")
 
@@ -511,11 +521,13 @@ class TestNotInRange(ComparatorTestBase):
             index.not_range, ('begin', 'end', True, True))
 
     def test_to_str(self):
-        inst = self._makeOne('index', 0, 5)
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 0, 5)
         self.assertEqual(str(inst), "not(0 <= index <= 5)")
 
     def test_to_str_exclusive(self):
-        inst = self._makeOne('index', 0, 5, True, True)
+        index = DummyIndex('index')
+        inst = self._makeOne(index, 0, 5, True, True)
         self.assertEqual(str(inst), "not(0 < index < 5)")
 
     def test_negate(self):
@@ -819,10 +831,10 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(contains.index.name, 'a')
         self.assertEqual(contains._value, 6)
 
-    def test_does_not_contain(self):
-        from . import DoesNotContain
+    def test_not_contains(self):
+        from . import NotContains
         contains = self._call_fut("6 not in a")
-        self.failUnless(isinstance(contains, DoesNotContain))
+        self.failUnless(isinstance(contains, NotContains))
         self.assertEqual(contains.index.name, 'a')
         self.assertEqual(contains._value, 6)
 
@@ -1128,8 +1140,8 @@ class DummyIndex(object):
         self.contains = value
         return value
 
-    def applyDoesNotContain(self, value):
-        self.does_not_contain = value
+    def applyNotContains(self, value):
+        self.not_contains = value
         return value
 
     def applyEq(self, value):
@@ -1176,6 +1188,8 @@ class DummyIndex(object):
         self.not_range = (start, end, start_exclusive, end_exclusive)
         return self.not_range
 
+    def qname(self):
+        return str(self.name)
 
 class DummyFamily(object):
     union = None

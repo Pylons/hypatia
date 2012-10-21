@@ -4,6 +4,32 @@ Next release
 - Remove code from ``hypatia.path``.  This package no longer supports
   PathIndex.
 
+- Remove ``interfaces.IIndexQuery`` interface.  It was never relevant, as
+  indices cannot be expected to implement all of its methods, only the ones
+  which apply to each index.
+
+- Moved ``BaseIndexMixin`` from ``util`` to a new ``base`` module to avoid
+  future circdep problems on ``util`` if ``BaseIndexMixin`` ever begins to
+  depend on ``query``.
+
+- ``BaseIndexMixin`` no longer supplies default implementation of applyFoo
+  methods which raise NotImplementedError.  Each index is now responsible for
+  implementing all of its own applyFoo methods.  This is in the interest of
+  fidelity with new query methods such as ``eq``, which are similarly not
+  implemented in the base.
+
+- Indexes are now compelled to implement a ``qname`` method for use by
+  queries.
+
+- ``DoesNotContain`` query renamed to ``NotContains`` for symmetry with other
+  negated query names.
+
+- New index methods: ``eq``, ``noteq``, ``ge``, ``le``, ``lt``, ``gt``,
+  ``any``, ``notany``, ``all``, ``notall``, ``inrange``, ``notinrange``,
+  ``contains``, ``notcontains``.  These methods return query objects.  Ex::
+
+      catalog['flavors'].eq('peach')
+
 0.1a2 (2012-07-02)
 ------------------
 

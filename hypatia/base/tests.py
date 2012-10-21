@@ -19,25 +19,6 @@ class TestBaseIndexMixin(unittest.TestCase):
         index.family = BTrees.family64
         return index
 
-    def test_not_implemented_applies_methods(self):
-        index = self._getTargetClass()()
-        for name in [
-            'applyContains',
-            'applyDoesNotContain',
-            'applyEq',
-            'applyNotEq',
-            'applyGt',
-            'applyLt',
-            'applyGe',
-            'applyLe',
-            'applyAny',
-            'applyNotAny',
-            'applyAll',
-            'applyNotAll',
-            'applyInRange',
-            'applyNotInRange']:
-            self.assertRaises(NotImplementedError, getattr(index, name))
-
     def test_index_doc_callback_returns_nondefault(self):
         def callback(ob, default):
             return ob
@@ -150,6 +131,15 @@ class TestBaseIndexMixin(unittest.TestCase):
         self.assertEqual(index.unindexed, 1)
         self.assertEqual(index.value, 'abc')
         self.assertEqual(set(index.docids()), set([1]))
+
+    def test_qname_with___name__(self):
+        index = self._makeIndex('abc')
+        index.__name__ = 'fred'
+        self.assertEqual(index.qname(), 'fred')
+
+    def test_qname_without___name__(self):
+        index = self._makeIndex('abc')
+        self.assertEqual(index.qname(), str(index))
 
 class DummyIndex(object):
 

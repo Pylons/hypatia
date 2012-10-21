@@ -3,9 +3,7 @@ import BTrees
 from persistent import Persistent
 from ZODB.broken import Broken
 
-from .. import query
-
-_marker = ()
+_marker = object()
 
 class BaseIndexMixin(object):
     """ Mixin class for indexes that implements common behavior """
@@ -67,105 +65,21 @@ class BaseIndexMixin(object):
             return result
         return self.family.IF.weightedIntersection(result, docids)[1]
 
-    def _negate(self, assertion, *args, **kw):
-        positive = assertion(*args, **kw)
+    def _negate(self, apply_func, *args, **kw):
+        positive = apply_func(*args, **kw)
         all = self.docids()
         if len(positive) == 0:
             return all
         return self.family.IF.difference(all, positive)
 
-    def __str__(self):
-        return getattr(self, '__name__', repr(self))
+    def qname(self):
+        # used in query representations; __name__ should be set by
+        # catalog __setitem__ but if it's not, we fall back to a generic
+        # representation
+        return getattr(
+            self,
+            '__name__',
+            str(self),
+            )
+        
 
-    def applyContains(self, *args, **kw):
-        raise NotImplementedError(
-            "Contains is not supported for %s" % type(self).__name__)
-
-    def contains(self, value):
-        return query.Contains(self, value)
-
-    def applyDoesNotContain(self, *args, **kw):
-        return self._negate(self.applyContains, *args, **kw)
-
-    def doesnotcontain(self, value):
-        return query.DoesNotContain(self, value)
-
-    def applyEq(self, *args, **kw):
-        raise NotImplementedError(
-            "Eq is not supported for %s" % type(self).__name__)
-
-    def eq(self, value):
-        return query.Eq(self, value)
-
-    def applyNotEq(self, *args, **kw):
-        return self._negate(self.applyEq, *args, **kw)
-
-    def noteq(self, value):
-        return query.NotEq(self, value)
-
-    def applyGt(self, *args, **kw):
-        raise NotImplementedError(
-            "Gt is not supported for %s" % type(self).__name__)
-
-    def gt(self, value):
-        return query.Gt(self, value)
-
-    def applyLt(self, *args, **kw):
-        raise NotImplementedError(
-            "Lt is not supported for %s" % type(self).__name__)
-
-    def lt(self, value):
-        return query.Lt(self, value)
-
-    def applyGe(self, *args, **kw):
-        raise NotImplementedError(
-            "Ge is not supported for %s" % type(self).__name__)
-
-    def ge(self, value):
-        return query.Ge(self, value)
-
-    def applyLe(self, *args, **kw):
-        raise NotImplementedError(
-            "Le is not supported for %s" % type(self).__name__)
-
-    def le(self, value):
-        return query.Le(self, value)
-
-    def applyAny(self, *args, **kw):
-        raise NotImplementedError(
-            "Any is not supported for %s" % type(self).__name__)
-
-    def any(self, value):
-        return query.Any(self, value)
-
-    def applyNotAny(self, *args, **kw):
-        return self._negate(self.applyAny, *args, **kw)
-
-    def notany(self, value):
-        return query.NotAny(self, value)
-
-    def applyAll(self, *args, **kw):
-        raise NotImplementedError(
-            "All is not supported for %s" % type(self).__name__)
-
-    def all(self, value):
-        return query.All(self, value)
-
-    def applyNotAll(self, *args, **kw):
-        return self._negate(self.applyAll, *args, **kw)
-
-    def notall(self, value):
-        return query.NotAll(self, value)
-
-    def applyInRange(self, *args, **kw):
-        raise NotImplementedError(
-            "InRange is not supported for %s" % type(self).__name__)
-
-    def inrange(self, value):
-        return query.InRange(self, value)
-
-    def applyNotInRange(self, *args, **kw):
-        return self._negate(self.applyInRange, *args, **kw)
-
-    def notinrange(self, value):
-        return query.NotInRange(self, value)

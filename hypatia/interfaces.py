@@ -33,51 +33,6 @@ class IIndexInjection(Interface):
         """Unindex all documents indexed by the index
         """
 
-class IIndexQuery(Interface):
-    """ Interface expected to be implemented by indexes which support CQE
-    queries """
-    def applyContains(value):
-        """ Used by query.Contains comparator """
-
-    def applyDoesNotContain(value):
-        """ Used by query.DoesNotContain comparator """ 
-
-    def applyEq(value):
-        """ Used by query.Eq comparator  """ 
-
-    def applyNotEq(value):
-        """ Used by query.NotEq comparator """ 
-
-    def applyGt(min_value):
-        """ Used by query.Gt comparator  """ 
-
-    def applyLt(max_value):
-        """ Used by query.Lt comparator  """ 
-
-    def applyGe(min_value):
-        """ Used by query.Ge comparator  """ 
-
-    def applyLe(max_value):
-        """ Used by query.Le comparator  """ 
-
-    def applyAny(values):
-        """ Used by query.Any comparator  """ 
-
-    def applyNotAny(values):
-        """ Used by query.NotAny comparator  """ 
-
-    def applyAll(values):
-        """ Used by query.All comparator  """ 
-
-    def applyNotAll(values):
-        """ Used by query.NotAll comparator  """ 
-
-    def applyInRange(start, end, excludemin=False, excludemax=False):
-        """ Used by query.InRange comparator  """ 
-
-    def applyNotInRange(start, end, excludemin=False, excludemax=False):
-        """ Used by query.NotInRange comparator  """
-
 class IIndexEnumeration(Interface):
     def not_indexed():
         """ Return the set of document ids for which this index's
@@ -110,7 +65,11 @@ class IIndexEnumeration(Interface):
         indexed and not indexed.  Logically equivalent to
         len(self.docids())."""
 
-class IIndex(IIndexQuery, IIndexInjection, IIndexEnumeration):
+class IIndexDisplay(Interface):
+    def qname():
+        """ Return a string suitable for representing the index's name """
+
+class IIndex(IIndexInjection, IIndexEnumeration, IIndexDisplay):
     pass
 
 class IIndexStatistics(Interface):

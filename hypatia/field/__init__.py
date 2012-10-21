@@ -26,6 +26,7 @@ from .. import interfaces
 from .. import RangeValue
 
 from ..base import BaseIndexMixin
+from .. import query
 
 _marker = []
 
@@ -315,12 +316,12 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
     def search(self, queries, operator='or'):
         sets = []
-        for query in queries:
-            if isinstance(query, RangeValue):
-                query = query.as_tuple()
+        for q in queries:
+            if isinstance(q, RangeValue):
+                q = q.as_tuple()
             else:
-                query = (query, query)
-            set = self.family.IF.multiunion(self._fwd_index.values(*query))
+                q = (q, q)
+            set = self.family.IF.multiunion(self._fwd_index.values(*q))
             sets.append(set)
 
         result = None
@@ -336,44 +337,74 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
         return result
 
-    def apply(self, query):
-        if isinstance(query, dict):
-            val = query['query']
+    def apply(self, q):
+        if isinstance(q, dict):
+            val = q['query']
             if isinstance(val, RangeValue):
                 val = [val]
             elif not isinstance(val, (list, tuple)):
                 val = [val]
-            operator = query.get('operator', 'or')
+            operator = q.get('operator', 'or')
             result = self.search(val, operator)
         else:
-            if isinstance(query, tuple) and len(query) == 2:
+            if isinstance(q, tuple) and len(q) == 2:
                 # b/w compat stupidity; this needs to die
-                query = RangeValue(*query)
-                query = [query]
-            elif not isinstance(query, (list, tuple)):
-                query = [query]
-            result = self.search(query, 'or')
+                q = RangeValue(*q)
+                q = [q]
+            elif not isinstance(q, (list, tuple)):
+                q = [q]
+            result = self.search(q, 'or')
 
         return result
 
     def applyEq(self, value):
         return self.apply(value)
 
+    def eq(self, value):
+        return query.Eq(self, value)
+
+    def applyNotEq(self, *args, **kw):
+        return self._negate(self.applyEq, *args, **kw)
+
+    def noteq(self, value):
+        return query.NotEq(self, value)
+
     def applyGe(self, min_value):
         return self.applyInRange(min_value, None)
+
+    def ge(self, value):
+        return query.Ge(self, value)
 
     def applyLe(self, max_value):
         return self.applyInRange(None, max_value)
 
+    def le(self, value):
+        return query.Le(self, value)
+
     def applyGt(self, min_value):
         return self.applyInRange(min_value, None, excludemin=True)
+
+    def gt(self, value):
+        return query.Gt(self, value)
 
     def applyLt(self, max_value):
         return self.applyInRange(None, max_value, excludemax=True)
 
+    def lt(self, value):
+        return query.Lt(self, value)
+
     def applyAny(self, values):
         queries = list(values)
         return self.search(queries, operator='or')
+
+    def any(self, value):
+        return query.Any(self, value)
+
+    def applyNotAny(self, *args, **kw):
+        return self._negate(self.applyAny, *args, **kw)
+
+    def notany(self, value):
+        return query.NotAny(self, value)
 
     def applyInRange(self, start, end, excludemin=False, excludemax=False):
         return self.family.IF.multiunion(
@@ -381,6 +412,15 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
                 start, end, excludemin=excludemin, excludemax=excludemax)
         )
 
+
+    def inrange(self, start, end, excludemin=False, excludemax=False):
+        return query.InRange(self, start, end, excludemin, excludemax)
+
+    def applyNotInRange(self, *args, **kw):
+        return self._negate(self.applyInRange, *args, **kw)
+
+    def notinrange(self, start, end, excludemin=False, excludemax=False):
+        return query.NotInRange(self, start, end, excludemin, excludemax)
 
 def nsort(docids, rev_index):
     for docid in docids:

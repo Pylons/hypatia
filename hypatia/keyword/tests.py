@@ -335,16 +335,6 @@ class _TestCaseBase:
         from hypatia.interfaces import IIndexInjection
         verifyObject(IIndexInjection, self._makeOne())
 
-    def test_class_conforms_to_IIndexQuery(self):
-        from zope.interface.verify import verifyClass
-        from hypatia.interfaces import IIndexQuery
-        verifyClass(IIndexQuery, self._getTargetClass())
-
-    def test_instance_conforms_to_IIndexQuery(self):
-        from zope.interface.verify import verifyObject
-        from hypatia.interfaces import IIndexQuery
-        verifyObject(IIndexQuery, self._makeOne())
-
     def test_class_conforms_to_IIndexStatistics(self):
         from zope.interface.verify import verifyClass
         from hypatia.interfaces import IIndexStatistics
@@ -546,6 +536,48 @@ class _TestCaseBase:
     def test_search_bad_operator(self):
         index = self._makeOne()
         self.assertRaises(TypeError, index.search, 'whatever', 'maybe')
+
+    def test_any(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.any([1])
+        self.assertEqual(result.__class__, query.Any)
+        self.assertEqual(result._value, [1])
+        
+    def test_notany(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.notany([1])
+        self.assertEqual(result.__class__, query.NotAny)
+        self.assertEqual(result._value, [1])
+
+    def test_all(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.all([1])
+        self.assertEqual(result.__class__, query.All)
+        self.assertEqual(result._value, [1])
+        
+    def test_notall(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.notall([1])
+        self.assertEqual(result.__class__, query.NotAll)
+        self.assertEqual(result._value, [1])
+
+    def test_eq(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.eq(1)
+        self.assertEqual(result.__class__, query.Eq)
+        self.assertEqual(result._value, 1)
+        
+    def test_noteq(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.noteq(1)
+        self.assertEqual(result.__class__, query.NotEq)
+        self.assertEqual(result._value, 1)
 
 
 class KeywordIndexTests32(_KeywordIndexTestsBase,

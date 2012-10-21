@@ -34,6 +34,7 @@ from .okapiindex import OkapiIndex
 from .queryparser import QueryParser
 
 from ..base import BaseIndexMixin 
+from .. import query
 
 _marker = object()
 
@@ -131,7 +132,20 @@ class TextIndex(BaseIndexMixin, Persistent):
     def applyContains(self, value):
         return self.apply(value)
 
+    def contains(self, value):
+        return query.Contains(self, value)
+
+    def applyNotContains(self, *args, **kw):
+        return self._negate(self.applyContains, *args, **kw)
+
+    def notcontains(self, value):
+        return query.NotContains(self, value)
+
     applyEq = applyContains
+    eq = contains
+
+    applyNotEq = applyNotContains
+    noteq = notcontains
 
     def sort(self, result, reverse=False, limit=None, sort_type=None):
         """Sort by text relevance.

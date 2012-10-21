@@ -68,7 +68,7 @@ class Comparator(Query):
         return value
 
     def __str__(self):
-        return ' '.join((str(self.index), self.operator, repr(self._value)))
+        return ' '.join((self.index.qname(), self.operator, repr(self._value)))
 
     def __eq__(self, other):
         return self.index == other.index and self._value == other._value
@@ -87,15 +87,15 @@ class Contains(Comparator):
         return '%r in %s' % (self._value, self.index)
 
     def negate(self):
-        return DoesNotContain(self.index, self._value)
+        return NotContains(self.index, self._value)
 
 
-class DoesNotContain(Comparator):
+class NotContains(Comparator):
     """CQE equivalent: 'foo' not in index
     """
 
     def _apply(self, names):
-        return self.index.applyDoesNotContain(self._get_value(names))
+        return self.index.applyNotContains(self._get_value(names))
 
     def __str__(self):
         return '%r not in %s' % (self._value, self.index)
@@ -307,7 +307,7 @@ class _Range(Comparator, RichComparisonMixin):
             s.append('<')
         else:
             s.append('<=')
-        s.append(str(self.index))
+        s.append(self.index.qname())
         if self.end_exclusive:
             s.append('<')
         else:
@@ -769,9 +769,9 @@ class _AstParser(object):
         def factory(left, right):
             if callable(right):  # any or all, see process_Call
                 return right(self._get_index(left)).negate()
-            return DoesNotContain(self._get_index(right), self._value(left))
+            return NotContains(self._get_index(right), self._value(left))
 
-        factory.type = DoesNotContain
+        factory.type = NotContains
         return factory
 
     def process_Not(self, node, children):

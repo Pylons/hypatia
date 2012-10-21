@@ -253,14 +253,14 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._query_weighted[0], ['anything'])
         self.assertEqual(okapi._searched, ['anything'])
 
-    def test_applyDoesNotContain(self):
+    def test_applyNotContains(self):
         index = self._makeOne()
         index.index_doc(1, u'now is the time')
         index.index_doc(2, u"l'ora \xe9 ora")
-        result = sorted(index.applyDoesNotContain('time'))
+        result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [2])
 
-    def test_applyDoesNotContain_with_unindexed_doc(self):
+    def test_applyNotContains_with_unindexed_doc(self):
         def discriminator(obj, default):
             if isinstance(obj, basestring):
                 return obj
@@ -269,17 +269,17 @@ class TextIndexTests(unittest.TestCase):
         index.index_doc(1, u'now is the time')
         index.index_doc(2, u"l'ora \xe9 ora")
         index.index_doc(3, 3)
-        result = sorted(index.applyDoesNotContain('time'))
+        result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [2, 3])
 
-    def test_applyDoesNotContain_nothing_indexed(self):
+    def test_applyNotContains_nothing_indexed(self):
         def discriminator(obj, default):
             return default
         index = self._makeOne(discriminator)
         index.index_doc(1, u'now is the time')
         index.index_doc(2, u"l'ora \xe9 ora")
         index.index_doc(3, 3)
-        result = sorted(index.applyDoesNotContain('time'))
+        result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [1, 2, 3])
         
     def test_sort_no_results(self):
@@ -320,7 +320,35 @@ class TextIndexTests(unittest.TestCase):
         index.index_doc(1, u'Am I rich yet?')
         index.index_doc(2, _marker)
         self.assertEqual(set([1, 2]), set(index.docids()))
+
+    def test_contains(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.contains(1)
+        self.assertEqual(result.__class__, query.Contains)
+        self.assertEqual(result._value, 1)
         
+    def test_notcontains(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.notcontains(1)
+        self.assertEqual(result.__class__, query.NotContains)
+        self.assertEqual(result._value, 1)
+
+    def test_eq(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.eq(1)
+        self.assertEqual(result.__class__, query.Contains)
+        self.assertEqual(result._value, 1)
+        
+    def test_noteq(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.noteq(1)
+        self.assertEqual(result.__class__, query.NotContains)
+        self.assertEqual(result._value, 1)
+
 class DummyOkapi:
 
     _cleared = False
