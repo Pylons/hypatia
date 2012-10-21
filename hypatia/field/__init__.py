@@ -25,7 +25,7 @@ from zope.interface import implementer
 from .. import interfaces
 from .. import RangeValue
 
-from ..util import BaseIndexMixin
+from ..base import BaseIndexMixin
 
 _marker = []
 

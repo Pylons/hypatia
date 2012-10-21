@@ -33,7 +33,7 @@ from .lexicon import (
 from .okapiindex import OkapiIndex
 from .queryparser import QueryParser
 
-from ..util import BaseIndexMixin 
+from ..base import BaseIndexMixin 
 
 _marker = object()
 

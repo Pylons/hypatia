@@ -3,8 +3,8 @@ import unittest
 
 class ComparatorTestBase(unittest.TestCase):
 
-    def _makeOne(self, index_name, value):
-        return self._getTargetClass()(index_name, value)
+    def _makeOne(self, index, value):
+        return self._getTargetClass()(index, value)
 
 
 class TestQuery(unittest.TestCase):
@@ -78,7 +78,7 @@ class TestComparator(ComparatorTestBase):
 
     def test_ctor(self):
         inst = self._makeOne('index', 'val')
-        self.assertEqual(inst.index_name, 'index')
+        self.assertEqual(inst.index, 'index')
         self.assertEqual(inst._value, 'val')
 
     def test_eq(self):
@@ -93,25 +93,25 @@ class TestContains(ComparatorTestBase):
         return Contains
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.contains, 'val')
+        self.assertEqual(index.contains, 'val')
 
     def test_apply_w_name(self):
         from . import Name
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', Name('foo'))
-        result = inst._apply(catalog, {'foo': 'val'})
+        index = DummyIndex()
+        inst = self._makeOne(index, Name('foo'))
+        result = inst._apply({'foo': 'val'})
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.contains, 'val')
+        self.assertEqual(index.contains, 'val')
 
     def test_apply_w_missing_name(self):
         from . import Name
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', Name('foo'))
-        self.assertRaises(NameError, inst._apply, catalog, {})
+        index = DummyIndex()
+        inst = self._makeOne(index, Name('foo'))
+        self.assertRaises(NameError, inst._apply, {})
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -130,11 +130,11 @@ class TestDoesNotContain(ComparatorTestBase):
         return DoesNotContain
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.does_not_contain, 'val')
+        self.assertEqual(index.does_not_contain, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -153,11 +153,11 @@ class TestEq(ComparatorTestBase):
         return Eq
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.eq, 'val')
+        self.assertEqual(index.eq, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -176,11 +176,11 @@ class TestNotEq(ComparatorTestBase):
         return NotEq
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.not_eq, 'val')
+        self.assertEqual(index.not_eq, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -199,11 +199,11 @@ class TestGt(ComparatorTestBase):
         return Gt
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.gt, 'val')
+        self.assertEqual(index.gt, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -222,11 +222,11 @@ class TestLt(ComparatorTestBase):
         return Lt
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.lt, 'val')
+        self.assertEqual(index.lt, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -245,11 +245,11 @@ class TestGe(ComparatorTestBase):
         return Ge
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.ge, 'val')
+        self.assertEqual(index.ge, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -268,11 +268,11 @@ class TestLe(ComparatorTestBase):
         return Le
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.le, 'val')
+        self.assertEqual(index.le, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', 'val')
@@ -291,11 +291,11 @@ class TestAll(ComparatorTestBase):
         return All
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.all, 'val')
+        self.assertEqual(index.all, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
@@ -314,11 +314,11 @@ class TestNotAll(ComparatorTestBase):
         return NotAll
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.all, 'val')
+        self.assertEqual(index.all, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
@@ -337,41 +337,41 @@ class TestAny(ComparatorTestBase):
         return Any
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.any, 'val')
+        self.assertEqual(index.any, 'val')
 
     def test_apply_with_list(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', ['one', 'two'])
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, ['one', 'two'])
+        result = inst._apply(None)
         self.assertEqual(result, ['one', 'two'])
-        self.assertEqual(catalog.index.any, ['one', 'two'])
+        self.assertEqual(index.any, ['one', 'two'])
 
     def test_apply_with_tuple(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', ('one', 'two'))
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, ('one', 'two'))
+        result = inst._apply(None)
         self.assertEqual(result, ('one', 'two'))
-        self.assertEqual(catalog.index.any, ('one', 'two'))
+        self.assertEqual(index.any, ('one', 'two'))
         
     def test_apply_with_names(self):
         from . import Name
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', [Name('foo'), Name('bar')])
-        result = inst._apply(catalog, names={'foo': 'one', 'bar': 'two'})
+        index = DummyIndex()
+        inst = self._makeOne(index, [Name('foo'), Name('bar')])
+        result = inst._apply(names={'foo': 'one', 'bar': 'two'})
         self.assertEqual(result, ['one', 'two'])
-        self.assertEqual(catalog.index.any, ['one', 'two'])
+        self.assertEqual(index.any, ['one', 'two'])
 
     def test_apply_with_names_in_tuple(self):
         from . import Name
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', (Name('foo'), Name('bar')))
-        result = inst._apply(catalog, names={'foo': 'one', 'bar': 'two'})
+        index = DummyIndex()
+        inst = self._makeOne(index, (Name('foo'), Name('bar')))
+        result = inst._apply(names={'foo': 'one', 'bar': 'two'})
         self.assertEqual(result, ('one', 'two'))
-        self.assertEqual(catalog.index.any, ('one', 'two'))
+        self.assertEqual(index.any, ('one', 'two'))
 
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
@@ -390,11 +390,11 @@ class TestNotAny(ComparatorTestBase):
         return NotAny
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'val')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        result = inst._apply(None)
         self.assertEqual(result, 'val')
-        self.assertEqual(catalog.index.not_any, 'val')
+        self.assertEqual(index.not_any, 'val')
 
     def test_to_str(self):
         inst = self._makeOne('index', [1, 2, 3])
@@ -418,36 +418,36 @@ class TestInRange(ComparatorTestBase):
             index, begin, end, begin_exclusive, end_exclusive)
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'begin', 'end')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'begin', 'end')
+        result = inst._apply(None)
         self.assertEqual(result, ('begin', 'end', False, False))
         self.assertEqual(
-            catalog.index.range, ('begin', 'end', False, False))
+            index.range, ('begin', 'end', False, False))
 
     def test_apply_w_names(self):
         from . import Name
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', Name('foo'), Name('bar'))
-        result = inst._apply(catalog, {'foo': 'begin', 'bar': 'end'})
+        index = DummyIndex()
+        inst = self._makeOne(index, Name('foo'), Name('bar'))
+        result = inst._apply({'foo': 'begin', 'bar': 'end'})
         self.assertEqual(result, ('begin', 'end', False, False))
         self.assertEqual(
-            catalog.index.range, ('begin', 'end', False, False))
+            index.range, ('begin', 'end', False, False))
 
     def test_apply_w_names_missing(self):
         from . import Name
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', Name('foo'), Name('bar'))
-        self.assertRaises(NameError, inst._apply, catalog, {})
-        self.assertRaises(NameError, inst._apply, catalog, {'foo': 'begin'})
+        index = DummyIndex()
+        inst = self._makeOne(index, Name('foo'), Name('bar'))
+        self.assertRaises(NameError, inst._apply, {})
+        self.assertRaises(NameError, inst._apply, {'foo': 'begin'})
 
     def test_apply_exclusive(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'begin', 'end', True, True)
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'begin', 'end', True, True)
+        result = inst._apply(None)
         self.assertEqual(result, ('begin', 'end', True, True))
         self.assertEqual(
-            catalog.index.range, ('begin', 'end', True, True))
+            index.range, ('begin', 'end', True, True))
 
     def test_to_str(self):
         inst = self._makeOne('index', 0, 5)
@@ -495,20 +495,20 @@ class TestNotInRange(ComparatorTestBase):
             index, begin, end, begin_exclusive, end_exclusive)
 
     def test_apply(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'begin', 'end')
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'begin', 'end')
+        result = inst._apply(None)
         self.assertEqual(result, ('begin', 'end', False, False))
         self.assertEqual(
-            catalog.index.not_range, ('begin', 'end', False, False))
+            index.not_range, ('begin', 'end', False, False))
 
     def test_apply_exclusive(self):
-        catalog = DummyCatalog()
-        inst = self._makeOne('index', 'begin', 'end', True, True)
-        result = inst._apply(catalog, None)
+        index = DummyIndex()
+        inst = self._makeOne(index, 'begin', 'end', True, True)
+        result = inst._apply(None)
         self.assertEqual(result, ('begin', 'end', True, True))
         self.assertEqual(
-            catalog.index.not_range, ('begin', 'end', True, True))
+            index.not_range, ('begin', 'end', True, True))
 
     def test_to_str(self):
         inst = self._makeOne('index', 0, 5)
@@ -565,7 +565,7 @@ class TestOr(BoolOpTestBase):
         right = DummyQuery(set([3, 4]))
         o = self._makeOne(left, right)
         o.family = DummyFamily()
-        self.assertEqual(o._apply(None, None), set([1, 2, 3, 4]))
+        self.assertEqual(o._apply(None), set([1, 2, 3, 4]))
         self.failUnless(left.applied)
         self.failUnless(right.applied)
         self.assertEqual(o.family.union, (left.results, right.results))
@@ -575,7 +575,7 @@ class TestOr(BoolOpTestBase):
         right = DummyQuery(set([3, 4]))
         o = self._makeOne(left, right)
         o.family = DummyFamily()
-        self.assertEqual(o._apply(None, None), set([3, 4]))
+        self.assertEqual(o._apply(None), set([3, 4]))
         self.failUnless(left.applied)
         self.failUnless(right.applied)
         self.assertEqual(o.family.union, None)
@@ -585,7 +585,7 @@ class TestOr(BoolOpTestBase):
         right = DummyQuery(set())
         o = self._makeOne(left, right)
         o.family = DummyFamily()
-        self.assertEqual(o._apply(None, None), set([1, 2]))
+        self.assertEqual(o._apply(None), set([1, 2]))
         self.failUnless(left.applied)
         self.failUnless(right.applied)
         self.assertEqual(o.family.union, None)
@@ -617,7 +617,7 @@ class TestAnd(BoolOpTestBase):
         right = DummyQuery(set([3, 4, 5]))
         o = self._makeOne(left, right)
         o.family = DummyFamily()
-        self.assertEqual(o._apply(None, None), set([3]))
+        self.assertEqual(o._apply(None), set([3]))
         self.failUnless(left.applied)
         self.failUnless(right.applied)
         self.assertEqual(o.family.intersection, (left.results, right.results))
@@ -627,7 +627,7 @@ class TestAnd(BoolOpTestBase):
         right = DummyQuery(set([3, 4, 5]))
         o = self._makeOne(left, right)
         o.family = DummyFamily()
-        self.assertEqual(o._apply(None, None), set())
+        self.assertEqual(o._apply(None), set())
         self.failUnless(left.applied)
         self.failIf(right.applied)
         self.assertEqual(o.family.intersection, None)
@@ -637,7 +637,7 @@ class TestAnd(BoolOpTestBase):
         right = DummyQuery(set())
         o = self._makeOne(left, right)
         o.family = DummyFamily()
-        self.assertEqual(o._apply(None, None), set())
+        self.assertEqual(o._apply(None), set())
         self.failUnless(left.applied)
         self.failUnless(right.applied)
         self.assertEqual(o.family.intersection, None)
@@ -667,7 +667,7 @@ class TestNot(BoolOpTestBase):
     def test_apply(self):
         query = DummyQuery('foo')
         o = self._makeOne(query)
-        self.assertEqual(o._apply(None, None), 'foo')
+        self.assertEqual(o._apply(None), 'foo')
         self.failUnless(query.negated)
         self.failUnless(query.applied)
 
@@ -704,7 +704,16 @@ class Test_parse_query(unittest.TestCase):
 
     def _call_fut(self, expr):
         from . import parse_query as fut
-        return fut(expr)
+        indexes = {}
+        class Catalog(object):
+            def __getitem__(self, name):
+                index = indexes.get(name)
+                if index is None:
+                    index = DummyIndex(name)
+                    indexes[name] = index
+                return index
+        catalog = Catalog()
+        return fut(expr, catalog)
 
     def test_not_an_expression(self):
         self.assertRaises(ValueError, self._call_fut, 'a = 1')
@@ -764,14 +773,14 @@ class Test_parse_query(unittest.TestCase):
         from . import Eq
         eq = self._call_fut('a.foo == 1')
         self.failUnless(isinstance(eq, Eq))
-        self.assertEqual(eq.index_name, 'a.foo')
+        self.assertEqual(eq.index.name, 'a.foo')
         self.assertEqual(eq._value, 1)
 
     def test_not_eq(self):
         from . import NotEq
         not_eq = self._call_fut("a != 'one'")
         self.failUnless(isinstance(not_eq, NotEq))
-        self.assertEqual(not_eq.index_name, 'a')
+        self.assertEqual(not_eq.index.name, 'a')
         self.assertEqual(not_eq._value, "one")
 
     def test_lt(self):
@@ -779,49 +788,49 @@ class Test_parse_query(unittest.TestCase):
         from . import Name
         lt = self._call_fut("a < foo")
         self.failUnless(isinstance(lt, Lt))
-        self.assertEqual(lt.index_name, 'a')
+        self.assertEqual(lt.index.name, 'a')
         self.assertEqual(lt._value, Name('foo'))
 
     def test_le(self):
         from . import Le
         le = self._call_fut("a <= 4")
         self.failUnless(isinstance(le, Le))
-        self.assertEqual(le.index_name, 'a')
+        self.assertEqual(le.index.name, 'a')
         self.assertEqual(le._value, 4)
 
     def test_gt(self):
         from . import Gt
         gt = self._call_fut('b > 2')
         self.failUnless(isinstance(gt, Gt))
-        self.assertEqual(gt.index_name, 'b')
+        self.assertEqual(gt.index.name, 'b')
         self.assertEqual(gt._value, 2)
 
     def test_ge(self):
         from . import Ge
         ge = self._call_fut("a >= 5")
         self.failUnless(isinstance(ge, Ge))
-        self.assertEqual(ge.index_name, 'a')
+        self.assertEqual(ge.index.name, 'a')
         self.assertEqual(ge._value, 5)
 
     def test_contains(self):
         from . import Contains
         contains = self._call_fut("6 in a")
         self.failUnless(isinstance(contains, Contains))
-        self.assertEqual(contains.index_name, 'a')
+        self.assertEqual(contains.index.name, 'a')
         self.assertEqual(contains._value, 6)
 
     def test_does_not_contain(self):
         from . import DoesNotContain
         contains = self._call_fut("6 not in a")
         self.failUnless(isinstance(contains, DoesNotContain))
-        self.assertEqual(contains.index_name, 'a')
+        self.assertEqual(contains.index.name, 'a')
         self.assertEqual(contains._value, 6)
 
     def test_range_exclusive_exclusive(self):
         from . import InRange
         comp = self._call_fut("0 < a < 5")
         self.failUnless(isinstance(comp, InRange))
-        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.index.name, 'a')
         self.assertEqual(comp._start, 0)
         self.assertEqual(comp._end, 5)
         self.failUnless(comp.start_exclusive)
@@ -831,7 +840,7 @@ class Test_parse_query(unittest.TestCase):
         from . import InRange
         comp = self._call_fut("0 < a <= 5")
         self.failUnless(isinstance(comp, InRange))
-        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.index.name, 'a')
         self.assertEqual(comp._start, 0)
         self.assertEqual(comp._end, 5)
         self.failUnless(comp.start_exclusive)
@@ -841,7 +850,7 @@ class Test_parse_query(unittest.TestCase):
         from . import InRange
         comp = self._call_fut("0 <= a < 5")
         self.failUnless(isinstance(comp, InRange))
-        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.index.name, 'a')
         self.assertEqual(comp._start, 0)
         self.assertEqual(comp._end, 5)
         self.failIf(comp.start_exclusive)
@@ -851,7 +860,7 @@ class Test_parse_query(unittest.TestCase):
         from . import InRange
         comp = self._call_fut("0 <= a <= 5")
         self.failUnless(isinstance(comp, InRange))
-        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.index.name, 'a')
         self.assertEqual(comp._start, 0)
         self.assertEqual(comp._end, 5)
         self.failIf(comp.start_exclusive)
@@ -861,7 +870,7 @@ class Test_parse_query(unittest.TestCase):
         from . import NotInRange
         comp = self._call_fut("not(0 < a < 5)")
         self.failUnless(isinstance(comp, NotInRange))
-        self.assertEqual(comp.index_name, 'a')
+        self.assertEqual(comp.index.name, 'a')
         self.assertEqual(comp._start, 0)
         self.assertEqual(comp._end, 5)
         self.failUnless(comp.start_exclusive)
@@ -874,11 +883,11 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op, Or))
         query = op.queries[0]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.index.name, 'a')
         self.assertEqual(query._value, 1)
         query = op.queries[1]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.index.name, 'b')
         self.assertEqual(query._value, 2)
 
     def test_or_with_bool_syntax(self):
@@ -888,25 +897,25 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op, Or))
         query = op.queries[0]
         self.failUnless(isinstance(query, NotEq))
-        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.index.name, 'a')
         self.assertEqual(query._value, 1)
         query = op.queries[1]
         self.failUnless(isinstance(query, NotEq))
-        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.index.name, 'b')
         self.assertEqual(query._value, 2)
 
     def test_any(self):
         from . import Any
         op = self._call_fut("a == 1 or a == 2 or a == 3")
         self.failUnless(isinstance(op, Any), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_better_any(self):
         from . import Any
         op = self._call_fut("a in any([1, 2, 3])")
         self.failUnless(isinstance(op, Any), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_any_with_name(self):
@@ -914,7 +923,7 @@ class Test_parse_query(unittest.TestCase):
         from . import Name
         op = self._call_fut("a in any(foo)")
         self.failUnless(isinstance(op, Any), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, Name('foo'))
 
     def test_any_with_names(self):
@@ -922,21 +931,21 @@ class Test_parse_query(unittest.TestCase):
         from . import Name
         op = self._call_fut("a in any([foo, bar])")
         self.failUnless(isinstance(op, Any), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [Name('foo'), Name('bar')])
 
     def test_not_any(self):
         from . import NotAny
         op = self._call_fut("not(a == 1 or a == 2 or a == 3)")
         self.failUnless(isinstance(op, NotAny), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_better_not_any(self):
         from . import NotAny
         op = self._call_fut("a not in any([1, 2, 3])")
         self.failUnless(isinstance(op, NotAny), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_and(self):
@@ -946,11 +955,11 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op, And))
         query = op.queries[0]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.index.name, 'a')
         self.assertEqual(query._value, 1)
         query = op.queries[1]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.index.name, 'b')
         self.assertEqual(query._value, 2)
 
     def test_and_with_bool_syntax(self):
@@ -960,39 +969,39 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op, And))
         query = op.queries[0]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'a')
+        self.assertEqual(query.index.name, 'a')
         self.assertEqual(query._value, 1)
         query = op.queries[1]
         self.failUnless(isinstance(query, Eq))
-        self.assertEqual(query.index_name, 'b')
+        self.assertEqual(query.index.name, 'b')
         self.assertEqual(query._value, 2)
 
     def test_all(self):
         from . import All
         op = self._call_fut("a == 1 and a == 2 and a == 3")
         self.failUnless(isinstance(op, All), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_better_all(self):
         from . import All
         op = self._call_fut("a in all([1, 2, 3])")
         self.failUnless(isinstance(op, All), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_not_all(self):
         from . import NotAll
         op = self._call_fut("not(a == 1 and a == 2 and a == 3)")
         self.failUnless(isinstance(op, NotAll), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_better_not_all(self):
         from . import NotAll
         op = self._call_fut("a not in all([1, 2, 3])")
         self.failUnless(isinstance(op, NotAll), op)
-        self.assertEqual(op.index_name, 'a')
+        self.assertEqual(op.index.name, 'a')
         self.assertEqual(op._value, [1, 2, 3])
 
     def test_all_with_or(self):
@@ -1007,7 +1016,7 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op, Or))
         self.failUnless(isinstance(op.queries[0], Eq))
         self.failUnless(isinstance(op.queries[1], All))
-        self.assertEqual(op.queries[1].index_name, 'a')
+        self.assertEqual(op.queries[1].index.name, 'a')
         self.assertEqual(op.queries[1]._value, [2, 3])
 
     def test_convert_gtlt_to_range(self):
@@ -1111,22 +1120,9 @@ class Test_parse_query(unittest.TestCase):
         self.failUnless(isinstance(op.queries[1].queries[1], Lt))
 
 
-class Dummy(object):
-    __parent__ = None
-
-
-class DummyCatalog(object):
-
-    def __init__(self, index=None):
-        if index is None:
-            index = DummyIndex()
-        self.index = index
-
-    def __getitem__(self, name):
-        return self.index
-
-
 class DummyIndex(object):
+    def __init__(self, name=None):
+        self.name = name
 
     def applyContains(self, value):
         self.contains = value
@@ -1209,7 +1205,7 @@ class DummyQuery(object):
     def __init__(self, results):
         self.results = results
 
-    def _apply(self, catalog, names):
+    def _apply(self, names):
         self.applied = True
         return self.results
 

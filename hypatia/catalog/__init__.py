@@ -18,6 +18,10 @@ class Catalog(PersistentMapping):
         if family is not None:
             self.family = family
 
+    def __setitem__(self, name, index):
+        index.__name__ = name
+        return PersistentMapping.__setitem__(self, name, index)
+
     def reset(self):
         """ Clear all indexes in this catalog. """
         for index in self.values():
@@ -151,8 +155,8 @@ class CatalogQuery(object):
         """ Use the arguments to perform a query.  Return a tuple of
         (num, resultseq)."""
         if isinstance(queryobject, basestring):
-            queryobject = parse_query(queryobject)
-        results = queryobject._apply(self.catalog, names)
+            queryobject = parse_query(queryobject, self.catalog)
+        results = queryobject._apply(names)
         return self.sort(results, sort_index, limit, sort_type, reverse)
 
     __call__ = query

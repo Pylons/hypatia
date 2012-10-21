@@ -49,12 +49,9 @@ class Comparator(Query):
     Base class for all comparators used in queries.
     """
 
-    def __init__(self, index_name, value):
-        self.index_name = index_name
+    def __init__(self, index, value):
+        self.index = index
         self._value = value
-
-    def _get_index(self, catalog):
-        return catalog[self.index_name]
 
     def _get_value(self, names, value=_marker):
         if value is _marker:
@@ -71,11 +68,10 @@ class Comparator(Query):
         return value
 
     def __str__(self):
-        return ' '.join((self.index_name, self.operator, repr(self._value)))
+        return ' '.join((str(self.index), self.operator, repr(self._value)))
 
     def __eq__(self, other):
-        return (self.index_name == other.index_name and
-                self._value == other._value)
+        return self.index == other.index and self._value == other._value
 
 
 class Contains(Comparator):
@@ -84,30 +80,28 @@ class Contains(Comparator):
     CQE equivalent: 'foo' in index
     """
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyContains(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyContains(self._get_value(names))
 
     def __str__(self):
-        return '%s in %s' % (repr(self._value), self.index_name)
+        return '%r in %s' % (self._value, self.index)
 
     def negate(self):
-        return DoesNotContain(self.index_name, self._value)
+        return DoesNotContain(self.index, self._value)
 
 
 class DoesNotContain(Comparator):
     """CQE equivalent: 'foo' not in index
     """
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyDoesNotContain(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyDoesNotContain(self._get_value(names))
 
     def __str__(self):
-        return '%s not in %s' % (repr(self._value), self.index_name)
+        return '%r not in %s' % (self._value, self.index)
 
     def negate(self):
-        return Contains(self.index_name, self._value)
+        return Contains(self.index, self._value)
 
 
 class Eq(Comparator):
@@ -117,12 +111,11 @@ class Eq(Comparator):
     """
     operator = '=='
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyEq(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyEq(self._get_value(names))
 
     def negate(self):
-        return NotEq(self.index_name, self._value)
+        return NotEq(self.index, self._value)
 
 
 class NotEq(Comparator):
@@ -132,12 +125,11 @@ class NotEq(Comparator):
     """
     operator = '!='
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyNotEq(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyNotEq(self._get_value(names))
 
     def negate(self):
-        return Eq(self.index_name, self._value)
+        return Eq(self.index, self._value)
 
 
 class Gt(Comparator):
@@ -147,12 +139,11 @@ class Gt(Comparator):
     """
     operator = '>'
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyGt(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyGt(self._get_value(names))
 
     def negate(self):
-        return Le(self.index_name, self._value)
+        return Le(self.index, self._value)
 
 
 class Lt(Comparator):
@@ -162,12 +153,11 @@ class Lt(Comparator):
     """
     operator = '<'
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyLt(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyLt(self._get_value(names))
 
     def negate(self):
-        return Ge(self.index_name, self._value)
+        return Ge(self.index, self._value)
 
 
 class Ge(Comparator):
@@ -177,12 +167,11 @@ class Ge(Comparator):
     """
     operator = '>='
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyGe(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyGe(self._get_value(names))
 
     def negate(self):
-        return Lt(self.index_name, self._value)
+        return Lt(self.index, self._value)
 
 
 class Le(Comparator):
@@ -192,12 +181,11 @@ class Le(Comparator):
     """
     operator = '<='
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyLe(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyLe(self._get_value(names))
 
     def negate(self):
-        return Gt(self.index_name, self._value)
+        return Gt(self.index, self._value)
 
 
 class Any(Comparator):
@@ -206,15 +194,14 @@ class Any(Comparator):
     CQE equivalent: index in any(['foo', 'bar'])
     """
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyAny(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyAny(self._get_value(names))
 
     def negate(self):
-        return NotAny(self.index_name, self._value)
+        return NotAny(self.index, self._value)
 
     def __str__(self):
-        return '%s in any(%s)' % (self.index_name, repr(self._value))
+        return '%s in any(%r)' % (self.index, self._value)
 
 
 class NotAny(Comparator):
@@ -224,15 +211,14 @@ class NotAny(Comparator):
     """
     operator = 'not any'
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyNotAny(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyNotAny(self._get_value(names))
 
     def negate(self):
-        return Any(self.index_name, self._value)
+        return Any(self.index, self._value)
 
     def __str__(self):
-        return '%s not in any(%s)' % (self.index_name, repr(self._value))
+        return '%s not in any(%r)' % (self.index, self._value)
 
 
 class All(Comparator):
@@ -242,15 +228,14 @@ class All(Comparator):
     """
     operator = 'all'
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyAll(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyAll(self._get_value(names))
 
     def negate(self):
-        return NotAll(self.index_name, self._value)
+        return NotAll(self.index, self._value)
 
     def __str__(self):
-        return '%s in all(%s)' % (self.index_name, repr(self._value))
+        return '%s in all(%r)' % (self.index, self._value)
 
 
 class NotAll(Comparator):
@@ -260,15 +245,14 @@ class NotAll(Comparator):
     """
     operator = 'not all'
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyAll(self._get_value(names))
+    def _apply(self, names):
+        return self.index.applyAll(self._get_value(names))
 
     def negate(self):
-        return All(self.index_name, self._value)
+        return All(self.index, self._value)
 
     def __str__(self):
-        return '%s not in all(%s)' % (self.index_name, repr(self._value))
+        return '%s not in all(%r)' % (self.index, self._value)
 
 
 class _Range(Comparator, RichComparisonMixin):
@@ -287,13 +271,13 @@ class _Range(Comparator, RichComparisonMixin):
         else:
             end_exclusive = False
 
-        assert start.index_name == end.index_name
-        return cls(start.index_name, start._value, end._value,
+        assert start.index == end.index
+        return cls(start.index, start._value, end._value,
                    start_exclusive, end_exclusive)
 
-    def __init__(self, index_name, start, end,
+    def __init__(self, index, start, end,
                  start_exclusive=False, end_exclusive=False):
-        self.index_name = index_name
+        self.index = index
         self._start = start
         self._end = end
         self.start_exclusive = start_exclusive
@@ -323,7 +307,7 @@ class _Range(Comparator, RichComparisonMixin):
             s.append('<')
         else:
             s.append('<=')
-        s.append(self.index_name)
+        s.append(str(self.index))
         if self.end_exclusive:
             s.append('<')
         else:
@@ -334,7 +318,7 @@ class _Range(Comparator, RichComparisonMixin):
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return False
-        return (self.index_name == other.index_name and
+        return (self.index == other.index and
                 self._start == other._start and
                 self._end == other._end and
                 self.start_exclusive == other.start_exclusive and
@@ -347,14 +331,13 @@ class InRange(_Range):
                    lower <= index <= upper
     """
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyInRange(
+    def _apply(self, names):
+        return self.index.applyInRange(
             self._get_start(names), self._get_end(names),
             self.start_exclusive, self.end_exclusive)
 
     def negate(self):
-        return NotInRange(self.index_name, self._start, self._end,
+        return NotInRange(self.index, self._start, self._end,
                           self.start_exclusive, self.end_exclusive)
 
 
@@ -365,9 +348,8 @@ class NotInRange(_Range):
                    not(lower <= index <= upper)
     """
 
-    def _apply(self, catalog, names):
-        index = self._get_index(catalog)
-        return index.applyNotInRange(
+    def _apply(self, names):
+        return self.index.applyNotInRange(
             self._get_start(names), self._get_end(names),
             self.start_exclusive, self.end_exclusive)
 
@@ -375,7 +357,7 @@ class NotInRange(_Range):
         return 'not(%s)' % _Range.__str__(self)
 
     def negate(self):
-        return InRange(self.index_name, self._start, self._end,
+        return InRange(self.index, self._start, self._end,
                        self.start_exclusive, self.end_exclusive)
 
 
@@ -420,18 +402,18 @@ class BoolOp(Query):
         query = queries.pop(0)
         if type(query) != Eq:
             return None
-        index_name = query.index_name
+        index = query.index
         values = [query._value]
         while queries:
             query = queries.pop(0)
-            if type(query) != Eq or query.index_name != index_name:
+            if type(query) != Eq or query.index != index:
                 return None
             values.append(query._value)
 
         # All queries are Eq operators for the same index.
         if type(self) == Or:
-            return Any(index_name, values)
-        return All(index_name, values)
+            return Any(index, values)
+        return All(index, values)
 
     def _optimize_not_eq(self):
         # If all queries are NotEq operators for the same index, we can
@@ -440,30 +422,30 @@ class BoolOp(Query):
         query = queries.pop(0)
         if type(query) != NotEq:
             return None
-        index_name = query.index_name
+        index = query.index
         values = [query._value]
         while queries:
             query = queries.pop(0)
-            if type(query) != NotEq or query.index_name != index_name:
+            if type(query) != NotEq or query.index != index:
                 return None
             values.append(query._value)
 
         # All queries are Eq operators for the same index.
         if type(self) == Or:
-            return NotAll(index_name, values)
-        return NotAny(index_name, values)
+            return NotAll(index, values)
+        return NotAny(index, values)
 
 
 class Or(BoolOp):
     """Boolean Or of multiple queries."""
 
-    def _apply(self, catalog, names):
+    def _apply(self, names):
         # XXX Try to figure out when we need weightedOr and when we can
         # just use union or multiunion.
         queries = self.queries
-        result = queries[0]._apply(catalog, names)
+        result = queries[0]._apply(names)
         for query in queries[1:]:
-            next_result = query._apply(catalog, names)
+            next_result = query._apply(names)
             if len(result) == 0:
                 result = next_result
             elif len(next_result) > 0:
@@ -493,20 +475,20 @@ class Or(BoolOp):
         for i in xrange(len(queries)):
             query = queries[i]
             if type(query) in (Lt, Le):
-                match = uppers.get(query.index_name)
+                match = uppers.get(query.index)
                 if match is not None:
                     i_upper, query_upper = match
                     process_range(i, query, i_upper, query_upper)
                 else:
-                    lowers[query.index_name] = (i, query)
+                    lowers[query.index] = (i, query)
 
             elif type(query) in (Gt, Ge):
-                match = lowers.get(query.index_name)
+                match = lowers.get(query.index)
                 if match is not None:
                     i_lower, query_lower = match
                     process_range(i_lower, query_lower, i, query)
                 else:
-                    uppers[query.index_name] = (i, query)
+                    uppers[query.index] = (i, query)
 
         queries = filter(None, queries)
         if len(queries) == 1:
@@ -519,16 +501,16 @@ class Or(BoolOp):
 class And(BoolOp):
     """Boolean And of multiple queries."""
 
-    def _apply(self, catalog, names):
+    def _apply(self, names):
         # XXX Try to figure out when we need weightedIntersection and when we
         # can just use intersection.
         IF = self.family.IF
         queries = self.queries
-        result = queries[0]._apply(catalog, names)
+        result = queries[0]._apply(names)
         for query in queries[1:]:
             if len(result) == 0:
                 return IF.Set()
-            next_result = query._apply(catalog, names)
+            next_result = query._apply(names)
             if len(next_result) == 0:
                 return IF.Set()
             _, result = IF.weightedIntersection(result, next_result)
@@ -556,20 +538,20 @@ class And(BoolOp):
         for i in xrange(len(queries)):
             query = queries[i]
             if type(query) in (Gt, Ge):
-                match = uppers.get(query.index_name)
+                match = uppers.get(query.index)
                 if match is not None:
                     i_upper, query_upper = match
                     process_range(i, query, i_upper, query_upper)
                 else:
-                    lowers[query.index_name] = (i, query)
+                    lowers[query.index] = (i, query)
 
             elif type(query) in (Lt, Le):
-                match = lowers.get(query.index_name)
+                match = lowers.get(query.index)
                 if match is not None:
                     i_lower, query_lower = match
                     process_range(i_lower, query_lower, i, query)
                 else:
-                    uppers[query.index_name] = (i, query)
+                    uppers[query.index] = (i, query)
 
         queries = filter(None, queries)
         if len(queries) == 1:
@@ -594,8 +576,8 @@ class Not(Query):
     def negate(self):
         return self.query
 
-    def _apply(self, catalog, names):
-        return self.query.negate()._apply(catalog, names)
+    def _apply(self, names):
+        return self.query.negate()._apply(names)
 
     def _optimize(self):
         return self.query.negate()._optimize()
@@ -689,8 +671,9 @@ class _AstParser(object):
     way the query tree is built from the ast from the bottom up.
     """
 
-    def __init__(self, expr):
+    def __init__(self, expr, catalog):
         self.expr = expr
+        self.catalog = catalog
 
     def parse(self):
         statements = ast.parse(self.expr).body
@@ -766,7 +749,7 @@ class _AstParser(object):
     def process_comparator(self, cls):
 
         def factory(left, right):
-            return cls(self._index_name(left), self._value(right))
+            return cls(self._get_index(left), self._value(right))
 
         factory.type = cls
         return factory
@@ -775,8 +758,8 @@ class _AstParser(object):
 
         def factory(left, right):
             if callable(right):  # any or all, see process_Call
-                return right(self._index_name(left))
-            return Contains(self._index_name(right), self._value(left))
+                return right(self._get_index(left))
+            return Contains(self._get_index(right), self._value(left))
 
         factory.type = Contains
         return factory
@@ -785,8 +768,8 @@ class _AstParser(object):
 
         def factory(left, right):
             if callable(right):  # any or all, see process_Call
-                return right(self._index_name(left)).negate()
-            return DoesNotContain(self._index_name(right), self._value(left))
+                return right(self._get_index(left)).negate()
+            return DoesNotContain(self._get_index(right), self._value(left))
 
         factory.type = DoesNotContain
         return factory
@@ -828,7 +811,7 @@ class _AstParser(object):
                     end_exclusive = True
                 else:
                     end_exclusive = False
-                return InRange(self._index_name(index_name),
+                return InRange(self._get_index(index_name),
                                self._value(start),
                                self._value(end),
                                start_exclusive,
@@ -888,7 +871,8 @@ class _AstParser(object):
             comparator = All
 
         def factory(index_name):
-            return comparator(index_name, self._value(values))
+            index = self._get_index(index_name)
+            return comparator(index, self._value(values))
 
         return factory
 
@@ -896,6 +880,10 @@ class _AstParser(object):
         if not isinstance(node, ast.Name):
             raise ValueError("Index name must be a name.")
         return node.id
+
+    def _get_index(self, node):
+        name = self._index_name(node)
+        return self.catalog[name]
 
     def _value(self, node):
         if isinstance(node, ast.Name):
@@ -909,12 +897,12 @@ def optimize(query):
     return query
 
 
-def parse_query(expr, optimize_query=True):
+def parse_query(expr, catalog, optimize_query=True):
     """
     Parses the given expression string and returns a query object.  Requires
     Python >= 2.6.
     """
-    query = _AstParser(expr).parse()
+    query = _AstParser(expr, catalog).parse()
     if optimize_query:
         query = optimize(query)
     return query
