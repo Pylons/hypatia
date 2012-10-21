@@ -1,10 +1,10 @@
-class ResultsException(Exception):
+class BadResults(Exception):
     def __init__(self, resultset):
         self.resultset = resultset
 
-class MultipleResultsFound(ResultsException):
+class MultipleResults(BadResults):
     pass
 
-class NoResultsFound(ResultsException):
+class NoResults(BadResults):
     pass
 

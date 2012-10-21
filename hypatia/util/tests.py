@@ -55,14 +55,14 @@ class TestResultSet(unittest.TestCase):
         self.assertEqual(inst.first(resolve=False), 2)
 
     def test_one_no_docids(self):
-        from ..exc import NoResultsFound
+        from ..exc import NoResults
         inst = self._makeOne([], 0, None)
-        self.assertRaises(NoResultsFound, inst.one)
+        self.assertRaises(NoResults, inst.one)
 
     def test_one_more_than_one_docid(self):
-        from ..exc import MultipleResultsFound
+        from ..exc import MultipleResults
         inst = self._makeOne([1, 2], 2, None)
-        self.assertRaises(MultipleResultsFound, inst.one)
+        self.assertRaises(MultipleResults, inst.one)
 
     def test_one_resolve_true_no_resolver(self):
         inst = self._makeOne([1], 1, None)

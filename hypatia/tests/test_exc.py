@@ -1,9 +1,9 @@
 import unittest
 
-class TestResultsException(unittest.TestCase):
+class TestBadResults(unittest.TestCase):
     def _makeOne(self, resultset):
         from .. import exc
-        return exc.ResultsException(resultset)
+        return exc.BadResults(resultset)
 
     def test_it(self):
         inst = self._makeOne(123)

@@ -42,9 +42,9 @@ class ResultSet(object):
         if self.numids == 1:
             return self.first(resolve=resolve)
         if self.numids > 1:
-            raise exc.MultipleResultsFound(self)
+            raise exc.MultipleResults(self)
         else:
-            raise exc.NoResultsFound(self)
+            raise exc.NoResults(self)
 
     def _resolve_all(self, resolver):
         for id_ in self.ids:
