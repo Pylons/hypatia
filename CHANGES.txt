@@ -8,10 +8,6 @@ Next release
   indices cannot be expected to implement all of its methods, only the ones
   which apply to each index.
 
-- Moved ``BaseIndexMixin`` from ``util`` to a new ``base`` module to avoid
-  future circdep problems on ``util`` if ``BaseIndexMixin`` ever begins to
-  depend on ``query``.
-
 - ``BaseIndexMixin`` no longer supplies default implementation of applyFoo
   methods which raise NotImplementedError.  Each index is now responsible for
   implementing all of its own applyFoo methods.  This is in the interest of
@@ -34,6 +30,8 @@ Next release
   index names.
 
 - The ``query.parse_query`` function now requires a ``catalog`` argument.
+
+- Query objects now supply an .execute method which returns a ResultSet.
 
 0.1a2 (2012-07-02)
 ------------------

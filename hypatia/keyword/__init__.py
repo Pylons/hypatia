@@ -4,7 +4,7 @@ from ..interfaces import (
     IIndex,
     IIndexStatistics,
     )
-from ..base import BaseIndexMixin
+from ..util import BaseIndexMixin
 
 from persistent import Persistent
 
