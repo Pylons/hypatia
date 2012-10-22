@@ -33,6 +33,10 @@ Next release
 
 - Query objects now supply an .execute method which returns a ResultSet.
 
+- ResultSet objects are returned from .execute.  They represent a set of
+  docids; they are iterable and have various methods for obtaining single
+  objects (like ``one``, ``first``) and sorting (``sort``).
+
 0.1a2 (2012-07-02)
 ------------------
 
