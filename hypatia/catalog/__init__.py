@@ -49,16 +49,42 @@ class Catalog(PersistentMapping):
         for index in self.values():
             index.reindex_doc(docid, obj)
 
+def assertint(docid):
+    if not isinstance(docid, int):
+        raise ValueError('%r is not an integer value; document ids must be '
+                         'integers' % docid)
+
 
 @implementer(ICatalogQuery)
 class CatalogQuery(object):
-    
+    """ Legacy query API for non-index-based queries; might be useful if/when
+    an index-based query doesn't work properly, or a particular contstraint
+    can't be spelled with one."""
+
     family = BTrees.family64
     
     def __init__(self, catalog, family=None):
         self.catalog = catalog
         if family is not None:
             self.family = family
+
+    def sort(self, docidset, sort_index, limit=None, sort_type=None,
+             reverse=False):
+        """ Return ``(num, sorted-resultseq)`` for the concrete docidset. """
+
+        result = docidset
+        numdocs = len(docidset)
+
+        if sort_index:
+            index = self.catalog[sort_index]
+            result = index.sort(
+                result, reverse=reverse, limit=limit, sort_type=sort_type
+                )
+            if limit:
+                numdocs = min(numdocs, limit)
+            return numdocs, result
+        else:
+            return numdocs, result
 
     def search(self, **query):
         """ Use the query terms to perform a query.  Return a tuple of
@@ -132,24 +158,6 @@ class CatalogQuery(object):
 
         return self.sort(result, sort_index, limit, sort_type, reverse)
 
-    def sort(self, docidset, sort_index, limit=None, sort_type=None,
-             reverse=False):
-        """ Return ``(num, sorted-resultseq)`` for the concrete docidset. """
-
-        result = docidset
-        numdocs = len(docidset)
-
-        if sort_index:
-            index = self.catalog[sort_index]
-            result = index.sort(
-                result, reverse=reverse, limit=limit, sort_type=sort_type
-                )
-            if limit:
-                numdocs = min(numdocs, limit)
-            return numdocs, result
-        else:
-            return numdocs, result
-
     def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
               reverse=False, names=None):
         """ Use the arguments to perform a query.  Return a tuple of
@@ -160,9 +168,4 @@ class CatalogQuery(object):
         return self.sort(results, sort_index, limit, sort_type, reverse)
 
     __call__ = query
-
-def assertint(docid):
-    if not isinstance(docid, int):
-        raise ValueError('%r is not an integer value; document ids must be '
-                         'integers' % docid)
 
