@@ -51,6 +51,12 @@ class TestCatalogFacetIndex(unittest.TestCase):
         from ..interfaces import IIndex
         verifyObject(IIndex, self._makeOne())
 
+    def test_document_repr(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertTrue('color:blue' in index.document_repr(1))
+        self.assertEqual(index.document_repr(50, True), True)
+
     def test_ctor_defaults(self):
         from BTrees import family64
         index = self._makeOne()

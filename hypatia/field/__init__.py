@@ -103,6 +103,12 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         """See interface IIndexStatistics"""
         return len(self._fwd_index)
 
+    def document_repr(self, docid, default=None):
+        result = self._rev_index.get(docid, default)
+        if result is not default:
+            return repr(result)
+        return default
+
     def index_doc(self, docid, value):
         """See interface IIndexInjection"""
         value = self.discriminate(value, _marker)

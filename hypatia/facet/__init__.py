@@ -41,6 +41,12 @@ class FacetIndex(KeywordIndex):
         self._not_indexed = self.family.IF.TreeSet()
         self.reset()
 
+    def document_repr(self, docid, default=None):
+        result = self._rev_index.get(docid, default)
+        if result is not default:
+            return repr(result)
+        return default
+
     def index_doc(self, docid, obj):
         """ Pass in an integer document id and an object supporting a
         sequence of facet specifiers ala ['style:gucci:handbag'] via

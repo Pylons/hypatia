@@ -31,6 +31,12 @@ class FieldIndexTests(unittest.TestCase):
         index.index_doc(11, 10)
         index.index_doc(10, 11)
 
+    def test_document_repr(self):
+        index = self._makeOne()
+        self._populateIndex(index)
+        self.assertEqual(index.document_repr(1), '3')
+        self.assertEqual(index.document_repr(50, True), True)
+
     def test_class_conforms_to_IIndexInjection(self):
         from zope.interface.verify import verifyClass
         from ..interfaces import IIndexInjection

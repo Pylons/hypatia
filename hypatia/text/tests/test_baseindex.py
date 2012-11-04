@@ -98,6 +98,18 @@ class BaseIndexTestBase:
         index = DerviedDoesntSet_indexed_count()
         self.assertRaises(NotImplementedError, index.indexed_count)
 
+    def test_document_repr(self):
+        index = self._makeOne()
+        # Fake out _get_frequencies, which is supposed to be overridden.
+        def _faux_get_frequencies(wids):
+            return dict([(y, x) for x, y in enumerate(wids)]), 1
+        index._get_frequencies = _faux_get_frequencies
+
+        index.index_doc(1, 'one two three')
+
+        self.assertEqual(index.document_repr(1), 'one two three')
+        self.assertEqual(index.document_repr(50, True), True)
+
     def test_index_doc_simple(self):
         index = self._makeOne()
 

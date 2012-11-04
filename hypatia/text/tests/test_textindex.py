@@ -78,6 +78,18 @@ class TextIndexTests(unittest.TestCase):
         from hypatia.interfaces import IIndexSort
         verifyObject(IIndexSort, self._makeOne())
 
+    def test_document_repr(self):
+        doc = "simple document contains five words"
+        index = self._makeOne()
+        index.index_doc(1, doc)
+        self.assertEqual(
+            index.document_repr(1),
+            'simple document contains five words'
+            )
+        self.assertEqual(
+            index.document_repr(50), None
+            )
+
     def test_ctor_defaults(self):
         index = self._makeOne()
         from ..lexicon import CaseNormalizer

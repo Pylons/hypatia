@@ -133,6 +133,12 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         """
         return seq
 
+    def document_repr(self, docid, default=None):
+        result = self._rev_index.get(docid, default)
+        if result is not default:
+            return repr(result)
+        return default
+
     def index_doc(self, docid, obj):
         seq = self.discriminate(obj, _marker)
 

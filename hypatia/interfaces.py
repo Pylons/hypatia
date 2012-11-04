@@ -69,6 +69,10 @@ class IIndexDisplay(Interface):
     def qname():
         """ Return a string suitable for representing the index's name """
 
+    def document_repr(docid, default=None):
+        """ Return an index-specific string representation for the docid value,
+        or the default if no such docid exists in the index."""
+
 class IIndex(IIndexInjection, IIndexEnumeration, IIndexDisplay):
     pass
 

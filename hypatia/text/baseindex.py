@@ -102,6 +102,16 @@ class BaseIndex(Persistent):
         """Return a list of the wordids for a given docid."""
         return widcode.decode(self._docwords[docid])
 
+    def document_repr(self, docid, default=None):
+        try:
+            words = []
+            wids = self.get_words(docid)
+            for wid in wids:
+                words.append(self._lexicon.get_word(wid))
+            return str(' '.join(words))
+        except KeyError:
+            return default
+
     # A subclass may wish to extend or override this.
     def index_doc(self, docid, text):
         if docid in self._docwords:

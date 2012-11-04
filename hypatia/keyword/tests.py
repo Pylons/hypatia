@@ -365,6 +365,12 @@ class _TestCaseBase:
         from hypatia.interfaces import IIndex
         verifyObject(IIndex, self._makeOne())
         
+    def test_document_repr(self):
+        index = self._makeOne()
+        self._populate(index)
+        self.assertTrue('CMF' in index.document_repr(1))
+        self.assertEqual(index.document_repr(50, True), True)
+
     def test_ctor_defaults(self):
         index = self._makeOne()
         self.failUnless(index.family is self._get_family())

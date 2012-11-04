@@ -67,6 +67,9 @@ class TextIndex(BaseIndexMixin, Persistent):
         self._not_indexed = self.family.IF.TreeSet()
         self.index.reset()
 
+    def document_repr(self, docid, default=None):
+        return self.index.document_repr(docid, default)
+
     def index_doc(self, docid, obj):
         text = self.discriminate(obj, _marker)
 
