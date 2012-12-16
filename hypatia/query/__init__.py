@@ -73,11 +73,17 @@ class Comparator(Query):
     def __eq__(self, other):
         return self.index == other.index and self._value == other._value
 
-    def execute(self, optimize=True, names=None, resolver=None):
+    def flush(self, value):
+        self.index.flush(value)
+
+    def execute(self, optimize=True, names=None, resolver=None, flush=None):
         if optimize:
             query = self._optimize()
         else:
             query = self
+
+        query.flush(flush)
+
         return self.index.resultset_from_query(
             query,
             names=names,
@@ -391,15 +397,23 @@ class BoolOp(Query):
     def __str__(self):
         return type(self).__name__
 
-    def execute(self, optimize=True, names=None, resolver=None):
+    def flush(self, value):
+        for query in self.queries:
+            query.flush(value)
+
+    def execute(self, optimize=True, names=None, resolver=None, flush=None):
         if not self.queries:
             raise ValueError('No subqueries')
+
         index = self.queries[0].index
 
         if optimize:
             query = self._optimize()
         else:
             query = self
+
+        query.flush(flush)
+
         return index.resultset_from_query(
             query,
             names=names,
@@ -607,11 +621,17 @@ class Not(Query):
     def _optimize(self):
         return self.query.negate()._optimize()
 
-    def execute(self, optimize=True, names=None, resolver=None):
+    def flush(self, value):
+        self.query.flush(value)
+
+    def execute(self, optimize=True, names=None, resolver=None, flush=None):
         if optimize:
             query = self._optimize()
         else:
             query = self
+
+        query.flush(flush)
+
         return self.query.index.resultset_from_query(
             query,
             names=names,

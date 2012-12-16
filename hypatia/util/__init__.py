@@ -144,6 +144,10 @@ class BaseIndexMixin(object):
         numdocs = len(docids)
         return ResultSet(docids, numdocs, resolver)
 
+    def flush(self, value):
+        """ Hookable by upstream systems"""
+        pass
+
 class RichComparisonMixin(object):
     # Stolen from http://www.voidspace.org.uk/python/recipebook.shtml#comparison
 

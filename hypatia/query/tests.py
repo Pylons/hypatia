@@ -92,6 +92,7 @@ class TestComparator(ComparatorTestBase):
         self.assertEqual(rs['query'], inst)
         self.assertEqual(rs['names'], None)
         self.assertEqual(rs['resolver'], None)
+        self.assertEqual(index.flushed, None)
 
     def test_execute_withargs(self):
         index = DummyIndex()
@@ -581,6 +582,8 @@ class TestBoolOp(BoolOpTestBase):
             index = DummyIndex()
             def _optimize(self):
                 return self
+            def flush(self, value):
+                self.flushed = value
         return DummyQuery()
 
     def test_execute(self):
@@ -591,6 +594,8 @@ class TestBoolOp(BoolOpTestBase):
         self.assertEqual(rs['query'], inst)
         self.assertEqual(rs['names'], None)
         self.assertEqual(rs['resolver'], None)
+        self.assertEqual(left.flushed, None)
+        self.assertEqual(right.flushed, None)
 
     def test_execute_withargs(self):
         left = self._makeDummyQuery()
@@ -1199,6 +1204,9 @@ class DummyIndex(object):
     def __init__(self, name=None):
         self.name = name
 
+    def flush(self, value):
+        self.flushed = value
+
     def applyContains(self, value):
         self.contains = value
         return value
@@ -1281,6 +1289,7 @@ class DummyFamily(object):
 class DummyQuery(object):
     applied = False
     negated = False
+    flushed = False
 
     def __init__(self, results, index=None):
         self.results = results
@@ -1296,4 +1305,7 @@ class DummyQuery(object):
 
     def _optimize(self):
         return self
+
+    def flush(self, value):
+        self.flushed = value
     

@@ -101,6 +101,6 @@ class ICatalog(IIndexInjection):
 
 class ICatalogQuery(Interface):
     def __call__(queryobject, sort_index=None, limit=None, sort_type=None,
-              reverse=False, names=None):
+                 reverse=False, names=None):
         """Search the catalog using the query and options provided.  """
 
