@@ -92,7 +92,12 @@ class TestComparator(ComparatorTestBase):
         self.assertEqual(rs['query'], inst)
         self.assertEqual(rs['names'], None)
         self.assertEqual(rs['resolver'], None)
-        self.assertEqual(index.flushed, None)
+
+    def test_flush(self):
+        index = DummyIndex()
+        inst = self._makeOne(index, 'val')
+        inst.flush(True)
+        self.assertEqual(index.flushed, True)
 
     def test_execute_withargs(self):
         index = DummyIndex()
@@ -594,8 +599,14 @@ class TestBoolOp(BoolOpTestBase):
         self.assertEqual(rs['query'], inst)
         self.assertEqual(rs['names'], None)
         self.assertEqual(rs['resolver'], None)
-        self.assertEqual(left.flushed, None)
-        self.assertEqual(right.flushed, None)
+
+    def test_flush(self):
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        inst = self._makeOne(left, right)
+        inst.flush(True)
+        self.assertEqual(left.flushed, True)
+        self.assertEqual(right.flushed, True)
 
     def test_execute_withargs(self):
         left = self._makeDummyQuery()
@@ -761,6 +772,13 @@ class TestNot(BoolOpTestBase):
         self.assertEqual(rs['query'], inst)
         self.assertEqual(rs['names'], {'a':1})
         self.assertEqual(rs['resolver'], True)
+
+    def test_flush(self):
+        index = DummyIndex()
+        query = DummyQuery('foo', index=index)
+        inst = self._makeOne(query)
+        inst.flush(True)
+        self.assertEqual(query.flushed, True)
 
 class TestName(unittest.TestCase):
 

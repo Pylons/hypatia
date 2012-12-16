@@ -144,7 +144,7 @@ class BaseIndexMixin(object):
         numdocs = len(docids)
         return ResultSet(docids, numdocs, resolver)
 
-    def flush(self, value):
+    def flush(self, *arg, **kw):
         """ Hookable by upstream systems"""
         pass
 

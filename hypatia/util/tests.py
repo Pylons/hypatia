@@ -239,6 +239,10 @@ class TestBaseIndexMixin(unittest.TestCase):
         index = self._makeIndex('abc')
         self.assertEqual(index.qname(), str(index))
 
+    def test_flush(self):
+        index = self._makeIndex('abc')
+        self.assertEqual(index.flush(), None)
+
 class RichComparisonMixinTest(unittest.TestCase):
 
     def setUp(self):

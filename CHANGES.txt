@@ -37,15 +37,12 @@ Next release
   docids; they are iterable and have various methods for obtaining single
   objects (like ``one``, ``first``) and sorting (``sort``).
 
-- All Query objects now have a ``flush`` method which accepts a single
-  positional argument.  Calling the ``flush`` method of a query object will
-  cause the ``flush`` method of all indexes participating in the query with the
-  value passed to Query.flush.  This is to support Substance D upstream, which
-  may require indexes to be flushed before a query happens.
-
-- All Query objects now accept a ``flush`` value as a keyword argument to their
-  ``execute`` method.  After query optimization, but before query execution,
-  the query's ``flush`` method is called unconditionally with this value.
+- All Query objects now have a ``flush`` method which accepts arbitrary
+  positional and keyword arguments.  Calling the ``flush`` method of a query
+  object will cause the ``flush`` method of all indexes participating in the
+  query with the value passed to Query.flush with the same positional and
+  keyword arguments.  This is to support Substance D upstream, which may
+  require indexes to be flushed before a query happens.
 
 - Add a ``document_repr`` method to all indexes which accepts a docid and
   returns a string represnting the index's knowledge about that docid.
