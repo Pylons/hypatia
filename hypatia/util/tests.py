@@ -35,6 +35,17 @@ class TestResultSet(unittest.TestCase):
         self.assertEqual(index.sort_type, True)
         self.assertEqual(index.limit, 1)
 
+    def test_sort_generator(self):
+        def mygen():
+            yield 2
+            yield 1
+            yield 3
+        inst = self._makeOne(mygen(), 3, None)
+        index = DummyIndex()
+        result = inst.sort(index)
+        self.assertEqual(result.ids, [1, 2, 3])
+        self.assertEqual(result.numids, 3)
+
     def test_first_no_docids(self):
         inst = self._makeOne([], 0, None)
         self.assertEqual(inst.first(), None)

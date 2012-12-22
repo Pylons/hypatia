@@ -8,6 +8,9 @@ _marker = object()
 from .. import exc
 
 class ResultSet(object):
+
+    family = BTrees.family64
+
     def __init__(self, ids, numids, resolver):
         self.ids = ids # only guaranteed to be iterable, not sliceable
         self.numids = numids
@@ -17,15 +20,25 @@ class ResultSet(object):
         return self.numids
 
     def sort(self, index, limit=None, reverse=False, sort_type=None):
+        ids = self.ids
+
+        if not hasattr(ids, '__len__'):
+            # indexes have no obligation to be able to sort generators
+            ids = list(ids)
+            self.ids = ids
+
         ids = index.sort(
             self.ids,
             reverse=reverse,
             limit=limit,
             sort_type=sort_type,
             )
+
         numids = self.numids
+
         if limit:
             numids = min(numids, limit)
+
         return self.__class__(ids, numids, self.resolver)
 
     def first(self, resolve=True):
