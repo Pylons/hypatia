@@ -143,10 +143,11 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         seq = self.discriminate(obj, _marker)
 
         if seq is _marker:
-            # unindex the previous value
-            self.unindex_doc(docid)
-            # Store docid in set of unindexed docids
-            self._not_indexed.add(docid)
+            if not (docid in self._not_indexed):
+                # unindex the previous value
+                self.unindex_doc(docid)
+                # Store docid in set of unindexed docids
+                self._not_indexed.add(docid)
             return None
 
         if docid in self._not_indexed:
@@ -171,10 +172,12 @@ class KeywordIndex(BaseIndexMixin, Persistent):
             self._insert_reverse(docid, new_kw)
             self._num_docs.change(1)
         else:
-
             # determine added and removed keywords
             kw_added = self.family.OO.difference(new_kw, old_kw)
             kw_removed = self.family.OO.difference(old_kw, new_kw)
+
+            if not (kw_added or kw_removed):
+                return
 
             # removed keywords are removed from the forward index
             for word in kw_removed:

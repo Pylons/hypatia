@@ -1,6 +1,9 @@
 Next release
 ------------
 
+- Optimize ``index_doc`` implementations of field and keyword index in cases
+  where the discriminator returns the default.
+
 - Remove code from ``hypatia.path``.  This package no longer supports
   PathIndex.
 

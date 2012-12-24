@@ -903,6 +903,15 @@ class FieldIndexTests(unittest.TestCase):
         index.unindex_doc(20)
         self.failIf(20 in index.docids())
 
+    def test_index_doc_value_is_marker(self):
+        index = self._makeOne()
+        # this should never be raised
+        index.unindex_doc = lambda *arg, **kw: 0/1
+        index.index_doc(1, _marker)
+        self.assertTrue(1 in index._not_indexed)
+        index.index_doc(1, _marker)
+        self.assertTrue(1 in index._not_indexed)
+
     def test_index_doc_then_missing_value(self):
         index = self._makeOne()
         self._populateIndex(index)

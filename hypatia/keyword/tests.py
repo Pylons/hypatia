@@ -462,6 +462,22 @@ class _TestCaseBase:
         docids = index.docids()
         self.failIf(3 in docids)
 
+    def test_index_doc_value_is_marker(self):
+        index = self._makeOne()
+        # this should never be raised
+        index.unindex_doc = lambda *arg, **kw: 0/1
+        index.index_doc(1, _marker)
+        self.assertTrue(1 in index._not_indexed)
+        index.index_doc(1, _marker)
+        self.assertTrue(1 in index._not_indexed)
+
+    def test_index_doc_same_value(self):
+        index = self._makeOne()
+        index.index_doc(1, [1, 2])
+        self.assertEqual(sorted(index._fwd_index[1]), [1])
+        index.index_doc(1, [1, 2])
+        self.assertEqual(sorted(index._fwd_index[1]), [1])
+
     def test_reindex_doc_doesnt_unindex(self):
         index = self._makeOne()
         index.index_doc(5, [1])

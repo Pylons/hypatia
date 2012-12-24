@@ -114,10 +114,11 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         value = self.discriminate(value, _marker)
 
         if value is _marker:
-            # unindex the previous value
-            self.unindex_doc(docid)
-            # Store docid in set of unindexed docids
-            self._not_indexed.add(docid)
+            if not (docid in self._not_indexed):
+                # unindex the previous value
+                self.unindex_doc(docid)
+                # Store docid in set of unindexed docids
+                self._not_indexed.add(docid)
             return None
 
         if docid in self._not_indexed:
