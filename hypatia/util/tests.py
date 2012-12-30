@@ -21,18 +21,16 @@ class TestResultSet(unittest.TestCase):
         self.assertEqual(result.numids, 2)
         self.assertEqual(result.resolver, None)
         self.assertEqual(index.reverse, False)
-        self.assertEqual(index.sort_type, None)
         self.assertEqual(index.limit, None)
 
     def test_sort_withargs(self):
         inst = self._makeOne([2, 1], 2, None)
         index = DummyIndex()
-        result = inst.sort(index, limit=1, reverse=True, sort_type=True)
+        result = inst.sort(index, limit=1, reverse=True)
         self.assertEqual(result.ids, [1,2])
         self.assertEqual(result.numids, 1)
         self.assertEqual(result.resolver, None)
         self.assertEqual(index.reverse, True)
-        self.assertEqual(index.sort_type, True)
         self.assertEqual(index.limit, 1)
 
     def test_sort_generator(self):
@@ -377,10 +375,9 @@ class DummyIndex(object):
     def not_indexed(self):
         return self._not_indexed
 
-    def sort(self, ids, reverse, limit, sort_type):
+    def sort(self, ids, reverse, limit):
         self.ids = ids
         self.reverse = reverse
         self.limit = limit
-        self.sort_type = sort_type
         return sorted(ids)
     
