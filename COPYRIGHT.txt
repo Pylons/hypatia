@@ -1,5 +1,5 @@
-(c) 2012 Zope Foundation and Contributors
+(c) 2013 Zope Foundation and Contributors
 
-Portions copyright (c) 2012 Agendaless Consulting.
+Portions copyright (c) 2013 Agendaless Consulting.
 (http://www.agendaless.com), All Rights Reserved
 
