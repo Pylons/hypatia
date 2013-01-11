@@ -54,13 +54,13 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'hypatia'
-copyright = '2008-2012, Zope Foundation and Contributors'
+copyright = '2008-2013, Zope Foundation and Contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.1a2'
+version = '0.1a3'
 # The full version, including alpha/beta/rc tags.
 release = version
 

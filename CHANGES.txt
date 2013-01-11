@@ -1,5 +1,5 @@
-Next release
-------------
+0.1a3 (2013-01-10)
+------------------
 
 - Optimize ``index_doc`` implementations of field and keyword index in cases
   where the discriminator returns the default.
