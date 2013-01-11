@@ -57,7 +57,7 @@ Comparators
 
    .. autoclass:: Contains
 
-   .. autoclass:: DoesNotContain
+   .. autoclass:: NotContains
 
    .. autoclass:: Any
 
