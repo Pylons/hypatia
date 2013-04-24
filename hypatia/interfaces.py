@@ -1,4 +1,7 @@
-from zope.interface import Interface
+from zope.interface import (
+    Interface,
+    Attribute,
+    )
 
 class IIndexInjection(Interface):
     """Interface for injecting documents into an index."""
@@ -104,3 +107,46 @@ class ICatalogQuery(Interface):
                  reverse=False, names=None):
         """Search the catalog using the query and options provided.  """
 
+class IResultSet(Interface):
+    """ Iterable sequence of documents or document identifiers."""
+
+    ids = Attribute('An iterable sequence of document identifiers')
+
+    resolver = Attribute(
+        'A callable which accepts a document id and which returns a document.  '
+        'May be ``None``, in which case, resolution performed by result set '
+        'methods is not performed, and document identifiers are returned '
+        'unresolved.'
+        )
+
+    def __len__():
+        """ Return the length of the result set"""
+
+    def sort(index, limit=None, reverse=False):
+        """Return another IResultSet sorted using the ``index`` (an IIndexSort)
+        passed to it after performing the sort using the index and the
+        ``limit`` and ``reverse`` parameters."""
+
+    def first(resolve=True):
+        """ Return the first element in the sequence.  If ``resolve`` is True,
+        and the result set has a valid resolver, return the resolved
+        document, otherwise return the document id of the first document. """
+
+    def one(resolve=True):
+        """ Return the element in the resultset, asserting that there is only
+        one result.  If the resultset has more than one element, raise an
+        :exc:`hypatia.exc.MultipleResults` exception.  If the resultset has no
+        elements, raise an :ex:`hypatia.exc.NoResults` exception. `If
+        ``resolve`` is True, and the result set has a valid resolver, return
+        the resolved document, otherwise return the document id of the
+        document."""
+
+    def all(resolve=True):
+        """ Return a sequence representing all elements in the resultset.  `If
+        ``resolve`` is True, and the result set has a valid resolver, return an
+        iterable of the resolved documents, otherwise return an iterable
+        containing the document id of each document."""
+
+    def __iter__():
+        """ Return an iterator over the results of ``self.all()``"""
+        

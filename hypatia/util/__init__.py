@@ -2,11 +2,14 @@ import BTrees
 
 from persistent import Persistent
 from ZODB.broken import Broken
+from zope.interface import implementer
 
 _marker = object()
 
 from .. import exc
+from ..interfaces import IResultSet
 
+@implementer(IResultSet)
 class ResultSet(object):
 
     family = BTrees.family64

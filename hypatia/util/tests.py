@@ -5,10 +5,25 @@ from . import RichComparisonMixin
 _marker = object()
 
 class TestResultSet(unittest.TestCase):
-    def _makeOne(self, ids, numids, resolver):
+    def _getTargetClass(self):
         from . import ResultSet
-        return ResultSet(ids, numids, resolver)
+        return ResultSet
+        
+    def _makeOne(self, ids, numids, resolver):
+        cls = self._getTargetClass()
+        return cls(ids, numids, resolver)
 
+    def test_class_implements_IResultSet(self):
+        from zope.interface.verify import verifyClass
+        from hypatia.interfaces import IResultSet
+        verifyClass(IResultSet, self._getTargetClass())
+
+    def test_instance_implements_IResultSet(self):
+        from zope.interface.verify import verifyObject
+        from hypatia.interfaces import IResultSet
+        inst = self._makeOne([1], 1, None)
+        verifyObject(IResultSet, inst)
+        
     def test___len__(self):
         inst = self._makeOne([1], 1, None)
         self.assertEqual(len(inst), 1)
