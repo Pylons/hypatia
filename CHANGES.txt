@@ -3,6 +3,8 @@ Next release
 
 - Add IResultSet interface definition.
 
+- Normalize keyword argument ordering of IIndexSort.sort and IResultSet.sort.
+
 0.1a3 (2013-01-10)
 ------------------
 

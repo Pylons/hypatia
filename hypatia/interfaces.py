@@ -122,7 +122,7 @@ class IResultSet(Interface):
     def __len__():
         """ Return the length of the result set"""
 
-    def sort(index, limit=None, reverse=False):
+    def sort(index, reverse=False, limit=None):
         """Return another IResultSet sorted using the ``index`` (an IIndexSort)
         passed to it after performing the sort using the index and the
         ``limit`` and ``reverse`` parameters."""
