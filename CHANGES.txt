@@ -5,22 +5,23 @@ Next release
 
 - Normalize keyword argument ordering of IIndexSort.sort and IResultSet.sort.
 
-- Add an argument ``raise_unsorted`` to IIndexSort.sort and IResultSet.sort
+- Add an argument ``raise_unsortable`` to IIndexSort.sort and IResultSet.sort
   methods.  By default this is ``True``.  It means that iterating over the
   results returned by one of these methods *may* raise a
-  ``hypatia.exc.Unsorted`` exception when a member of the docids passed in
+  ``hypatia.exc.Unsortable`` exception when a member of the docids passed in
   cannot be sorted by the index used to do the sort (e.g. a value for the docid
   is not present in the index).  It defaults to ``True``, which changes the
   default behavior of indexes.  To get the old default behavior back, pass
-  ``False`` for this value, or write code like this::
+  ``False`` for this value.  Alternately, write code like this::
 
+     from hypatia.exc import Unsortable
 
      ids = []
      results = resultset.sort(someindex)
      try:
          for id in results:
              ids.append(id)
-     except Unsorted as e:
+     except Unsortable as e:
          unsorted = e.docids
          ids.extend(unsorted)
 
