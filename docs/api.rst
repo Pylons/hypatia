@@ -87,6 +87,31 @@ Other Helpers
 
 .. autofunction:: parse_query
 
+.. _api_util_section:
+
+:mod:`hypatia.util`
+-------------------
+
+.. automodule:: hypatia.util
+
+  .. autoclass:: ResultSet
+     :members:
+
+.. _api_exceptions_section:
+
+:mod:`hypatia.exc`
+-------------------
+
+.. automodule:: hypatia.exc
+
+  .. autoclass:: BadResults
+
+  .. autoclass:: MultipleResults
+
+  .. autoclass:: NoResults
+
+  .. autoclass:: Unsortable
+
 .. _api_fieldindex_section:
 
 :mod:`hypatia.field`
