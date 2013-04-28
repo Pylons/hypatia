@@ -1,3 +1,26 @@
+Next release
+------------
+
+- Add an argument ``raise_unsorted`` to IIndexSort.sort and IResultSet.sort
+  methods.  By default this is ``True``.  It means that iterating over the
+  results returned by one of these methods *may* raise a
+  ``hypatia.exc.Unsorted`` exception when a member of the docids passed in
+  cannot be sorted by the index used to do the sort (e.g. a value for the docid
+  is not present in the index).  It defaults to ``True``, which changes the
+  default behavior of indexes.  To get the old default behavior back, pass
+  ``False`` for this value, or write code like this::
+
+
+     ids = []
+     results = resultset.sort(someindex)
+     try:
+         for id in results:
+             ids.append(id)
+     except Unsorted as e:
+         unsorted = e.docids
+         ids.extend(unsorted)
+
+
 0.1a3 (2013-01-10)
 ------------------
 
