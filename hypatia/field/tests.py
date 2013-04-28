@@ -1380,8 +1380,39 @@ class Test_nbest_ascending_wins(unittest.TestCase):
         self.failUnless(self._callFUT(2048, 32767, 65536))
         self.failIf(self._callFUT(2049, 32767, 65536))
 
+class Test_MissingValue(unittest.TestCase):
+    def _makeOne(self, val):
+        from hypatia.field import _MissingValue
+        return _MissingValue(val)
+
+    def test___eq__other_class_is_self_class(self):
+        inst1 = self._makeOne(True)
+        inst2 = self._makeOne(True)
+        self.assertNotEqual(inst1, inst2)
+
+    def test___eq__other_is_self(self):
+        inst = self._makeOne(True)
+        self.assertEqual(inst, inst)
+        
+    def test___gt__other_class_is_self_class(self):
+        inst1 = self._makeOne(True)
+        inst2 = self._makeOne(True)
+        self.assertFalse(inst1 > inst2)
+        self.assertTrue(inst1 < inst2)
+        
+    def test___gt__val_True(self):
+        inst = self._makeOne(True)
+        self.assertTrue(inst > 1)
+
+    def test___gt__val_False(self):
+        inst = self._makeOne(False)
+        self.assertFalse(inst > 1)
+        
 def test_suite():
     return unittest.TestSuite((
         doctest.DocFileSuite('README.txt', optionflags=doctest.ELLIPSIS),
         unittest.makeSuite(FieldIndexTests),
+        unittest.makeSuite(Test_fwscan_wins),
+        unittest.makeSuite(Test_nbest_ascending_wins),
+        unittest.makeSuite(Test_MissingValue),
         ))
