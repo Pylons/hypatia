@@ -150,7 +150,8 @@ class TextIndex(BaseIndexMixin, Persistent):
     applyNotEq = applyNotContains
     noteq = notcontains
 
-    def sort(self, result, reverse=False, limit=None, sort_type=None):
+    def sort(self, result, reverse=False, limit=None, sort_type=None,
+             ignore_missing=False):
         """Sort by text relevance.
 
         This only works if the query includes at least one text query,

@@ -375,9 +375,10 @@ class DummyIndex(object):
     def not_indexed(self):
         return self._not_indexed
 
-    def sort(self, ids, reverse, limit):
+    def sort(self, ids, reverse, limit, ignore_missing):
         self.ids = ids
         self.reverse = reverse
         self.limit = limit
+        self.ignore_missing = ignore_missing
         return sorted(ids)
     

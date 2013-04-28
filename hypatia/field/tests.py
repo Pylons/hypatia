@@ -153,9 +153,23 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(index.sort([])), [])
 
     def test_sort_w_missing_docids(self):
+        from hypatia.exc import MissingDocuments
         index = self._makeOne()
         index.index_doc(1, 'albatross')
-        self.assertEqual(list(index.sort([2, 3])), [])
+        gen = index.sort([1,3])
+        dids = []
+        try:
+            for did in gen:
+                dids.append(did)
+        except MissingDocuments as e:
+            self.assertEqual(list(e.docids), [3])
+        self.assertEqual(dids, [1])
+
+    def test_sort_w_missing_docids_ignore_missing(self):
+        index = self._makeOne()
+        index.index_doc(1, 'albatross')
+        gen = index.sort([1,3], ignore_missing=True)
+        self.assertEqual(list(gen), [1])
 
     def test_sort_force_nbest_w_missing_docids(self):
         index = self._makeOne()
@@ -196,11 +210,35 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
     def test_sort_nonlazy_missingdocid(self):
+        from hypatia.exc import MissingDocuments
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except MissingDocuments as e:
+            self.assertEqual(list(e.docids), [99])
+        self.assertEqual(dids, [5, 2, 1, 3, 4]) # 99 not present
+
+    def test_sort_nonlazy_missingdocid_with_limit(self):
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, limit=1)
+        result = index.sort(c1, limit=1)
+        self.assertEqual(list(result), [5]) # raise MissingDocuments not hit
+
+    def test_sort_nonlazy_missingdocid_ignore_missing(self):
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, ignore_missing=True)
         self.assertEqual(list(result), [5, 2, 1, 3, 4]) # 99 not present
 
     def test_sort_nonlazy_withlimit(self):
@@ -245,7 +283,7 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1, reverse=True, limit=3)
         self.assertEqual(list(result), [4, 3, 1])
 
-    def test_sort_nbest_missing(self):
+    def test_sort_nbest_missing_limited(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         index._use_nbest = True
@@ -254,14 +292,37 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1, limit=3)
         self.assertEqual(list(result), [5, 2, 1])
 
+    def test_sort_nbest_missing_unlimited(self):
+        from hypatia.exc import MissingDocuments
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        index._use_nbest = True
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, limit=10)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except MissingDocuments as e:
+            self.assertEqual(list(e.docids), [99])
+        self.assertEqual(dids, [5, 2, 1, 3, 4])
+
     def test_sort_nbest_missing_reverse(self):
+        from hypatia.exc import MissingDocuments
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1, reverse=True, limit=3)
-        self.assertEqual(list(result), [4, 3, 1])
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except MissingDocuments as e:
+            self.assertEqual(list(e.docids), [99])
+        self.assertEqual(dids, [4, 3, 1])
 
     def test_sort_nodocs(self):
         from BTrees.IFBTree import IFSet

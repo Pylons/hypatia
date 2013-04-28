@@ -19,7 +19,7 @@ class ResultSet(object):
     def __len__(self):
         return self.numids
 
-    def sort(self, index, limit=None, reverse=False):
+    def sort(self, index, limit=None, reverse=False, ignore_missing=False):
         ids = self.ids
 
         if not hasattr(ids, '__len__'):
@@ -31,6 +31,7 @@ class ResultSet(object):
             self.ids,
             reverse=reverse,
             limit=limit,
+            ignore_missing=ignore_missing,
             )
 
         numids = self.numids

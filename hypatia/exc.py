@@ -8,3 +8,11 @@ class MultipleResults(BadResults):
 class NoResults(BadResults):
     pass
 
+class MissingDocuments(Exception):
+    def __init__(self, docids):
+        self.docids = docids
+
+    def __repr__(self):
+        return '%r' % (list(self.docids),)
+    __str__ = __repr__
+        
