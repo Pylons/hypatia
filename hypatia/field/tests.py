@@ -153,21 +153,70 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(index.sort([])), [])
 
     def test_sort_w_missing_docids(self):
+        from hypatia.exc import Unsortable
         index = self._makeOne()
         index.index_doc(1, 'albatross')
-        self.assertEqual(list(index.sort([2, 3])), [])
+        gen = index.sort([1,3])
+        dids = []
+        try:
+            for did in gen:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [3])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [1])
+
+    def test_sort_w_missing_docids_raise_unsortable_False(self):
+        index = self._makeOne()
+        index.index_doc(1, 'albatross')
+        gen = index.sort([1,3], raise_unsortable=False)
+        self.assertEqual(list(gen), [1])
 
     def test_sort_force_nbest_w_missing_docids(self):
+        from hypatia.exc import Unsortable
         index = self._makeOne()
         index._use_nbest = True
         index.index_doc(1, 'albatross')
-        self.assertEqual(list(index.sort([2, 3])), [])
+        result = index.sort([2, 3])
+        dids = []
+        try: # pragma: no cover
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [2,3])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [])
+
+    def test_sort_force_nbest_w_missing_docids_raise_unsortable_false(self):
+        index = self._makeOne()
+        index._use_nbest = True
+        index.index_doc(1, 'albatross')
+        result = index.sort([2, 3], raise_unsortable=False)
+        self.assertEqual(list(result), [])
 
     def test_sort_force_lazy_w_missing_docids(self):
+        from hypatia.exc import Unsortable
         index = self._makeOne()
         index._use_lazy = True
         index.index_doc(1, 'albatross')
-        self.assertEqual(list(index.sort([2, 3])), [])
+        result = index.sort([2, 3])
+        dids = []
+        try: # pragma: no cover
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [2, 3])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [])
+
+    def test_sort_force_lazy_w_missing_docids_raise_unsortable_false(self):
+        index = self._makeOne()
+        index._use_lazy = True
+        index.index_doc(1, 'albatross')
+        self.assertEqual(list(index.sort([2, 3], raise_unsortable=False)), [])
 
     def test_sort_lazy_nolimit(self):
         from BTrees.IFBTree import IFSet
@@ -196,11 +245,37 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
     def test_sort_nonlazy_missingdocid(self):
+        from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [5, 2, 1, 3, 4]) # 99 not present
+
+    def test_sort_nonlazy_missingdocid_with_limit(self):
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, limit=1)
+        result = index.sort(c1, limit=1)
+        self.assertEqual(list(result), [5]) # raise Unsortable not hit
+
+    def test_sort_nonlazy_missingdocid_raise_unsortable_False(self):
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, raise_unsortable=False)
         self.assertEqual(list(result), [5, 2, 1, 3, 4]) # 99 not present
 
     def test_sort_nonlazy_withlimit(self):
@@ -245,7 +320,7 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1, reverse=True, limit=3)
         self.assertEqual(list(result), [4, 3, 1])
 
-    def test_sort_nbest_missing(self):
+    def test_sort_nbest_missing_limited(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         index._use_nbest = True
@@ -254,15 +329,55 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1, limit=3)
         self.assertEqual(list(result), [5, 2, 1])
 
-    def test_sort_nbest_missing_reverse(self):
+    def test_sort_nbest_missing_unlimited(self):
+        from hypatia.exc import Unsortable
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        index._use_nbest = True
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, limit=10)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [5, 2, 1, 3, 4])
+
+    def test_sort_nbest_missing_reverse_withlimit(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1, reverse=True, limit=3)
-        self.assertEqual(list(result), [4, 3, 1])
+        dids = []
+        for did in result:
+            dids.append(did)
+        # Unsortable not raised because generator not totally unwound
+        self.assertEqual(dids, [4, 3, 1])
 
+    def test_sort_nbest_missing_reverse_unlimited(self):
+        from hypatia.exc import Unsortable
+        from BTrees.IFBTree import IFSet
+        index = self._makeOne()
+        index._use_nbest = True
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, reverse=True)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [4, 3, 1, 2, 5])
+        
     def test_sort_nodocs(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
@@ -478,12 +593,30 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
     def test_sort_force_fwscan_missing_docid(self):
+        from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
         from ..field import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1, sort_type=FWSCAN)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [5, 2, 1, 3, 4]) # 99 not present
+        
+    def test_sort_force_fwscan_missing_docid_raise_unsortable_false(self):
+        from BTrees.IFBTree import IFSet
+        from ..field import FWSCAN
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, sort_type=FWSCAN, raise_unsortable=False)
         r = list(result)
         self.assertEqual(r, [5, 2, 1, 3, 4]) # 99 not present
 
@@ -506,12 +639,30 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
     def test_sort_force_timsort_missing_docid(self):
+        from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
         from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1, sort_type=TIMSORT)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [5, 2, 1, 3, 4]) # 99 not present
+        
+    def test_sort_force_timsort_missing_docid_raise_unsortable_false(self):
+        from BTrees.IFBTree import IFSet
+        from ..field import TIMSORT
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, sort_type=TIMSORT, raise_unsortable=False)
         r = list(result)
         self.assertEqual(r, [5, 2, 1, 3, 4]) # 99 not present
 
@@ -534,15 +685,35 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(result), [4, 3, 1, 2, 5])
 
     def test_sort_force_timsort_reverse_missing_docid(self):
+        from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
         from ..field import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
         result = index.sort(c1, reverse=True, sort_type=TIMSORT)
+        dids = []
+        try:
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(e.docids, [99])
+        else: # pragma: no cover
+            raise AssertionError('Unsortable not raised')
+        self.assertEqual(dids, [4, 3, 1, 2, 5]) # 99 not present
+
+    def test_sort_force_timsort_reverse_missing_docid_raise_unsortable_f(self):
+        from BTrees.IFBTree import IFSet
+        from ..field import TIMSORT
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(
+            c1, reverse=True, sort_type=TIMSORT, raise_unsortable=False
+            )
         r = list(result)
         self.assertEqual(r, [4, 3, 1, 2, 5]) # 99 not present
-
+        
     def test_sort_force_timsort_reverse_withlimit(self):
         from BTrees.IFBTree import IFSet
         from ..field import TIMSORT
@@ -569,6 +740,22 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1, limit=3, sort_type=NBEST)
         self.assertEqual(list(result), [5, 2, 1])
 
+    def test_sort_force_nbest_largelimit(self):
+        from hypatia.exc import Unsortable
+        from BTrees.IFBTree import IFSet
+        from ..field import NBEST
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, limit=20, sort_type=NBEST)
+        try:
+            dids = []
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        self.assertEqual(dids, [5, 2, 1, 3, 4])
+        
     def test_sort_force_nbest_reverse_no_limit_raises(self):
         from BTrees.IFBTree import IFSet
         from ..field import NBEST
@@ -586,6 +773,22 @@ class FieldIndexTests(unittest.TestCase):
         c1 = IFSet([1, 2, 3, 4, 5])
         result = index.sort(c1, reverse=True, limit=3, sort_type=NBEST)
         self.assertEqual(list(result), [4, 3, 1])
+
+    def test_sort_force_nbest_reverse_largelimit(self):
+        from hypatia.exc import Unsortable
+        from BTrees.IFBTree import IFSet
+        from ..field import NBEST
+        index = self._makeOne()
+        self._populateIndex(index)
+        c1 = IFSet([1, 2, 3, 4, 5, 99])
+        result = index.sort(c1, reverse=True, limit=20, sort_type=NBEST)
+        try:
+            dids = []
+            for did in result:
+                dids.append(did)
+        except Unsortable as e:
+            self.assertEqual(list(e.docids), [99])
+        self.assertEqual(dids, [4, 3, 1, 2, 5])
 
     def test_sort_force_nbest_missing_docid(self):
         from BTrees.IFBTree import IFSet
@@ -1177,8 +1380,39 @@ class Test_nbest_ascending_wins(unittest.TestCase):
         self.failUnless(self._callFUT(2048, 32767, 65536))
         self.failIf(self._callFUT(2049, 32767, 65536))
 
+class Test_MissingValue(unittest.TestCase):
+    def _makeOne(self, val):
+        from hypatia.field import _MissingValue
+        return _MissingValue(val)
+
+    def test___eq__other_class_is_self_class(self):
+        inst1 = self._makeOne(True)
+        inst2 = self._makeOne(True)
+        self.assertNotEqual(inst1, inst2)
+
+    def test___eq__other_is_self(self):
+        inst = self._makeOne(True)
+        self.assertEqual(inst, inst)
+        
+    def test___gt__other_class_is_self_class(self):
+        inst1 = self._makeOne(True)
+        inst2 = self._makeOne(True)
+        self.assertFalse(inst1 > inst2)
+        self.assertTrue(inst1 < inst2)
+        
+    def test___gt__val_True(self):
+        inst = self._makeOne(True)
+        self.assertTrue(inst > 1)
+
+    def test___gt__val_False(self):
+        inst = self._makeOne(False)
+        self.assertFalse(inst > 1)
+        
 def test_suite():
     return unittest.TestSuite((
         doctest.DocFileSuite('README.txt', optionflags=doctest.ELLIPSIS),
         unittest.makeSuite(FieldIndexTests),
+        unittest.makeSuite(Test_fwscan_wins),
+        unittest.makeSuite(Test_nbest_ascending_wins),
+        unittest.makeSuite(Test_MissingValue),
         ))
