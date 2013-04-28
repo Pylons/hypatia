@@ -17,7 +17,6 @@ import persistent
 from BTrees.Length import Length
 
 import bisect
-import functools
 import heapq
 from itertools import islice
 
@@ -27,6 +26,7 @@ from .. import interfaces
 from .. import RangeValue
 from .. import query
 
+from ..compat import total_ordering
 from ..exc import Unsortable
 from ..util import BaseIndexMixin
 
@@ -511,7 +511,7 @@ def nsort(docids, rev_index, missing):
         except KeyError:
             yield (missing, docid)
 
-@functools.total_ordering
+@total_ordering
 class _MissingValue(object):
     def __init__(self, val):
         self.val = val
