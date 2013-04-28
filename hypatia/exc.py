@@ -8,7 +8,7 @@ class MultipleResults(BadResults):
 class NoResults(BadResults):
     pass
 
-class MissingDocuments(Exception):
+class Unsortable(Exception):
     def __init__(self, docids):
         self.docids = docids
 

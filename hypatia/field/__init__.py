@@ -27,7 +27,7 @@ from .. import interfaces
 from .. import RangeValue
 from .. import query
 
-from ..exc import MissingDocuments
+from ..exc import Unsortable
 from ..util import BaseIndexMixin
 
 _marker = []
@@ -182,8 +182,14 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         # the base index's index_doc method special-cases a reindex
         return self.index_doc(docid, value)
 
-    def sort(self, docids, reverse=False, limit=None,
-             sort_type=None, ignore_missing=False):
+    def sort(
+        self,
+        docids,
+        reverse=False,
+        limit=None,
+        sort_type=None,
+        raise_unsortable=True,
+        ):
         if limit is not None:
             limit = int(limit)
             if limit < 1:
@@ -197,14 +203,30 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
             return []
 
         if reverse:
-            return self.sort_reverse(docids, limit, numdocs, sort_type,
-                                     ignore_missing)
+            return self.sort_reverse(
+                docids,
+                limit,
+                numdocs,
+                sort_type,
+                raise_unsortable,
+                )
         else:
-            return self.sort_forward(docids, limit, numdocs, sort_type,
-                                     ignore_missing)
+            return self.sort_forward(
+                docids,
+                limit,
+                numdocs,
+                sort_type,
+                raise_unsortable,
+                )
 
-    def sort_forward(self, docids, limit, numdocs, sort_type=None,
-                     ignore_missing=False):
+    def sort_forward(
+        self,
+        docids,
+        limit,
+        numdocs,
+        sort_type=None,
+        raise_unsortable=True,
+        ):
 
         rlen = len(docids)
 
@@ -227,18 +249,24 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
                 sort_type = TIMSORT
 
         if sort_type == FWSCAN:
-            return self.scan_forward(docids, limit, ignore_missing)
+            return self.scan_forward(docids, limit, raise_unsortable)
         elif sort_type == NBEST:
             if limit is None:
                 raise ValueError('nbest requires a limit')
-            return self.nbest_ascending(docids, limit, ignore_missing)
+            return self.nbest_ascending(docids, limit, raise_unsortable)
         elif sort_type == TIMSORT:
-            return self.timsort_ascending(docids, limit, ignore_missing)
+            return self.timsort_ascending(docids, limit, raise_unsortable)
         else:
             raise ValueError('Unknown sort type %s' % sort_type)
 
-    def sort_reverse(self, docids, limit, numdocs, sort_type=None,
-                     ignore_missing=False):
+    def sort_reverse(
+        self,
+        docids,
+        limit,
+        numdocs,
+        sort_type=None,
+        raise_unsortable=True,
+        ):
         if sort_type is None:
             rlen = len(docids)
             if limit:
@@ -252,13 +280,13 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         if sort_type == NBEST:
             if limit is None:
                 raise ValueError('nbest requires a limit')
-            return self.nbest_descending(docids, limit, ignore_missing)
+            return self.nbest_descending(docids, limit, raise_unsortable)
         elif sort_type == TIMSORT:
-            return self.timsort_descending(docids, limit, ignore_missing)
+            return self.timsort_descending(docids, limit, raise_unsortable)
         else:
             raise ValueError('Unknown sort type %s' % sort_type)
 
-    def scan_forward(self, docids, limit=None, ignore_missing=False):
+    def scan_forward(self, docids, limit=None, raise_unsortable=True):
         fwd_index = self._fwd_index
 
         # make a copy so we don't mutate what we're passed.
@@ -274,16 +302,16 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
                     if limit and n >= limit:
                         raise StopIteration
 
-        if (not ignore_missing) and docids:
-            raise MissingDocuments(docids)
+        if raise_unsortable and docids:
+            raise Unsortable(docids)
 
-    def nbest_ascending(self, docids, limit, ignore_missing=False):
+    def nbest_ascending(self, docids, limit, raise_unsortable=False):
         if limit is None: #pragma NO COVERAGE
             raise RuntimeError, 'n-best used without limit'
 
         # lifted from heapq.nsmallest
 
-        h = nsort(docids, self._rev_index)
+        h = nsort(docids, self._rev_index, ASC)
         it = iter(h)
         result = sorted(islice(it, 0, limit))
         if not result: #pragma NO COVERAGE
@@ -301,37 +329,51 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         missing_docids = []
 
         for value, docid in result:
-            if value is _missing_value:
+            if value is ASC:
                 missing_docids.append(docid)
             else:
                 yield docid
 
-        if (not ignore_missing):
-            if missing_docids:
-                raise MissingDocuments(missing_docids)
+        if raise_unsortable and missing_docids:
+            raise Unsortable(missing_docids)
 
-    def nbest_descending(self, docids, limit, ignore_missing=False):
+    def nbest_descending(self, docids, limit, raise_unsortable=True):
         if limit is None: #pragma NO COVERAGE
             raise RuntimeError, 'N-Best used without limit'
-        iterable = nsort(docids, self._rev_index)
+        iterable = nsort(docids, self._rev_index, DESC)
         missing_docids = []
         for value, docid in heapq.nlargest(limit, iterable):
-            if value is _missing_value:
+            if value is DESC:
                 missing_docids.append(docid)
             else:
                 yield docid
-        if (not ignore_missing) and missing_docids:
-            raise MissingDocuments(missing_docids)
+        if raise_unsortable and missing_docids:
+            raise Unsortable(missing_docids)
 
-    def timsort_ascending(self, docids, limit, ignore_missing=False):
-        return self._timsort(docids, limit, reverse=False,
-                             ignore_missing=ignore_missing)
+    def timsort_ascending(self, docids, limit, raise_unsortable=True):
+        return self._timsort(
+            docids,
+            limit,
+            reverse=False,
+            raise_unsortable=raise_unsortable,
+            )
 
-    def timsort_descending(self, docids, limit, ignore_missing=False):
-        return self._timsort(docids, limit, reverse=True,
-                             ignore_missing=ignore_missing)
+    def timsort_descending(self, docids, limit, raise_unsortable=True):
+        return self._timsort(
+            docids,
+            limit,
+            reverse=True,
+            raise_unsortable=raise_unsortable,
+            )
 
-    def _timsort(self, docids, limit=None, reverse=False, ignore_missing=False):
+    def _timsort(
+        self,
+        docids,
+        limit=None,
+        reverse=False,
+        raise_unsortable=True,
+        ):
+        
         n = 0
         marker = _marker
         missing_docids = []
@@ -351,8 +393,8 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
             if limit and n >= limit:
                 raise StopIteration
 
-        if (not ignore_missing) and missing_docids:
-            raise MissingDocuments(missing_docids)
+        if raise_unsortable and missing_docids:
+            raise Unsortable(missing_docids)
 
     def search(self, queries, operator='or'):
         sets = []
@@ -462,27 +504,32 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
     def notinrange(self, start, end, excludemin=False, excludemax=False):
         return query.NotInRange(self, start, end, excludemin, excludemax)
 
-def nsort(docids, rev_index):
+def nsort(docids, rev_index, missing):
     for docid in docids:
         try:
             yield (rev_index[docid], docid)
         except KeyError:
-            yield (_missing_value, docid)
+            yield (missing, docid)
 
 @functools.total_ordering
 class _MissingValue(object):
+    def __init__(self, val):
+        self.val = val
+
     def __gt__(self, other):
-        # greater than any other value, except ourself
         if other.__class__ is self.__class__:
             return False
-        return True
+        return self.val
 
     def __eq__(self, other):
         if other is self:
             return True
         return False
 
-_missing_value = _MissingValue()
+# for nbest sort, we need 2 sentinels; one which is greater than anything else
+# (ASC) and one which is less than anything else (DESC).
+ASC = _MissingValue(True)
+DESC = _MissingValue(False)
 
 def fwscan_wins(limit, rlen, numdocs):
     """
