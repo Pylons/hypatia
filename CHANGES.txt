@@ -1,3 +1,9 @@
+Next release
+------------
+
+- Fix signature of TextIndex.sort (it would fail when e.g. raise_unsortable was
+  passed).
+
 0.1a4 (2013-04-28)
 ------------------
 

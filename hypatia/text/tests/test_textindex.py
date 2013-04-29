@@ -320,6 +320,12 @@ class TextIndexTests(unittest.TestCase):
         expect = [-2, 0]
         self.assertEqual(index.sort(results, limit=2), expect)
 
+    def test_sort_with_extra_kwargs(self):
+        index = self._makeOne()
+        results = {-2: 5.0, 3: 3.0, 0: 4.5}
+        expect = [-2, 0]
+        self.assertEqual(index.sort(results, limit=2, foo='bar'), expect)
+
     def test_docids(self):
         index = self._makeOne()
         index.index_doc(1, u'now is the time')
