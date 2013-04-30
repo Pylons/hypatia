@@ -131,7 +131,7 @@ class TextIndex(BaseIndexMixin, Persistent):
                 except TypeError:
                     # We overflowed the score, perhaps wildly unlikely.
                     # Who knows.
-                    results[docid] = _maxint()/10
+                    results[docid] = _maxint() / 10.0
 
         return results
  
