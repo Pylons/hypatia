@@ -798,10 +798,10 @@ class _AstParser(object):
     def process_GtE(self, node, children):
         return self.process_comparator(Ge)
 
-    def process_UAdd(self, node, children):
+    def process_UAdd(self, node, children): #pragma NO COVER Py3k only
         return operator.pos
 
-    def process_USub(self, node, children):
+    def process_USub(self, node, children): #pragma NO COVER Py3k only
         return operator.neg
 
     def process_comparator(self, cls):

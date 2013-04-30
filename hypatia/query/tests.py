@@ -2,7 +2,7 @@ import unittest
 
 def _skip_on_Python_3_2(func):
     import sys
-    if sys.version_info[:2] == (3, 2):
+    if sys.version_info[:2] == (3, 2): #pragma NO COVER
         def _skip(self):
             pass
         return _skip
@@ -67,9 +67,9 @@ class TestQuery(unittest.TestCase):
                 return self.children
 
         import sys
-        if sys.version_info[0] >= 3:
+        if sys.version_info[0] >= 3: #pragma NO COVER
             from io import StringIO
-        else:
+        else: #pragma NO COVER
             from io import BytesIO as StringIO
         a = Derived('A')
         b = Derived('B')
