@@ -77,7 +77,7 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         return self.index_doc(docid, value)
 
     def has_doc(self, docid):
-        return bool(self._rev_index.has_key(docid))
+        return bool(docid in self._rev_index)
 
     def indexed(self):
         return self._rev_index.keys()

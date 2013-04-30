@@ -149,7 +149,7 @@ class Lexicon(Persistent):
     def _new_wid(self):
         count = self.word_count
         count.change(1)
-        while self._words.has_key(count()):
+        while count() in self._words:
             # just to be safe
             count.change(1)
         return count()
@@ -195,8 +195,7 @@ class StopWordRemover(object):
     dict = get_stopdict().copy()
 
     def process(self, lst):
-        has_key = self.dict.has_key
-        return [w for w in lst if not has_key(w)]
+        return [w for w in lst if w not in self.dict]
 
 class StopWordAndSingleCharRemover(StopWordRemover):
 

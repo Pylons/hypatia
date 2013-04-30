@@ -97,7 +97,7 @@ class Test_mass_weightedIntersection(unittest.TestCase):
                 for w1, w2 in (0, 0), (1, 10), (10, 1), (2, 3):
                     expected = []
                     for key in allkeys:
-                        if x.has_key(key) and y.has_key(key):
+                        if key in x and key in y:
                             result = x[key] * w1 + y[key] * w2
                             expected.append((key, result))
                     expected.sort()
@@ -130,7 +130,7 @@ class Test_mass_weightedIntersection(unittest.TestCase):
         for key in allkeys:
             sum = 0
             for t, w in L:
-                if t.has_key(key):
+                if key in t:
                     sum += t[key] * w
                 else:
                     break
@@ -220,7 +220,7 @@ class Test_mass_weightedUnion(unittest.TestCase):
                 for w1, w2 in (0, 0), (1, 10), (10, 1), (2, 3):
                     expected = []
                     for key in allkeys:
-                        if x.has_key(key) or y.has_key(key):
+                        if key in x or key in y:
                             result = x.get(key, 0) * w1 + y.get(key, 0) * w2
                             expected.append((key, result))
                     expected.sort()
@@ -252,7 +252,7 @@ class Test_mass_weightedUnion(unittest.TestCase):
         for key in allkeys:
             sum = 0
             for t, w in L:
-                if t.has_key(key):
+                if key in t:
                     sum += t[key] * w
             expected.append((key, sum))
         # print 'union', expected
