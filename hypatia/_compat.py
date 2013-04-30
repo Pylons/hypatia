@@ -22,6 +22,8 @@ if PY3: #pragma NO COVER
     intern = sys.intern
     xrange = range
     _long = int
+    def _iteritems(x):
+        return x.items()
 else: #pragma NO COVER
     def b(s):
         return s
@@ -42,3 +44,5 @@ else: #pragma NO COVER
     intern = intern
     xrange = xrange
     _long = long
+    def _iteritems(x):
+        return x.iteritems()

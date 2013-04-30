@@ -36,6 +36,7 @@ from .queryparser import QueryParser
 from ..util import BaseIndexMixin 
 from .. import query
 from .._compat import string_types
+from .._compat import _iteritems
 
 _marker = object()
 
@@ -123,7 +124,7 @@ class TextIndex(BaseIndexMixin, Persistent):
 
             qw *= 1.0
 
-            for docid, score in results.iteritems():
+            for docid, score in _iteritems(results):
                 try:
                     results[docid] = score/qw
                 except TypeError:
