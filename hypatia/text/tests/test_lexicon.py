@@ -385,8 +385,7 @@ class WackyReversePipelineElement(object):
         res = []
         for term in seq:
             if term == self.__revword:
-                x = list(term)
-                x.reverse()
+                x = reversed(list(term))
                 res.append(''.join(x))
             else:
                 res.append(term)
