@@ -58,7 +58,7 @@ class TestQuery(unittest.TestCase):
             def iter_children(self):
                 return self.children
 
-        from StringIO import StringIO
+        from io import StringIO
         a = Derived('A')
         b = Derived('B')
         c = Derived('C')
