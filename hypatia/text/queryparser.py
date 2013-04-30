@@ -222,9 +222,9 @@ class QueryParser(object):
             nodes = [x for x in  nodes if x]
             if not nodes:
                 return None # Only stopwords
-            structure = [(isinstance(nodes[i], parsetree.NotNode), i, nodes[i])
-                         for i in range(len(nodes))]
-            structure.sort()
+            structure = sorted(
+                [(isinstance(nodes[i], parsetree.NotNode), i, nodes[i])
+                         for i in range(len(nodes))])
             nodes = [node for (bit, index, node) in structure]
             if isinstance(nodes[0], parsetree.NotNode):
                 raise parsetree.ParseError(

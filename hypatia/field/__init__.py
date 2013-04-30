@@ -412,8 +412,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         if len(sets) == 1:
             result = sets[0]
         elif operator == 'and':
-            sets.sort()
-            for set in sets:
+            for set in sorted(sets):
                 result = self.family.IF.intersection(set, result)
         else:
             result = self.family.IF.multiunion(sets)
