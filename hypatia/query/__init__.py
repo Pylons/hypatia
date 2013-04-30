@@ -32,7 +32,7 @@ class Query(object):
         return ()
 
     def print_tree(self, out=sys.stdout, level=0):
-        print >> out, '  ' * level + str(self)
+        out.write('%s%s\n' % ('  ' * level, str(self)))
         for child in self.iter_children():
             child.print_tree(out, level + 1)
 
@@ -963,7 +963,7 @@ def _print_ast(expr):  # pragma NO COVERAGE
     tree = ast.parse(expr)
 
     def visit(node, level):
-        print '  ' * level + str(node)
+        sys.stdout.write('%s%s\n' % ('  ' * level + str(node)))
         for child in ast.iter_child_nodes(node):
             visit(child, level + 1)
     visit(tree, 0)

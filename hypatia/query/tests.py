@@ -851,7 +851,8 @@ class Test_parse_query(unittest.TestCase):
         self.assertEqual(self._call_fut('"foo"'), 'foo')
 
     def test_unicode(self):
-        self.assertEqual(self._call_fut('u"foo"'), u'foo')
+        from hypatia._compat import u
+        self.assertEqual(self._call_fut('u"foo"'), u('foo'))
 
     def test_list(self):
         self.assertEqual(self._call_fut('[1, 2, 3]'), [1, 2, 3])

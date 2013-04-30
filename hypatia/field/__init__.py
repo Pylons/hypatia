@@ -307,7 +307,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
     def nbest_ascending(self, docids, limit, raise_unsortable=False):
         if limit is None: #pragma NO COVERAGE
-            raise RuntimeError, 'n-best used without limit'
+            raise RuntimeError('n-best used without limit')
 
         # lifted from heapq.nsmallest
 
@@ -339,7 +339,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
     def nbest_descending(self, docids, limit, raise_unsortable=True):
         if limit is None: #pragma NO COVERAGE
-            raise RuntimeError, 'N-Best used without limit'
+            raise RuntimeError('N-Best used without limit')
         iterable = nsort(docids, self._rev_index, DESC)
         missing_docids = []
         for value, docid in heapq.nlargest(limit, iterable):

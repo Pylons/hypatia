@@ -28,6 +28,7 @@ from .interfaces import IPipelineElement
 from .interfaces import ISplitter
 from .stopdict import get_stopdict
 from .parsetree import QueryError
+from .._compat import u
 
 
 @implementer(ILexicon)
@@ -156,7 +157,7 @@ class Lexicon(Persistent):
 def _text2list(text):
     # Helper: splitter input may be a string or a list of strings
     try:
-        text + u""
+        text + u('')
     except:
         return text
     else:

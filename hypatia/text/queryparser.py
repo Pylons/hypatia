@@ -59,6 +59,7 @@ from zope.interface import implementer
 
 from .interfaces import IQueryParser
 from . import parsetree
+from .._compat import intern
 
 # Create unique symbols for token types.
 _AND    = intern("AND")
