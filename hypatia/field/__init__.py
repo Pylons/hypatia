@@ -376,12 +376,11 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         ):
         
         n = 0
-        marker = _marker
         missing_docids = []
 
         def get(k, rev_index=self._rev_index):
-            v = rev_index.get(k, marker)
-            if v is marker:
+            v = rev_index.get(k, ASC)
+            if v is ASC:
                 missing_docids.append(k)
             return v
 
