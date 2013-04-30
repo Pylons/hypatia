@@ -24,6 +24,8 @@ if PY3: #pragma NO COVER
     _long = int
     def _iteritems(x):
         return x.items()
+    def _items(x):
+        return list(x.items())
     def _maxint():
         return sys.maxsize
 else: #pragma NO COVER
@@ -48,5 +50,7 @@ else: #pragma NO COVER
     _long = long
     def _iteritems(x):
         return x.iteritems()
+    def _items(x):
+        return x.items()
     def _maxint():
         return sys.maxint
