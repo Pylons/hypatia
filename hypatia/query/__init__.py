@@ -525,7 +525,7 @@ class Or(BoolOp):
                 else:
                     uppers[query.index] = (i, query)
 
-        queries = filter(None, queries)
+        queries = [x for x in queries if x]
         if len(queries) == 1:
             return queries[0]
 
@@ -588,7 +588,7 @@ class And(BoolOp):
                 else:
                     uppers[query.index] = (i, query)
 
-        queries = filter(None, queries)
+        queries = [x for x in queries if x]
         if len(queries) == 1:
             return queries[0]
 
