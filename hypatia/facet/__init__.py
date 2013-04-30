@@ -3,6 +3,7 @@ from zope.interface import implementer
 
 from ..keyword import KeywordIndex
 from ..interfaces import IIndex
+from .._compat import make_binary
 from .._compat import string_types
 
 _marker = ()
@@ -134,6 +135,6 @@ class FacetIndex(KeywordIndex):
 def cachekey(set):
     h = md5()
     for item in sorted(list(set)):
-        h.update(item)
+        h.update(make_binary(item))
     return h.hexdigest()
 
