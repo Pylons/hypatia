@@ -73,7 +73,7 @@ class Lexicon(Persistent):
         # Because length is independent, this will load the most
         # recent value stored, regardless of whether MVCC is enabled
         self.word_count._p_deactivate()
-        return map(self._getWordIdCreate, last)
+        return [self._getWordIdCreate(x) for x in last]
 
     def termToWordIds(self, text):
         last = _text2list(text)
