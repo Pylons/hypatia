@@ -1,5 +1,13 @@
 import unittest
 
+def _skip_on_Python_3_2(func):
+    import sys
+    if sys.version_info[:2] == (3, 2):
+        def _skip(self):
+            pass
+        return _skip
+    return func
+
 
 class ComparatorTestBase(unittest.TestCase):
 
@@ -850,6 +858,7 @@ class Test_parse_query(unittest.TestCase):
     def test_str(self):
         self.assertEqual(self._call_fut('"foo"'), 'foo')
 
+    @_skip_on_Python_3_2
     def test_unicode(self):
         from hypatia._compat import u
         self.assertEqual(self._call_fut('u"foo"'), u('foo'))
