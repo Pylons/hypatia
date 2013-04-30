@@ -1,6 +1,8 @@
 Next release
 ------------
 
+- Added support for Python 3.2 / 3.3.
+
 - Fix signature of TextIndex.sort (it would fail when e.g. raise_unsortable was
   passed).
 
