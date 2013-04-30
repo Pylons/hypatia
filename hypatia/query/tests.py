@@ -66,7 +66,11 @@ class TestQuery(unittest.TestCase):
             def iter_children(self):
                 return self.children
 
-        from io import StringIO
+        import sys
+        if sys.version_info[0] >= 3:
+            from io import StringIO
+        else:
+            from io import BytesIO as StringIO
         a = Derived('A')
         b = Derived('B')
         c = Derived('C')
