@@ -58,10 +58,11 @@ class HTMLWordSplitterTests(unittest.TestCase):
                 locale.setlocale(locale.LC_ALL, 'de_DE.ISO8859-1')
         except locale.Error: # pragma: no cover
             return # This test doesn't work here :-(
-        expected = ['m\xfclltonne', 'waschb\xe4r',
-                    'beh\xf6rde', '\xfcberflieger']
-        splitter = self._makeOne()
-        self.assertEqual(splitter.process([' '.join(expected)]), expected)
+        else: # pragma: no cover
+            expected = ['m\xfclltonne', 'waschb\xe4r',
+                        'beh\xf6rde', '\xfcberflieger']
+            splitter = self._makeOne()
+            self.assertEqual(splitter.process([' '.join(expected)]), expected)
 
     def test_process_w_markup(self):
         splitter = self._makeOne()
