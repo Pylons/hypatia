@@ -277,8 +277,9 @@ class TextIndexTests(unittest.TestCase):
 
     def test_applyNotContains_with_unindexed_doc(self):
         from hypatia._compat import u
+        from hypatia._compat import string_types
         def discriminator(obj, default):
-            if isinstance(obj, basestring):
+            if isinstance(obj, string_types):
                 return obj
             return default
         index = self._makeOne(discriminator)

@@ -3,6 +3,7 @@ from zope.interface import implementer
 
 from ..keyword import KeywordIndex
 from ..interfaces import IIndex
+from .._compat import string_types
 
 _marker = ()
 
@@ -31,7 +32,7 @@ class FacetIndex(KeywordIndex):
 
     def __init__(self, discriminator, facets, family=None):
         if not callable(discriminator):
-            if not isinstance(discriminator, basestring):
+            if not isinstance(discriminator, string_types):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
