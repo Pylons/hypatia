@@ -1,12 +1,14 @@
-import BTrees
-import sys
 import ast
+import operator
+import sys
 
-_marker = object()
+import BTrees
 
 from ..util import RichComparisonMixin
 from .._compat import xrange
 
+
+_marker = object()
 
 class Query(object):
     """
@@ -795,6 +797,12 @@ class _AstParser(object):
 
     def process_GtE(self, node, children):
         return self.process_comparator(Ge)
+
+    def process_UAdd(self, node, children):
+        return operator.pos
+
+    def process_USub(self, node, children):
+        return operator.neg
 
     def process_comparator(self, cls):
 
