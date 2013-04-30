@@ -20,12 +20,14 @@ _marker = object()
 class Test_widcode(unittest.TestCase):
 
     def test_encode_1_to_7_bits(self):
+        from ..._compat import xrange
         from ..widcode import encode
         for wid in xrange(2**7):
             code = encode([wid])
             self.assertEqual(code, chr(wid + 128))
 
     def test_encode_8_to_14_bits(self):
+        from ..._compat import xrange
         from ..widcode import encode
         for wid in xrange(2**7, 2**14):
             hi, lo = divmod(wid, 128)
@@ -33,6 +35,7 @@ class Test_widcode(unittest.TestCase):
             self.assertEqual(code, chr(hi + 128) + chr(lo))
 
     def test_encode_15_to_21_bits(self):
+        from ..._compat import xrange
         from ..widcode import encode
         for wid in xrange(2**14, 2**21, 255):
             mid, lo = divmod(wid, 128)
@@ -41,6 +44,7 @@ class Test_widcode(unittest.TestCase):
             self.assertEqual(code, chr(hi + 128) + chr(mid) + chr(lo))
 
     def test_encode_22_to_28_bits(self):
+        from ..._compat import xrange
         from ..widcode import encode
         STEP = (256 * 512) - 1
         for wid in xrange(2**21, 2**28, STEP):
@@ -86,6 +90,7 @@ class Test_widcode(unittest.TestCase):
             self.assertEqual(_decode(code), wid)
 
     def test_symmetric(self):
+        from ..._compat import xrange
         from ..widcode import decode
         from ..widcode import encode
         for wid in xrange(2**14, 2**21, 247):

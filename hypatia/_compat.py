@@ -20,6 +20,7 @@ if PY3: #pragma NO COVER
             return x
         return x.encode('ascii')
     intern = sys.intern
+    xrange = range
 else: #pragma NO COVER
     def b(s):
         return s
@@ -38,3 +39,4 @@ else: #pragma NO COVER
             return x
         return x.encode('ascii')
     intern = intern
+    xrange = xrange

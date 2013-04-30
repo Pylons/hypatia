@@ -5,6 +5,7 @@ import ast
 _marker = object()
 
 from ..util import RichComparisonMixin
+from .._compat import xrange
 
 
 class Query(object):
