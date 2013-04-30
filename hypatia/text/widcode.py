@@ -101,7 +101,7 @@ def _decode(s):
         a, b, c = map(ord, s)
         assert a & 0x80 == 0x80 and not b & 0x80 and not c & 0x80
         return ((a & 0x7F) << 14) | (b << 7) | c
-    assert len(s) == 4, `s`
+    assert len(s) == 4, repr(s)
     a, b, c, d = map(ord, s)
     assert a & 0x80 == 0x80 and not b & 0x80 and not c & 0x80 and not d & 0x80
     return ((a & 0x7F) << 21) | (b << 14) | (c << 7) | d

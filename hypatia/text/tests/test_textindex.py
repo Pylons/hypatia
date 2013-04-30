@@ -97,48 +97,48 @@ class TextIndexTests(unittest.TestCase):
         from ..lexicon import Splitter
         from ..lexicon import StopWordRemover
         from ..okapiindex import OkapiIndex
-        self.failUnless(isinstance(index.index, OkapiIndex))
-        self.failUnless(isinstance(index.lexicon, Lexicon))
-        self.failUnless(index.index._lexicon is index.lexicon)
+        self.assertTrue(isinstance(index.index, OkapiIndex))
+        self.assertTrue(isinstance(index.lexicon, Lexicon))
+        self.assertTrue(index.index._lexicon is index.lexicon)
         pipeline = index.lexicon._pipeline
         self.assertEqual(len(pipeline), 3)
-        self.failUnless(isinstance(pipeline[0], Splitter))
-        self.failUnless(isinstance(pipeline[1], CaseNormalizer))
-        self.failUnless(isinstance(pipeline[2], StopWordRemover))
+        self.assertTrue(isinstance(pipeline[0], Splitter))
+        self.assertTrue(isinstance(pipeline[1], CaseNormalizer))
+        self.assertTrue(isinstance(pipeline[2], StopWordRemover))
 
     def test_ctor_explicit_lexicon(self):
         from ..okapiindex import OkapiIndex
         lexicon = object()
         index = self._makeOne(lexicon=lexicon)
-        self.failUnless(index.lexicon is lexicon)
-        self.failUnless(isinstance(index.index, OkapiIndex))
-        self.failUnless(index.index._lexicon is lexicon)
+        self.assertTrue(index.lexicon is lexicon)
+        self.assertTrue(isinstance(index.index, OkapiIndex))
+        self.assertTrue(index.index._lexicon is lexicon)
 
     def test_ctor_explicit_family(self):
         import BTrees
         index = self._makeOne(family=BTrees.family32)
-        self.failUnless(index.family is BTrees.family32)
+        self.assertTrue(index.family is BTrees.family32)
 
     def test_ctor_explicit_index(self):
         lexicon = object()
         okapi = DummyOkapi(lexicon)
         index = self._makeOne(index=okapi)
-        self.failUnless(index.index is okapi)
+        self.assertTrue(index.index is okapi)
         # See LP #232516
-        self.failUnless(index.lexicon is lexicon)
+        self.assertTrue(index.lexicon is lexicon)
 
     def test_ctor_explicit_lexicon_and_index(self):
         lexicon = object()
         okapi = DummyIndex()
         index = self._makeOne(lexicon=lexicon, index=okapi)
-        self.failUnless(index.lexicon is lexicon)
-        self.failUnless(index.index is okapi)
+        self.assertTrue(index.lexicon is lexicon)
+        self.assertTrue(index.index is okapi)
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):
             """ """
         index = self._makeOne(discriminator=_discriminator)
-        self.failUnless(index.discriminator is _discriminator)
+        self.assertTrue(index.discriminator is _discriminator)
 
     def test_ctor_string_discriminator(self):
         index = self._makeOne(discriminator='abc')
@@ -155,31 +155,33 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._indexed[0], (1, 'cats and dogs'))
 
     def test_index_doc_then_missing_value(self):
+        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(3, u'Am I rich yet?')
+        index.index_doc(3, u('Am I rich yet?'))
         self.assertEqual(set([3]), set(index.applyContains('rich')))
-        self.failUnless(3 in index.docids())
+        self.assertTrue(3 in index.docids())
         index.index_doc(3, _marker)
         self.assertEqual(set(), set(index.applyEq('rich')))
-        self.failUnless(3 in index.docids())
+        self.assertTrue(3 in index.docids())
 
     def test_index_doc_missing_value_then_with_value(self):
+        from hypatia._compat import u
         index = self._makeOne()
         index.index_doc(20, _marker)
         self.assertEqual(set(), set(index.applyContains('rich')))
-        self.failUnless(20 in index.docids())
-        index.index_doc(20, u'Am I rich yet?')
+        self.assertTrue(20 in index.docids())
+        index.index_doc(20, u('Am I rich yet?'))
         self.assertEqual(set([20]), set(index.applyContains('rich')))
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
 
     def test_index_doc_missing_value_then_unindex(self):
         index = self._makeOne()
         index.index_doc(20, _marker)
         self.assertEqual(set(), set(index.applyEq('/cmr')))
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
         index.unindex_doc(20)
         self.assertEqual(set(), set(index.applyEq('/cmr')))
-        self.failIf(20 in index.docids())
+        self.assertFalse(20 in index.docids())
 
     def test_unindex_doc(self):
         lexicon = object()
@@ -191,9 +193,9 @@ class TextIndexTests(unittest.TestCase):
     def test_unindex_doc_removes_from_docids(self):
         index = self._makeOne()
         index.index_doc(20, _marker)
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
         index.unindex_doc(20)
-        self.failIf(20 in index.docids())
+        self.assertFalse(20 in index.docids())
 
     def test_reindex_doc_doesnt_unindex(self):
         index = self._makeOne()
@@ -206,7 +208,7 @@ class TextIndexTests(unittest.TestCase):
         okapi = DummyOkapi(lexicon)
         index = self._makeOne(lexicon=lexicon, index=okapi)
         index.reset()
-        self.failUnless(okapi._cleared)
+        self.assertTrue(okapi._cleared)
 
     def test_indexed_count(self):
         lexicon = object()
@@ -252,8 +254,8 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._searched, ['anything'])
 
     def test_apply_w_results_bogus_query_weight(self):
-        import sys
-        DIVISOR = sys.maxint / 10
+        from hypatia._compat import _maxint
+        DIVISOR = _maxint() / 10.0
         lexicon = DummyLexicon()
         # cause TypeError in division
         okapi = DummyOkapi(lexicon, {1: '14.0', 2: '7.4', 3: '3.2'})
@@ -266,30 +268,34 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._searched, ['anything'])
 
     def test_applyNotContains(self):
+        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(1, u'now is the time')
-        index.index_doc(2, u"l'ora \xe9 ora")
+        index.index_doc(1, u('now is the time'))
+        index.index_doc(2, u("l'ora \xe9 ora"))
         result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [2])
 
     def test_applyNotContains_with_unindexed_doc(self):
+        from hypatia._compat import u
+        from hypatia._compat import string_types
         def discriminator(obj, default):
-            if isinstance(obj, basestring):
+            if isinstance(obj, string_types):
                 return obj
             return default
         index = self._makeOne(discriminator)
-        index.index_doc(1, u'now is the time')
-        index.index_doc(2, u"l'ora \xe9 ora")
+        index.index_doc(1, u('now is the time'))
+        index.index_doc(2, u("l'ora \xe9 ora"))
         index.index_doc(3, 3)
         result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [2, 3])
 
     def test_applyNotContains_nothing_indexed(self):
+        from hypatia._compat import u
         def discriminator(obj, default):
             return default
         index = self._makeOne(discriminator)
-        index.index_doc(1, u'now is the time')
-        index.index_doc(2, u"l'ora \xe9 ora")
+        index.index_doc(1, u('now is the time'))
+        index.index_doc(2, u("l'ora \xe9 ora"))
         index.index_doc(3, 3)
         result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [1, 2, 3])
@@ -327,15 +333,17 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(index.sort(results, limit=2, foo='bar'), expect)
 
     def test_docids(self):
+        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(1, u'now is the time')
-        index.index_doc(2, u"l'ora \xe9 ora")
-        index.index_doc(3, u"you have nice hair.")
+        index.index_doc(1, u('now is the time'))
+        index.index_doc(2, u("l'ora \xe9 ora"))
+        index.index_doc(3, u("you have nice hair."))
         self.assertEqual(set(index.docids()), set((1, 2, 3)))
 
     def test_docids_with_indexed_and_not_indexed(self):
+        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(1, u'Am I rich yet?')
+        index.index_doc(1, u('Am I rich yet?'))
         index.index_doc(2, _marker)
         self.assertEqual(set([1, 2]), set(index.docids()))
 

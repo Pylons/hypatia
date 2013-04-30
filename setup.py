@@ -29,26 +29,28 @@ class optional_build_ext(build_ext):
         try:
             build_ext.run(self)
         
-        except DistutilsPlatformError, e:
+        except DistutilsPlatformError as e:
             self._unavailable(e)
 
     def build_extension(self, ext):
        try:
            build_ext.build_extension(self, ext)
         
-       except (CCompilerError, DistutilsExecError), e:
+       except (CCompilerError, DistutilsExecError) as e:
            self._unavailable(e)
 
     def _unavailable(self, e):
-        print >> sys.stderr, '*' * 80
-        print >> sys.stderr, """WARNING:
+        def errprint(x):
+            sys.stderr.write('%s\n' % x)
+        errprint('*' * 80)
+        errprint("""WARNING:
 
         An optional code optimization (C extension) could not be compiled.
 
-        Optimizations for this package will not be available!"""
-        print >> sys.stderr
-        print >> sys.stderr, e
-        print >> sys.stderr, '*' * 80
+        Optimizations for this package will not be available!""")
+        errprint('')
+        errprint(e)
+        errprint('*' * 80)
 
 try:
     here = os.path.abspath(os.path.dirname(__file__))
@@ -72,8 +74,12 @@ setup(name='hypatia',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
         ],

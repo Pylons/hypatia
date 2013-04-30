@@ -67,7 +67,7 @@ class BaseIndex(Persistent):
         # lexicons can also be shared across indices, and some other index
         # may introduce a lexicon word we've never seen.
         # A word is in-vocabulary for this index if and only if
-        # _wordinfo.has_key(wid).  Note that wid 0 must not be a key.
+        # wid in _wordinfo.  Note that wid 0 must not be a key.
         # This does not use the BTree family since wids are always "I"
         # flavor trees.
         self._wordinfo = IOBTree()
@@ -227,7 +227,7 @@ class BaseIndex(Persistent):
         return result
 
     def _remove_oov_wids(self, wids):
-        return filter(self._wordinfo.has_key, wids)
+        return [wid for wid in wids if wid in self._wordinfo]
 
     # Subclass must override.
     # The workhorse.  Return a list of (IFBucket, weight) pairs, one pair

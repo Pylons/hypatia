@@ -66,7 +66,7 @@ class CosineIndex(BaseIndex):
         L = []
         DictType = type({})
         for wid in wids:
-            assert self._wordinfo.has_key(wid)  # caller responsible for OOV
+            assert wid in self._wordinfo  # caller responsible for OOV
             d2w = self._wordinfo[wid] # maps docid to w(docid, wid)
             idf = inverse_doc_frequency(len(d2w), N)  # an unscaled float
             #print "idf = %.3f" % idf

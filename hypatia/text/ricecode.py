@@ -75,7 +75,8 @@ class BitArray(object):
     def __getstate__(self):
         return self.nbits, self.bitsleft, self.tostring()
 
-    def __setstate__(self, (nbits, bitsleft, s)):
+    def __setstate__(self, nbits_bitsleft_s):
+        nbits, bitsleft, s = nbits_bitsleft_s
         self.bytes = array.array('B', s)
         self.nbits = nbits
         self.bitsleft = bitsleft
@@ -97,7 +98,7 @@ class RiceCode(object):
     def append(self, val):
         """Append an item to the list."""
         if val < 1:
-            raise ValueError("value >= 1 expected, got %s" % `val`)
+            raise ValueError("value >= 1 expected, got %s" % repr(val))
         val -= 1
         # emit the unary part of the code
         q = val >> self.m
@@ -144,7 +145,8 @@ class RiceCode(object):
     def __getstate__(self):
         return self.m, self.bits
 
-    def __setstate__(self, (m, bits)):
+    def __setstate__(self, m_bits):
+        m, bits = m_bits
         self.init(m)
         self.bits = bits
 
@@ -172,6 +174,11 @@ def decode_deltas(start, enc_deltas):
     l.append(l[-1] + deltas[-1])
     return l
 
+def _print(x, newline=True):
+    import sys
+    fmt = newline and '%s\n' or '%s'
+    sys.stdout.write(fmt % x)
+
 def test():
     import random
     for size in [10, 20, 50, 100, 200]:
@@ -184,8 +191,8 @@ def test():
         l2 = decode_deltas(*t)
         assert l == l2
         if l != l2:
-            print l
-            print l2
+            _print(l)
+            _print(l2)
 
 def pickle_efficiency():
     import pickle
@@ -196,12 +203,12 @@ def pickle_efficiency():
                 l = [random.randint(1, elt_range) for i in range(size)]
                 raw = pickle.dumps(l, 1)
                 enc = pickle.dumps(encode(m, l), 1)
-                print "m=%2d size=%4d range=%4d" % (m, size, elt_range),
-                print "%5d %5d" % (len(raw), len(enc)),
+                _print("m=%2d size=%4d range=%4d" % (m, size, elt_range), False)
+                _print("%5d %5d" % (len(raw), len(enc)), False)
                 if len(raw) > len(enc):
-                    print "win"
+                    _print("win")
                 else:
-                    print "lose"
+                    _print("lose")
 
 if __name__ == "__main__":
     test()

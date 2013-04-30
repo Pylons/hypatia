@@ -178,10 +178,10 @@ class TestBaseIndexMixin(unittest.TestCase):
             pass
         dummy = Dummy()
         self.assertEqual(index.index_doc(20, dummy), None)
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
         dummy.abc = 'foo'
         self.assertEqual(index.index_doc(20, dummy), 'foo')
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
 
     def test_index_doc_missing_value_then_unindex(self):
         index = self._makeIndex('abc')
@@ -189,9 +189,9 @@ class TestBaseIndexMixin(unittest.TestCase):
             pass
         dummy = Dummy()
         self.assertEqual(index.index_doc(20, dummy), None)
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
         index.unindex_doc(20)
-        self.failIf(20 in index.docids())
+        self.assertFalse(20 in index.docids())
 
     def test_docids_with_indexed_and_not_indexed(self):
         index = self._makeIndex('abc')

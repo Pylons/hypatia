@@ -29,6 +29,7 @@ from .. import query
 from ..compat import total_ordering
 from ..exc import Unsortable
 from ..util import BaseIndexMixin
+from .._compat import string_types
 
 _marker = []
 
@@ -74,7 +75,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         if family is not None:
             self.family = family
         if not callable(discriminator):
-            if not isinstance(discriminator, basestring):
+            if not isinstance(discriminator, string_types):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
@@ -307,7 +308,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
     def nbest_ascending(self, docids, limit, raise_unsortable=False):
         if limit is None: #pragma NO COVERAGE
-            raise RuntimeError, 'n-best used without limit'
+            raise RuntimeError('n-best used without limit')
 
         # lifted from heapq.nsmallest
 
@@ -339,7 +340,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
     def nbest_descending(self, docids, limit, raise_unsortable=True):
         if limit is None: #pragma NO COVERAGE
-            raise RuntimeError, 'N-Best used without limit'
+            raise RuntimeError('N-Best used without limit')
         iterable = nsort(docids, self._rev_index, DESC)
         missing_docids = []
         for value, docid in heapq.nlargest(limit, iterable):
@@ -375,12 +376,11 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         ):
         
         n = 0
-        marker = _marker
         missing_docids = []
 
         def get(k, rev_index=self._rev_index):
-            v = rev_index.get(k, marker)
-            if v is marker:
+            v = rev_index.get(k, ASC)
+            if v is ASC:
                 missing_docids.append(k)
             return v
 
@@ -411,8 +411,7 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         if len(sets) == 1:
             result = sets[0]
         elif operator == 'and':
-            sets.sort()
-            for set in sets:
+            for _, set in sorted([(len(x), x) for x in sets]):
                 result = self.family.IF.intersection(set, result)
         else:
             result = self.family.IF.multiunion(sets)

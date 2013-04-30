@@ -1,12 +1,13 @@
+import operator
+
 import BTrees
 from persistent.mapping import PersistentMapping
-
 from zope.interface import implementer
 
 from ..interfaces import ICatalog
 from ..interfaces import ICatalogQuery
-
 from ..query import parse_query
+from .._compat import string_types
 
 @implementer(ICatalog)
 class Catalog(PersistentMapping):
@@ -132,8 +133,10 @@ class CatalogQuery(object):
             if not results:
                 return 0, ()
 
-            results.sort() # order from smallest to largest
-            _, result = results.pop(0)
+            # order smallest to largest
+            _, result = sorted(results,
+                               key=operator.itemgetter(0),
+                              ).pop(0)
             for _, r in results:
                 _, result = self.family.IF.weightedIntersection(result, r)
 
@@ -162,7 +165,7 @@ class CatalogQuery(object):
               reverse=False, names=None):
         """ Use the arguments to perform a query.  Return a tuple of
         (num, resultseq)."""
-        if isinstance(queryobject, basestring):
+        if isinstance(queryobject, string_types):
             queryobject = parse_query(queryobject, self.catalog)
         results = queryobject._apply(names)
         return self.sort(results, sort_index, limit, sort_type, reverse)

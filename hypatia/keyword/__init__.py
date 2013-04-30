@@ -12,6 +12,7 @@ from BTrees.Length import Length
 
 from .interfaces import IKeywordQuerying
 from .. import query
+from .._compat import string_types
 
 _marker = object()
 
@@ -52,7 +53,7 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         if family is not None:
             self.family = family
         if not callable(discriminator):
-            if not isinstance(discriminator, basestring):
+            if not isinstance(discriminator, string_types):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
@@ -76,7 +77,7 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         return self.index_doc(docid, value)
 
     def has_doc(self, docid):
-        return bool(self._rev_index.has_key(docid))
+        return bool(docid in self._rev_index)
 
     def indexed(self):
         return self._rev_index.keys()
@@ -154,7 +155,7 @@ class KeywordIndex(BaseIndexMixin, Persistent):
             # Remove from set of unindexed docs if it was in there.
             self._not_indexed.remove(docid)
 
-        if isinstance(seq, basestring):
+        if isinstance(seq, string_types):
             raise TypeError('seq argument must be a list/tuple of strings')
 
         old_kw = self._rev_index.get(docid, None)
@@ -239,7 +240,7 @@ class KeywordIndex(BaseIndexMixin, Persistent):
 
     def search(self, query, operator='and'):
         """Execute a search given by 'query'."""
-        if isinstance(query, basestring):
+        if isinstance(query, string_types):
             query = [query]
 
         query = self.normalize(query)

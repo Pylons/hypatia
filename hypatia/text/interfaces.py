@@ -16,6 +16,8 @@
 from zope.interface import Attribute
 from zope.interface import Interface
 
+from .._compat import u
+
 class ILexicon(Interface):
     """Object responsible for converting text to word identifiers."""
 
@@ -78,7 +80,7 @@ class ILexicon(Interface):
 
 class ILexiconBasedIndex(Interface):
     """ Interface for indexes which hold a lexicon."""
-    lexicon = Attribute(u'Lexicon used by the index.')
+    lexicon = Attribute(u('Lexicon used by the index.'))
 
 class IQueryParser(Interface):
     """Interface for Query Parsers."""

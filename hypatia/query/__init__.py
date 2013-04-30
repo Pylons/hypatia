@@ -1,11 +1,14 @@
-import BTrees
-import sys
 import ast
+import operator
+import sys
 
-_marker = object()
+import BTrees
 
 from ..util import RichComparisonMixin
+from .._compat import xrange
 
+
+_marker = object()
 
 class Query(object):
     """
@@ -32,7 +35,7 @@ class Query(object):
         return ()
 
     def print_tree(self, out=sys.stdout, level=0):
-        print >> out, '  ' * level + str(self)
+        out.write('%s%s\n' % ('  ' * level, str(self)))
         for child in self.iter_children():
             child.print_tree(out, level + 1)
 
@@ -525,7 +528,7 @@ class Or(BoolOp):
                 else:
                     uppers[query.index] = (i, query)
 
-        queries = filter(None, queries)
+        queries = [x for x in queries if x]
         if len(queries) == 1:
             return queries[0]
 
@@ -588,7 +591,7 @@ class And(BoolOp):
                 else:
                     uppers[query.index] = (i, query)
 
-        queries = filter(None, queries)
+        queries = [x for x in queries if x]
         if len(queries) == 1:
             return queries[0]
 
@@ -795,6 +798,12 @@ class _AstParser(object):
     def process_GtE(self, node, children):
         return self.process_comparator(Ge)
 
+    def process_UAdd(self, node, children): #pragma NO COVER Py3k only
+        return operator.pos
+
+    def process_USub(self, node, children): #pragma NO COVER Py3k only
+        return operator.neg
+
     def process_comparator(self, cls):
 
         def factory(left, right):
@@ -963,7 +972,7 @@ def _print_ast(expr):  # pragma NO COVERAGE
     tree = ast.parse(expr)
 
     def visit(node, level):
-        print '  ' * level + str(node)
+        sys.stdout.write('%s%s\n' % ('  ' * level + str(node)))
         for child in ast.iter_child_nodes(node):
             visit(child, level + 1)
     visit(tree, 0)

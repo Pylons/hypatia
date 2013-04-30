@@ -52,13 +52,11 @@ class NBestTest(TestCase):
         import random
         inputs = [(-i, i) for i in range(50)]
 
-        reversed_inputs = inputs[:]
-        reversed_inputs.reverse()
+        reversed_inputs = list(reversed(inputs[:]))
 
         # Test the N-best for a variety of n (1, 6, 11, ... 50).
         for n in range(1, len(inputs)+1, 5):
-            expected = inputs[-n:]
-            expected.reverse()
+            expected = list(reversed(inputs[-n:]))
 
             random_inputs = inputs[:]
             random.shuffle(random_inputs)

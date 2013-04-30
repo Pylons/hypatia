@@ -68,9 +68,7 @@ class NBest(object):
         assert n == len(scores)
 
     def getbest(self):
-        result = zip(self._items, self._scores)
-        result.reverse()
-        return result
+        return list(reversed(list(zip(self._items, self._scores))))
 
     def pop_smallest(self):
         if self._scores:

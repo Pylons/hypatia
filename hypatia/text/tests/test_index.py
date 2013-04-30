@@ -27,8 +27,8 @@ class IndexTestBase:
         self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index.word_count(), word_count)
         self.assertEqual(index._lexicon.word_count(), word_count)
-        self.assert_(index.has_doc(docid))
-        self.assert_(index._docweight[docid])
+        self.assertTrue(index.has_doc(docid))
+        self.assertTrue(index._docweight[docid])
         self.assertEqual(len(index._docweight), 1)
         self.assertEqual(len(index._wordinfo), word_count)
         self.assertEqual(len(index._docwords), 1)
@@ -37,7 +37,7 @@ class IndexTestBase:
                          index.word_count())
         for map in index._wordinfo.values():
             self.assertEqual(len(map), 1)
-            self.assert_(map.has_key(docid))
+            self.assertTrue(docid in map)
 
     def _check_index_is_empty(self, index):
         self.assertEqual(len(index._docweight), 0)
@@ -53,7 +53,7 @@ class IndexTestBase:
     def test_index_document(self):
         doc = "simple document contains five words"
         index = self._makeOne()
-        self.assert_(not index.has_doc(1))
+        self.assertTrue(not index.has_doc(1))
         index.index_doc(1, doc)
         self._check_index_has_document(index, 1)
 
@@ -84,7 +84,7 @@ class IndexTestBase:
         index = self._makeOne()
         index.index_doc(1, doc1)
         index.index_doc(2, doc2)
-        self.failUnless(index._docweight[2])
+        self.assertTrue(index._docweight[2])
         self.assertEqual(len(index._docweight), 2)
         self.assertEqual(len(index._wordinfo), 8)
         self.assertEqual(len(index._docwords), 2)
@@ -97,8 +97,8 @@ class IndexTestBase:
         for wid, map in index._wordinfo.items():
             if wid == document_wid:
                 self.assertEqual(len(map), 2)
-                self.assert_(map.has_key(1))
-                self.assert_(map.has_key(2))
+                self.assertTrue(1 in map)
+                self.assertTrue(2 in map)
             else:
                 self.assertEqual(len(map), 1)
 
@@ -111,7 +111,7 @@ class IndexTestBase:
         index.index_doc(2, doc2)
         index.unindex_doc(1)
         self.assertEqual(len(index._docweight), 1)
-        self.assert_(index._docweight[2])
+        self.assertTrue(index._docweight[2])
         self.assertEqual(len(index._wordinfo), 4)
         self.assertEqual(len(index._docwords), 1)
         self.assertEqual(len(index.get_words(2)), 4)
@@ -119,13 +119,13 @@ class IndexTestBase:
                          index.word_count())
         for map in index._wordinfo.values():
             self.assertEqual(len(map), 1)
-            self.assert_(map.has_key(2))
+            self.assertTrue(2 in map)
 
     def test_index_duplicated_words(self):
         doc = "very simple repeat repeat repeat document test"
         index = self._makeOne()
         index.index_doc(1, doc)
-        self.assert_(index._docweight[1])
+        self.assertTrue(index._docweight[1])
         self.assertEqual(len(index._wordinfo), 5)
         self.assertEqual(len(index._docwords), 1)
         self.assertEqual(len(index.get_words(1)), 7)
@@ -135,7 +135,7 @@ class IndexTestBase:
         self.assertEqual(len(wids), 1)
         for wid, map in index._wordinfo.items():
             self.assertEqual(len(map), 1)
-            self.assert_(map.has_key(1))
+            self.assertTrue(1 in map)
 
     def test_simple_query_oneresult(self):
         index = self._makeOne()

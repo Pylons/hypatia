@@ -35,6 +35,9 @@ from .queryparser import QueryParser
 
 from ..util import BaseIndexMixin 
 from .. import query
+from .._compat import string_types
+from .._compat import _iteritems
+from .._compat import _maxint
 
 _marker = object()
 
@@ -49,7 +52,7 @@ class TextIndex(BaseIndexMixin, Persistent):
         if family is not None:
             self.family = family
         if not callable(discriminator):
-            if not isinstance(discriminator, basestring):
+            if not isinstance(discriminator, string_types):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
@@ -122,13 +125,13 @@ class TextIndex(BaseIndexMixin, Persistent):
 
             qw *= 1.0
 
-            for docid, score in results.iteritems():
+            for docid, score in _iteritems(results):
                 try:
                     results[docid] = score/qw
                 except TypeError:
                     # We overflowed the score, perhaps wildly unlikely.
                     # Who knows.
-                    results[docid] = sys.maxint/10
+                    results[docid] = _maxint() / 10.0
 
         return results
  

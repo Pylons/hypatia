@@ -373,18 +373,18 @@ class _TestCaseBase:
 
     def test_ctor_defaults(self):
         index = self._makeOne()
-        self.failUnless(index.family is self._get_family())
+        self.assertTrue(index.family is self._get_family())
 
     def test_ctor_explicit_family(self):
         import BTrees
         index = self._makeOne(family=BTrees.family32)
-        self.failUnless(index.family is BTrees.family32)
+        self.assertTrue(index.family is BTrees.family32)
 
     def test_ctor_callback_discriminator(self):
         def _discriminator(obj, default):
             """ """
         index = self._makeOne(discriminator=_discriminator)
-        self.failUnless(index.discriminator is _discriminator)
+        self.assertTrue(index.discriminator is _discriminator)
 
     def test_ctor_string_discriminator(self):
         index = self._makeOne(discriminator='abc')
@@ -397,7 +397,7 @@ class _TestCaseBase:
         index = self._makeOne()
         self.assertEqual(index.indexed_count(), 0)
         self.assertEqual(index.word_count(), 0)
-        self.failIf(index.has_doc(1))
+        self.assertFalse(index.has_doc(1))
 
     def test_index_doc_string_value_raises(self):
         index = self._makeOne()
@@ -408,9 +408,9 @@ class _TestCaseBase:
         index.index_doc(1, ('albatross', 'cormorant'))
         self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index.word_count(), 2)
-        self.failUnless(index.has_doc(1))
-        self.failUnless('albatross' in index._fwd_index)
-        self.failUnless('cormorant' in index._fwd_index)
+        self.assertTrue(index.has_doc(1))
+        self.assertTrue('albatross' in index._fwd_index)
+        self.assertTrue('cormorant' in index._fwd_index)
 
     def test_index_doc_existing(self):
         index = self._makeOne()
@@ -418,10 +418,10 @@ class _TestCaseBase:
         index.index_doc(1, ('buzzard', 'cormorant'))
         self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index.word_count(), 2)
-        self.failUnless(index.has_doc(1))
-        self.failIf('albatross' in index._fwd_index)
-        self.failUnless('buzzard' in index._fwd_index)
-        self.failUnless('cormorant' in index._fwd_index)
+        self.assertTrue(index.has_doc(1))
+        self.assertFalse('albatross' in index._fwd_index)
+        self.assertTrue('buzzard' in index._fwd_index)
+        self.assertTrue('cormorant' in index._fwd_index)
 
     def test_index_doc_many(self):
         index = self._makeOne()
@@ -430,37 +430,37 @@ class _TestCaseBase:
         self.assertEqual(index.word_count(), self._populated_word_count)
         for docid in range(1, 6):
             if docid == 4:
-                self.failIf(index.has_doc(docid))
+                self.assertFalse(index.has_doc(docid))
             else:
-                self.failUnless(index.has_doc(docid))
+                self.assertTrue(index.has_doc(docid))
 
     def test_index_doc_then_missing_value(self):
         index = self._makeOne()
         index.index_doc(20, [1, 2, 3])
         self.assertEqual(set([20]), set(index.applyEq(2)))
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
         index.index_doc(20, _marker)
         self.assertEqual(set(), set(index.applyEq(2)))
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
 
     def test_index_doc_missing_value_then_with_value(self):
         index = self._makeOne()
         index.index_doc(3, _marker)
         self.assertEqual(set(), set(index.applyEq(4)))
-        self.failUnless(3 in index.docids())
+        self.assertTrue(3 in index.docids())
         index.index_doc(3, [3, 4, 5])
         self.assertEqual(set([3]), set(index.applyEq(4)))
-        self.failUnless(3 in index.docids())
+        self.assertTrue(3 in index.docids())
 
     def test_index_doc_missing_value_then_unindex(self):
         index = self._makeOne()
         index.index_doc(3, _marker)
         self.assertEqual(set(), set(index.applyEq(4)))
-        self.failUnless(3 in index.docids())
+        self.assertTrue(3 in index.docids())
         index.unindex_doc(3)
         self.assertEqual(set(), set(index.applyEq(4)))
         docids = index.docids()
-        self.failIf(3 in docids)
+        self.assertFalse(3 in docids)
 
     def test_index_doc_value_is_marker(self):
         index = self._makeOne()
@@ -490,11 +490,11 @@ class _TestCaseBase:
         self.assertEqual(index.indexed_count(), 1)
         index.reindex_doc(1, [1, 2, 3])
         self.assertEqual(index.indexed_count(), 1)
-        self.failUnless(1 in index._rev_index)
-        self.failUnless(1 in index._fwd_index[1])
-        self.failUnless(1 in index._fwd_index[2])
-        self.failUnless(1 in index._fwd_index[3])
-        self.failIf(4 in index._fwd_index)
+        self.assertTrue(1 in index._rev_index)
+        self.assertTrue(1 in index._fwd_index[1])
+        self.assertTrue(1 in index._fwd_index[2])
+        self.assertTrue(1 in index._fwd_index[3])
+        self.assertFalse(4 in index._fwd_index)
 
     def test_reindex_doc_different_values(self):
         index = self._makeOne()
@@ -502,11 +502,11 @@ class _TestCaseBase:
         self.assertEqual(index.indexed_count(), 1)
         index.reindex_doc(1, [2, 3, 4])
         self.assertEqual(index.indexed_count(), 1)
-        self.failUnless(1 in index._rev_index)
-        self.failIf(1 in index._fwd_index.get(1, []))
-        self.failUnless(1 in index._fwd_index[2])
-        self.failUnless(1 in index._fwd_index[3])
-        self.failUnless(1 in index._fwd_index[4])
+        self.assertTrue(1 in index._rev_index)
+        self.assertFalse(1 in index._fwd_index.get(1, []))
+        self.assertTrue(1 in index._fwd_index[2])
+        self.assertTrue(1 in index._fwd_index[3])
+        self.assertTrue(1 in index._fwd_index[4])
 
     def test_reset(self):
         index = self._makeOne()
@@ -515,7 +515,7 @@ class _TestCaseBase:
         self.assertEqual(index.indexed_count(), 0)
         self.assertEqual(index.word_count(), 0)
         for docid in range(1, 6):
-            self.failIf(index.has_doc(docid))
+            self.assertFalse(index.has_doc(docid))
 
     def test_unindex_doc_missing(self):
         index = self._makeOne()
@@ -527,7 +527,7 @@ class _TestCaseBase:
         index.unindex_doc(1)
         self.assertEqual(index.indexed_count(), 0)
         self.assertEqual(index.word_count(), 0)
-        self.failIf(index.has_doc(1))
+        self.assertFalse(index.has_doc(1))
 
     def test_unindex_w_residue(self):
         index = self._makeOne()
@@ -536,14 +536,14 @@ class _TestCaseBase:
         index.unindex_doc(1)
         self.assertEqual(index.indexed_count(), 1)
         self.assertEqual(index.word_count(), 2)
-        self.failIf(index.has_doc(1))
+        self.assertFalse(index.has_doc(1))
 
     def test_unindex_doc_removes_from_docids(self):
         index = self._makeOne()
         index.index_doc(20, [1, 2, 3])
-        self.failUnless(20 in index.docids())
+        self.assertTrue(20 in index.docids())
         index.unindex_doc(20)
-        self.failIf(20 in index.docids())
+        self.assertFalse(20 in index.docids())
 
     def test_hasdoc(self):
         index = self._makeOne()

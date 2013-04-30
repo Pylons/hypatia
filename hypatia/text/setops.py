@@ -26,7 +26,7 @@ def mass_weightedIntersection(L, family=BTrees.family64):
     # Intersect with smallest first.  We expect the input maps to be
     # IFBuckets, so it doesn't hurt to get their lengths repeatedly
     # (len(Bucket) is fast; len(BTree) is slow).
-    L.sort(lambda x, y: cmp(len(x[0]), len(y[0])))
+    L = sorted(L, key=lambda x: len(x[0]))
     (x, wx), (y, wy) = L[:2]
     dummy, result = family.IF.weightedIntersection(x, y, wx, wy)
     for x, wx in L[2:]:

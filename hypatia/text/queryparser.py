@@ -59,6 +59,7 @@ from zope.interface import implementer
 
 from .interfaces import IQueryParser
 from . import parsetree
+from .._compat import intern
 
 # Create unique symbols for token types.
 _AND    = intern("AND")
@@ -162,7 +163,7 @@ class QueryParser(object):
         L.append(self._parseAndExpr())
         while self._check(_OR):
             L.append(self._parseAndExpr())
-        L = filter(None, L)
+        L = [x for x in L if x]
         if not L:
             return None # Only stopwords
         elif len(L) == 1:
@@ -218,12 +219,12 @@ class QueryParser(object):
             nodes = [self._parseAtom()]
             while self._peek(_ATOM):
                 nodes.append(self._parseAtom())
-            nodes = filter(None, nodes)
+            nodes = [x for x in  nodes if x]
             if not nodes:
                 return None # Only stopwords
-            structure = [(isinstance(nodes[i], parsetree.NotNode), i, nodes[i])
-                         for i in range(len(nodes))]
-            structure.sort()
+            structure = sorted(
+                [(isinstance(nodes[i], parsetree.NotNode), i, nodes[i])
+                         for i in range(len(nodes))])
             nodes = [node for (bit, index, node) in structure]
             if isinstance(nodes[0], parsetree.NotNode):
                 raise parsetree.ParseError(

@@ -189,13 +189,21 @@ to always be 1, and then that quotient is
 regardless of k3's value.  So, in a trivial sense, we are incorporating
 this measure (and optimizing it by not bothering to multiply by 1 <wink>).
 """
+import os
+from BTrees.Length import Length
+
+from .._compat import _items
+from .._compat import _long
 from .baseindex import BaseIndex
 from .baseindex import inverse_doc_frequency
-try:
-    from .okascore import score
-except ImportError: #pragma NO COVERAGE
-    score = None
-from BTrees.Length import Length
+
+score = None
+
+if not os.environ.get('PURE_PYTHON'):
+    try:
+        from .okascore import score
+    except ImportError: #pragma NO COVERAGE
+        pass
 
 class OkapiIndex(BaseIndex):
 
@@ -244,7 +252,7 @@ class OkapiIndex(BaseIndex):
             self._totaldoclen.change(delta)
         except AttributeError:
             # Opportunistically upgrade _totaldoclen attribute to Length object
-            self._totaldoclen = Length(long(self._totaldoclen + delta))
+            self._totaldoclen = Length(_long(self._totaldoclen + delta))
 
     # The workhorse.  Return a list of (IFBucket, weight) pairs, one pair
     # for each wid t in wids.  The IFBucket, times the weight, maps D to
@@ -330,7 +338,7 @@ class OkapiIndex(BaseIndex):
                 d2f = self._wordinfo[t] # map {docid -> f(docid, t)}
                 idf = inverse_doc_frequency(len(d2f), N)  # an unscaled float
                 result = self.family.IF.Bucket()
-                score(result, d2f.items(), docid2len, idf, meandoclen)
+                score(result, _items(d2f), docid2len, idf, meandoclen)
                 L.append((result, 1))
             return L
 
