@@ -60,9 +60,9 @@ class TestCatalogFacetIndex(unittest.TestCase):
     def test_ctor_defaults(self):
         from BTrees import family64
         index = self._makeOne()
-        self.failUnless(index.discriminator(self, index) is self)
+        self.assertTrue(index.discriminator(self, index) is self)
         self.assertEqual(list(index.facets), sorted(FACETS))
-        self.failUnless(index.family is family64)
+        self.assertTrue(index.family is family64)
 
     def test_ctor_explicit(self):
         from BTrees import family32
@@ -70,9 +70,9 @@ class TestCatalogFacetIndex(unittest.TestCase):
         def _discriminator(obj, default):
             return default
         index = self._makeOne(_discriminator, OTHER_FACETS, family32)
-        self.failUnless(index.discriminator(self, index) is index)
+        self.assertTrue(index.discriminator(self, index) is index)
         self.assertEqual(list(index.facets), OTHER_FACETS)
-        self.failUnless(index.family is family32)
+        self.assertTrue(index.family is family32)
 
     def test_ctor_string_discriminator(self):
         index = self._makeOne('facets')
@@ -111,9 +111,9 @@ class TestCatalogFacetIndex(unittest.TestCase):
         index.index_doc(1, dummy)
         del dummy.facets
         index.index_doc(1, dummy)
-        self.failIf('foo' in index._fwd_index)
-        self.failIf('foo:bar' in index._fwd_index)
-        self.failIf(1 in index._rev_index)
+        self.assertFalse('foo' in index._fwd_index)
+        self.assertFalse('foo:bar' in index._fwd_index)
+        self.assertFalse(1 in index._rev_index)
 
     def test_index_doc_persistent_value_raises(self):
         from persistent import Persistent
@@ -138,7 +138,7 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(list(index._fwd_index['foo']), [1])
         self.assertEqual(list(index._fwd_index['foo:baz']), [1])
         self.assertEqual(list(index._rev_index[1]), ['foo', 'foo:baz'])
-        self.failIf('foo:bar' in index._fwd_index)
+        self.assertFalse('foo:bar' in index._fwd_index)
 
     def test_search(self):
         index = self._makeOne()
@@ -239,11 +239,11 @@ class TestCatalogFacetIndex(unittest.TestCase):
             return default
         index = self._makeOne(discriminator)
         self.assertEqual(index.index_doc(20, 3), None)
-        self.failUnless(20 in index._not_indexed)
+        self.assertTrue(20 in index._not_indexed)
 
     def test_index_doc_with_value_removes_from__not_indexed(self):
         index = self._makeOne()
         index._not_indexed.add(20)
         self.assertEqual(index.index_doc(20, 'foo'), 'foo')
-        self.failIf(20 in index._not_indexed)
+        self.assertFalse(20 in index._not_indexed)
 

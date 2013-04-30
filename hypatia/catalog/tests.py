@@ -28,12 +28,12 @@ class TestCatalog(unittest.TestCase):
     def test_ctor_defaults(self):
         from BTrees import family64
         catalog = self._makeOne()
-        self.failUnless(catalog.family is family64)
+        self.assertTrue(catalog.family is family64)
 
     def test_ctor_explicit_family(self):
         from BTrees import family32
         catalog = self._makeOne(family32)
-        self.failUnless(catalog.family is family32)
+        self.assertTrue(catalog.family is family32)
 
     def test_reset(self):
         catalog = self._makeOne()

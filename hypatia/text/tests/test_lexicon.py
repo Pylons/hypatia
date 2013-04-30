@@ -51,7 +51,7 @@ class LexiconTests(unittest.TestCase):
         del lexicon.word_count
         self.assertEqual(lexicon.word_count(), 0)
         # No write-on-read!
-        self.failIf(isinstance(lexicon.word_count, Length))
+        self.assertFalse(isinstance(lexicon.word_count, Length))
 
     def test_sourceToWordIds_empty_string(self):
         lexicon = self._makeOne()
@@ -79,7 +79,7 @@ class LexiconTests(unittest.TestCase):
         wids = lexicon.sourceToWordIds('cats and dogs')
         self.assertEqual(wids, [1, 2, 3])
         self.assertEqual(lexicon.word_count(), 3)
-        self.failUnless(isinstance(lexicon.word_count, Length))
+        self.assertTrue(isinstance(lexicon.word_count, Length))
 
     def test_termToWordIds_hit(self):
         lexicon = self._makeOne()
@@ -150,19 +150,19 @@ class LexiconTests(unittest.TestCase):
 
     def test_isGlob_empty(self):
         lexicon = self._makeOne()
-        self.failIf(lexicon.isGlob(''))
+        self.assertFalse(lexicon.isGlob(''))
 
     def test_isGlob_miss(self):
         lexicon = self._makeOne()
-        self.failIf(lexicon.isGlob('abc'))
+        self.assertFalse(lexicon.isGlob('abc'))
 
     def test_isGlob_question_mark(self):
         lexicon = self._makeOne()
-        self.failUnless(lexicon.isGlob('a?c'))
+        self.assertTrue(lexicon.isGlob('a?c'))
 
     def test_isGlob_asterisk(self):
         lexicon = self._makeOne()
-        self.failUnless(lexicon.isGlob('abc*'))
+        self.assertTrue(lexicon.isGlob('abc*'))
 
     def test_globToWordIds_invalid_pattern(self):
         from ..parsetree import QueryError

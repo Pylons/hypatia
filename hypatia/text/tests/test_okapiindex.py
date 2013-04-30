@@ -101,10 +101,10 @@ class OkapiIndexTestBase:
         relevances = index._search_wids(wids)
         self.assertEqual(len(relevances), len(wids))
         for relevance in relevances:
-            self.failUnless(isinstance(relevance[0], index.family.IF.Bucket))
+            self.assertTrue(isinstance(relevance[0], index.family.IF.Bucket))
             self.assertEqual(len(relevance[0]), 1)
-            self.failUnless(isinstance(relevance[0][1], float))
-            self.failUnless(isinstance(relevance[1], int))
+            self.assertTrue(isinstance(relevance[0][1], float))
+            self.assertTrue(isinstance(relevance[1], int))
 
     def test__search_wids_old_totaldoclen_no_write_on_read(self):
         index = self._makeOne()
@@ -115,7 +115,7 @@ class OkapiIndexTestBase:
 
         relevances = index._search_wids([1])
 
-        self.failUnless(isinstance(index._totaldoclen, int))
+        self.assertTrue(isinstance(index._totaldoclen, int))
 
     def test_query_weight_empty_wids(self):
         index = self._makeOne()
@@ -130,12 +130,12 @@ class OkapiIndexTestBase:
     def test_query_weight_hit_single_occurence(self):
         index = self._makeOne()
         index.index_doc(1, 'one two three')
-        self.failUnless(0.0 < index.query_weight(['one']))
+        self.assertTrue(0.0 < index.query_weight(['one']))
 
     def test_query_weight_hit_multiple_occurences(self):
         index = self._makeOne()
         index.index_doc(1, 'one one two three one')
-        self.failUnless(0.0 < index.query_weight(['one']))
+        self.assertTrue(0.0 < index.query_weight(['one']))
 
 
 class OkapiIndexTest32(OkapiIndexTestBase, unittest.TestCase):

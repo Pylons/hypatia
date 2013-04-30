@@ -76,13 +76,13 @@ class BaseIndexTestBase:
         self.assertEqual(len(index._docwords), 0)
         self.assertEqual(index.word_count(), 0)
         self.assertEqual(index.indexed_count(), 0)
-        self.failIf(index.has_doc(1))
+        self.assertFalse(index.has_doc(1))
 
     def test_reset_doesnt_lose_family(self):
         import BTrees
         index = self._makeOne(family=BTrees.family64)
         index.reset()
-        self.failUnless(index.family is BTrees.family64)
+        self.assertTrue(index.family is BTrees.family64)
 
     def test_word_count_method_raises_NotImplementedError(self):
         class DerviedDoesntSet_word_count(self._getTargetClass()):
@@ -122,18 +122,18 @@ class BaseIndexTestBase:
 
         self.assertEqual(count, 3)
         self.assertEqual(index.word_count(), 3)
-        self.failUnless(index._lexicon._wids['one'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['three'] in index._wordinfo)
         self.assertEqual(index.indexed_count(), 1)
-        self.failUnless(index.has_doc(1))
-        self.failUnless(1 in index._docwords)
-        self.failUnless(1 in index._docweight)
+        self.assertTrue(index.has_doc(1))
+        self.assertTrue(1 in index._docwords)
+        self.assertTrue(1 in index._docweight)
         wids = index.get_words(1)
         self.assertEqual(len(wids), 3)
-        self.failUnless(index._lexicon._wids['one'] in wids)
-        self.failUnless(index._lexicon._wids['two'] in wids)
-        self.failUnless(index._lexicon._wids['three'] in wids)
+        self.assertTrue(index._lexicon._wids['one'] in wids)
+        self.assertTrue(index._lexicon._wids['two'] in wids)
+        self.assertTrue(index._lexicon._wids['three'] in wids)
 
     def test_index_doc_existing_docid(self):
         index = self._makeOne()
@@ -148,16 +148,16 @@ class BaseIndexTestBase:
 
         self.assertEqual(count, 3)
         self.assertEqual(index.word_count(), 3)
-        self.failIf(index._lexicon._wids['one'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['four'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['four'] in index._wordinfo)
         wids = index.get_words(1)
         self.assertEqual(len(wids), 3)
-        self.failIf(index._lexicon._wids['one'] in wids)
-        self.failUnless(index._lexicon._wids['two'] in wids)
-        self.failUnless(index._lexicon._wids['three'] in wids)
-        self.failUnless(index._lexicon._wids['four'] in wids)
+        self.assertFalse(index._lexicon._wids['one'] in wids)
+        self.assertTrue(index._lexicon._wids['two'] in wids)
+        self.assertTrue(index._lexicon._wids['three'] in wids)
+        self.assertTrue(index._lexicon._wids['four'] in wids)
 
     def test_index_doc_upgrades_word_count_indexed_count(self):
         index = self._makeOne()
@@ -196,14 +196,14 @@ class BaseIndexTestBase:
 
         self.assertEqual(count, 3)
         self.assertEqual(index.word_count(), 3)
-        self.failUnless(index._lexicon._wids['one'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['three'] in index._wordinfo)
         wids = index.get_words(1)
         self.assertEqual(len(wids), 3)
-        self.failUnless(index._lexicon._wids['one'] in wids)
-        self.failUnless(index._lexicon._wids['two'] in wids)
-        self.failUnless(index._lexicon._wids['three'] in wids)
+        self.assertTrue(index._lexicon._wids['one'] in wids)
+        self.assertTrue(index._lexicon._wids['two'] in wids)
+        self.assertTrue(index._lexicon._wids['three'] in wids)
 
     def test_reindex_doc_disjoint(self):
         index = self._makeOne()
@@ -217,20 +217,20 @@ class BaseIndexTestBase:
 
         self.assertEqual(count, 3)
         self.assertEqual(index.word_count(), 3)
-        self.failIf(index._lexicon._wids['one'] in index._wordinfo)
-        self.failIf(index._lexicon._wids['two'] in index._wordinfo)
-        self.failIf(index._lexicon._wids['three'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['four'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['five'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['six'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['four'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['five'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['six'] in index._wordinfo)
         wids = index.get_words(1)
         self.assertEqual(len(wids), 3)
-        self.failIf(index._lexicon._wids['one'] in wids)
-        self.failIf(index._lexicon._wids['two'] in wids)
-        self.failIf(index._lexicon._wids['three'] in wids)
-        self.failUnless(index._lexicon._wids['four'] in wids)
-        self.failUnless(index._lexicon._wids['five'] in wids)
-        self.failUnless(index._lexicon._wids['six'] in wids)
+        self.assertFalse(index._lexicon._wids['one'] in wids)
+        self.assertFalse(index._lexicon._wids['two'] in wids)
+        self.assertFalse(index._lexicon._wids['three'] in wids)
+        self.assertTrue(index._lexicon._wids['four'] in wids)
+        self.assertTrue(index._lexicon._wids['five'] in wids)
+        self.assertTrue(index._lexicon._wids['six'] in wids)
 
     def test_reindex_doc_subset(self):
         index = self._makeOne()
@@ -244,14 +244,14 @@ class BaseIndexTestBase:
 
         self.assertEqual(count, 2)
         self.assertEqual(index.word_count(), 2)
-        self.failIf(index._lexicon._wids['one'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['three'] in index._wordinfo)
         wids = index.get_words(1)
         self.assertEqual(len(wids), 2)
-        self.failIf(index._lexicon._wids['one'] in wids)
-        self.failUnless(index._lexicon._wids['two'] in wids)
-        self.failUnless(index._lexicon._wids['three'] in wids)
+        self.assertFalse(index._lexicon._wids['one'] in wids)
+        self.assertTrue(index._lexicon._wids['two'] in wids)
+        self.assertTrue(index._lexicon._wids['three'] in wids)
 
     def test_reindex_doc_superset(self): # TODO
         index = self._makeOne()
@@ -265,20 +265,20 @@ class BaseIndexTestBase:
 
         self.assertEqual(count, 6)
         self.assertEqual(index.word_count(), 6)
-        self.failUnless(index._lexicon._wids['one'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['two'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['three'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['four'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['five'] in index._wordinfo)
-        self.failUnless(index._lexicon._wids['six'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['four'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['five'] in index._wordinfo)
+        self.assertTrue(index._lexicon._wids['six'] in index._wordinfo)
         wids = index.get_words(1)
         self.assertEqual(len(wids), 6)
-        self.failUnless(index._lexicon._wids['one'] in wids)
-        self.failUnless(index._lexicon._wids['two'] in wids)
-        self.failUnless(index._lexicon._wids['three'] in wids)
-        self.failUnless(index._lexicon._wids['four'] in wids)
-        self.failUnless(index._lexicon._wids['five'] in wids)
-        self.failUnless(index._lexicon._wids['six'] in wids)
+        self.assertTrue(index._lexicon._wids['one'] in wids)
+        self.assertTrue(index._lexicon._wids['two'] in wids)
+        self.assertTrue(index._lexicon._wids['three'] in wids)
+        self.assertTrue(index._lexicon._wids['four'] in wids)
+        self.assertTrue(index._lexicon._wids['five'] in wids)
+        self.assertTrue(index._lexicon._wids['six'] in wids)
 
     def test__get_frequencies_raises_NotImplementedError(self):
         index = self._makeOne()
@@ -293,13 +293,13 @@ class BaseIndexTestBase:
         index.index_doc(1, 'one two three')
         index.unindex_doc(1)
         self.assertEqual(index.word_count(), 0)
-        self.failIf(index._lexicon._wids['one'] in index._wordinfo)
-        self.failIf(index._lexicon._wids['two'] in index._wordinfo)
-        self.failIf(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['three'] in index._wordinfo)
         self.assertEqual(index.indexed_count(), 0)
-        self.failIf(index.has_doc(1))
-        self.failIf(1 in index._docwords)
-        self.failIf(1 in index._docweight)
+        self.assertFalse(index.has_doc(1))
+        self.assertFalse(1 in index._docwords)
+        self.assertFalse(1 in index._docweight)
         self.assertRaises(KeyError, index.get_words, 1)
 
     def test_unindex_doc_upgrades_word_count_indexed_count(self):
@@ -314,13 +314,13 @@ class BaseIndexTestBase:
         del index.indexed_count
         index.unindex_doc(1)
         self.assertEqual(index.word_count(), 0)
-        self.failIf(index._lexicon._wids['one'] in index._wordinfo)
-        self.failIf(index._lexicon._wids['two'] in index._wordinfo)
-        self.failIf(index._lexicon._wids['three'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['one'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['two'] in index._wordinfo)
+        self.assertFalse(index._lexicon._wids['three'] in index._wordinfo)
         self.assertEqual(index.indexed_count(), 0)
-        self.failIf(index.has_doc(1))
-        self.failIf(1 in index._docwords)
-        self.failIf(1 in index._docweight)
+        self.assertFalse(index.has_doc(1))
+        self.assertFalse(1 in index._docwords)
+        self.assertFalse(1 in index._docweight)
         self.assertRaises(KeyError, index.get_words, 1)
 
     def test_search_w_empty_term(self):
@@ -437,9 +437,9 @@ class BaseIndexTestBase:
         index.DICT_CUTOFF = 2
         index._add_wordinfo(123, 4, 1)
         index._add_wordinfo(123, 5, 2)
-        self.failUnless(isinstance(index._wordinfo[123], dict))
+        self.assertTrue(isinstance(index._wordinfo[123], dict))
         index._add_wordinfo(123, 6, 3)
-        self.failUnless(isinstance(index._wordinfo[123],
+        self.assertTrue(isinstance(index._wordinfo[123],
                                    index.family.IF.BTree))
         self.assertEqual(dict(index._wordinfo[123]), {1: 4, 2: 5, 3: 6})
 
@@ -449,7 +449,7 @@ class BaseIndexTestBase:
         index._add_wordinfo(123, 4, 1)
         index._add_wordinfo(123, 5, 2)
         index._mass_add_wordinfo({123: 6, 124: 1}, 3)
-        self.failUnless(isinstance(index._wordinfo[123],
+        self.assertTrue(isinstance(index._wordinfo[123],
                                    index.family.IF.BTree))
         self.assertEqual(dict(index._wordinfo[123]), {1: 4, 2: 5, 3: 6})
 
