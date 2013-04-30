@@ -254,8 +254,8 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._searched, ['anything'])
 
     def test_apply_w_results_bogus_query_weight(self):
-        import sys
-        DIVISOR = sys.maxint / 10
+        from hypatia._compat import _maxint
+        DIVISOR = _maxint() / 10.0
         lexicon = DummyLexicon()
         # cause TypeError in division
         okapi = DummyOkapi(lexicon, {1: '14.0', 2: '7.4', 3: '3.2'})

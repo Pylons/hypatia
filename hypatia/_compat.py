@@ -24,6 +24,8 @@ if PY3: #pragma NO COVER
     _long = int
     def _iteritems(x):
         return x.items()
+    def _maxint():
+        return sys.maxsize
 else: #pragma NO COVER
     def b(s):
         return s
@@ -46,3 +48,5 @@ else: #pragma NO COVER
     _long = long
     def _iteritems(x):
         return x.iteritems()
+    def _maxint():
+        return sys.maxint

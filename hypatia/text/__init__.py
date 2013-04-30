@@ -37,6 +37,7 @@ from ..util import BaseIndexMixin
 from .. import query
 from .._compat import string_types
 from .._compat import _iteritems
+from .._compat import _maxint
 
 _marker = object()
 
@@ -130,7 +131,7 @@ class TextIndex(BaseIndexMixin, Persistent):
                 except TypeError:
                     # We overflowed the score, perhaps wildly unlikely.
                     # Who knows.
-                    results[docid] = sys.maxint/10
+                    results[docid] = _maxint()/10
 
         return results
  
