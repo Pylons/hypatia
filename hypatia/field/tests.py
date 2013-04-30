@@ -580,7 +580,7 @@ class FieldIndexTests(unittest.TestCase):
             index.index_doc(i, i)
             c1.insert(i)
         result = index.sort(c1, reverse=True, limit=301) # waaa
-        self.assertEqual(list(result), range(9999, 9698, -1))
+        self.assertEqual(list(result), list(range(9999, 9698, -1)))
 
     def test_sort_force_fwscan_no_limit(self):
         from BTrees.IFBTree import IFSet
