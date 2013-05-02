@@ -152,3 +152,15 @@ Other Helpers
    .. autoclass:: FacetIndex
       :members:
 
+:mod:`hypatia.interfaces`
+-------------------------
+
+.. automodule:: hypatia.interfaces
+
+  .. attribute:: STABLE
+
+     Used as an argument to the ``sort_type`` parameter of IIndexSort.sort.
+
+  .. attribute:: OPTIMAL
+
+     Used as an argument to the ``sort_type`` parameter of IIndexSort.sort.

@@ -7,22 +7,30 @@ from zope.interface import implementer
 _marker = object()
 
 from .. import exc
-from ..interfaces import IResultSet
+from ..interfaces import (
+    IResultSet,
+    STABLE,
+    )
 
 @implementer(IResultSet)
 class ResultSet(object):
 
     family = BTrees.family64
 
-    def __init__(self, ids, numids, resolver):
+    def __init__(self, ids, numids, resolver, sort_type=None):
         self.ids = ids # only guaranteed to be iterable, not sliceable
         self.numids = numids
         self.resolver = resolver
+        self.sort_type = sort_type
         
     def __len__(self):
         return self.numids
 
-    def sort(self, index, reverse=False, limit=None, raise_unsortable=True):
+    def sort(self, index, reverse=False, limit=None, sort_type=None,
+             raise_unsortable=True):
+        if sort_type is None:
+            sort_type = self.sort_type
+        
         ids = self.ids
 
         if not hasattr(ids, '__len__'):
@@ -34,6 +42,7 @@ class ResultSet(object):
             self.ids,
             reverse=reverse,
             limit=limit,
+            sort_type=sort_type,
             raise_unsortable=raise_unsortable,
             )
 
@@ -42,7 +51,7 @@ class ResultSet(object):
         if limit:
             numids = min(numids, limit)
 
-        return self.__class__(ids, numids, self.resolver)
+        return self.__class__(ids, numids, self.resolver, sort_type=STABLE)
 
     def first(self, resolve=True):
         # return the first object or None

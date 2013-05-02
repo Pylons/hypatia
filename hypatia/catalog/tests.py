@@ -204,7 +204,7 @@ class TestCatalogQuery(unittest.TestCase):
         c1 = IFSet([1, 2, 3, 4, 5])
         idx1 = DummyIndex(c1)
         catalog['name1'] = idx1
-        from ..field import FWSCAN
+        from ..interfaces import FWSCAN
         q = self._makeOne(catalog)
         numdocs, result = q.search(name1={}, sort_index='name1',
                                    limit=1, sort_type=FWSCAN)

@@ -87,15 +87,27 @@ class IIndexStatistics(Interface):
 
 class IIndexSort(Interface):
 
-    def sort(docids, reverse=False, limit=None):
+    def sort(docids, reverse=False, limit=None, sort_type=None,
+             raise_unsortable=True):
         """Sort document ids sequence using indexed values
-        
-        If some of docids are not indexed they are skipped from resulting
-        iterable.
         
         Return a sorted iterable of document ids. Limited by value of the
         'limit' argument and optionally reversed, using the 'reverse'
         argument.
+
+        If ``sort_type`` is not ``None``, it should be the value
+        :attr:`hypatia.interfaces.STABLE` to specify that the sort should be
+        stable (see http://www.algorithmist.com/index.php/Stable_Sort) or
+        :attr:`hypatia.interfaces.OPTIMAL` to specify that the sort should be
+        done with the opmimal algorithm (which is not guaranteed to be stable).
+        By default, the sort will be done using the optimal algorithm if
+        ``sort_type`` is not :attr:`~hypatia.interfaces.STABLE``.
+
+        If ``raise_unsortable`` is ``True`` (the default), if the index cannot
+        resolve any of the docids in the set of docids in this result set, a
+        :exc:`hypatia.exc.Unsortable` exception will be raised during iteration
+        over the sorted docids.  If ``raise_unsortable`` is ``False``, if some
+        of docids are not indexed they are skipped from resulting iterable.
         """
 
 class ICatalog(IIndexInjection):
@@ -122,10 +134,28 @@ class IResultSet(Interface):
     def __len__():
         """ Return the length of the result set"""
 
-    def sort(index, reverse=False, limit=None):
+    def sort(index, reverse=False, limit=None, sort_type=None,
+             raise_unsortable=True):
         """Return another IResultSet sorted using the ``index`` (an IIndexSort)
         passed to it after performing the sort using the index and the
-        ``limit`` and ``reverse`` parameters."""
+        ``limit``, ``reverse``, and ``sort_type`` parameters.
+
+        If ``sort_type`` is not ``None``, it should be the value
+        :attr:`hypatia.interfaces.STABLE` to specify that the sort should be
+        stable or :attr:`hypatia.interfaces.OPTIMAL` to specify that the sort
+        algorithm chosen should be optimal (but not necessarily stable).  It's
+        usually unnecessary to pass this value, even if you're resorting an
+        already-sorted set of docids, because the implementation of IResultSet
+        will internally ensure that subsequent sorts of the returned result set
+        of an initial sort will be stable; if you don't want this behavior,
+        explicitly pass :attr:`hypatia.interfaces.OPTIMAL` on the second and
+        subsequent sorts of a set of docids.
+
+        If ``raise_unsortable`` is ``True`` (the default), if the index cannot
+        resolve any of the docids in the set of docids in this result set, a
+        :exc:`hypatia.exc.Unsortable` exception will be raised during iteration
+        over the sorted docids.
+        """
 
     def first(resolve=True):
         """ Return the first element in the sequence.  If ``resolve`` is True,
@@ -150,3 +180,8 @@ class IResultSet(Interface):
     def __iter__():
         """ Return an iterator over the results of ``self.all()``"""
         
+FWSCAN = 'fwscan'
+NBEST = 'nbest'
+TIMSORT = 'timsort'
+STABLE = 'stable'
+OPTIMAL = 'optimal'

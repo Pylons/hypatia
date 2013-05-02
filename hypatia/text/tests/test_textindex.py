@@ -330,7 +330,15 @@ class TextIndexTests(unittest.TestCase):
         index = self._makeOne()
         results = {-2: 5.0, 3: 3.0, 0: 4.5}
         expect = [-2, 0]
-        self.assertEqual(index.sort(results, limit=2, foo='bar'), expect)
+        self.assertEqual(
+            index.sort(
+                results,
+                limit=2,
+                sort_type='bar',
+                raise_unsortable=False
+                ),
+            expect
+            )
 
     def test_docids(self):
         from hypatia._compat import u

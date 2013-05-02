@@ -59,6 +59,32 @@ class TestResultSet(unittest.TestCase):
         self.assertEqual(result.ids, [1, 2, 3])
         self.assertEqual(result.numids, 3)
 
+    def test_second_sort_stable(self):
+        from hypatia.interfaces import STABLE, OPTIMAL
+        inst = self._makeOne([2, 1], 2, None)
+        index = DummyIndex()
+        result = inst.sort(index, limit=1, reverse=True)
+        self.assertEqual(result.ids, [1,2])
+        self.assertEqual(result.numids, 1)
+        self.assertEqual(result.resolver, None)
+        self.assertEqual(index.reverse, True)
+        self.assertEqual(index.limit, 1)
+        self.assertEqual(index.sort_type, None)
+        result2 = result.sort(index, limit=2)
+        self.assertEqual(result2.ids, [1,2])
+        self.assertEqual(result2.numids, 1)
+        self.assertEqual(result2.resolver, None)
+        self.assertEqual(index.reverse, False)
+        self.assertEqual(index.limit, 2)
+        self.assertEqual(index.sort_type, STABLE)
+        result3 = result2.sort(index, limit=3, sort_type=OPTIMAL)
+        self.assertEqual(result3.ids, [1,2])
+        self.assertEqual(result3.numids, 1)
+        self.assertEqual(result3.resolver, None)
+        self.assertEqual(index.reverse, False)
+        self.assertEqual(index.limit, 3)
+        self.assertEqual(index.sort_type, OPTIMAL)
+
     def test_first_no_docids(self):
         inst = self._makeOne([], 0, None)
         self.assertEqual(inst.first(), None)
@@ -122,7 +148,6 @@ class TestResultSet(unittest.TestCase):
             return 'a'
         inst = self._makeOne([2, 1], 2, resolver)
         self.assertEqual(list(iter(inst)), ['a', 'a'])
-        
 
 class TestBaseIndexMixin(unittest.TestCase):
     def _getTargetClass(self):
@@ -390,10 +415,11 @@ class DummyIndex(object):
     def not_indexed(self):
         return self._not_indexed
 
-    def sort(self, ids, reverse, limit, raise_unsortable):
+    def sort(self, ids, reverse, limit, sort_type=None, raise_unsortable=True):
         self.ids = ids
         self.reverse = reverse
         self.limit = limit
+        self.sort_type = sort_type
         self.raise_unsortable = raise_unsortable
         return sorted(ids)
     

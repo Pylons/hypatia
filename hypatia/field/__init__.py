@@ -33,10 +33,6 @@ from .._compat import string_types
 
 _marker = []
 
-FWSCAN = 'fwscan'
-NBEST = 'nbest'
-TIMSORT = 'timsort'
-
 @implementer(
         interfaces.IIndex,
         interfaces.IIndexStatistics,
@@ -203,6 +199,12 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         if not numdocs:
             return []
 
+        if sort_type == interfaces.STABLE:
+            sort_type = interfaces.TIMSORT
+
+        elif sort_type == interfaces.OPTIMAL:
+            sort_type = None
+
         if reverse:
             return self.sort_reverse(
                 docids,
@@ -234,28 +236,27 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         # See http://www.zope.org/Members/Caseman/ZCatalog_for_2.6.1
         # for an overview of why we bother doing all this work to
         # choose the right sort algorithm.
-
+        
         if sort_type is None:
-
             if fwscan_wins(limit, rlen, numdocs):
                 # forward scan beats both n-best and timsort reliably
                 # if this is true
-                sort_type = FWSCAN
+                sort_type = interfaces.FWSCAN
 
             elif limit and nbest_ascending_wins(limit, rlen, numdocs):
                 # nbest beats timsort reliably if this is true
-                sort_type = NBEST
+                sort_type = interfaces.NBEST
 
             else:
-                sort_type = TIMSORT
+                sort_type = interfaces.TIMSORT
 
-        if sort_type == FWSCAN:
+        if sort_type == interfaces.FWSCAN:
             return self.scan_forward(docids, limit, raise_unsortable)
-        elif sort_type == NBEST:
+        elif sort_type == interfaces.NBEST:
             if limit is None:
                 raise ValueError('nbest requires a limit')
             return self.nbest_ascending(docids, limit, raise_unsortable)
-        elif sort_type == TIMSORT:
+        elif sort_type == interfaces.TIMSORT:
             return self.timsort_ascending(docids, limit, raise_unsortable)
         else:
             raise ValueError('Unknown sort type %s' % sort_type)
@@ -272,17 +273,17 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
             rlen = len(docids)
             if limit:
                 if (limit < 300) or (limit/float(rlen) > 0.09):
-                    sort_type = NBEST
+                    sort_type = interfaces.NBEST
                 else:
-                    sort_type = TIMSORT
+                    sort_type = interfaces.TIMSORT
             else:
-                sort_type = TIMSORT
+                sort_type = interfaces.TIMSORT
 
-        if sort_type == NBEST:
+        if sort_type == interfaces.NBEST:
             if limit is None:
                 raise ValueError('nbest requires a limit')
             return self.nbest_descending(docids, limit, raise_unsortable)
-        elif sort_type == TIMSORT:
+        elif sort_type == interfaces.TIMSORT:
             return self.timsort_descending(docids, limit, raise_unsortable)
         else:
             raise ValueError('Unknown sort type %s' % sort_type)

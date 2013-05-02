@@ -174,11 +174,11 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(list(gen), [1])
 
     def test_sort_force_nbest_w_missing_docids(self):
+        from hypatia.interfaces import NBEST
         from hypatia.exc import Unsortable
         index = self._makeOne()
-        index._use_nbest = True
         index.index_doc(1, 'albatross')
-        result = index.sort([2, 3])
+        result = index.sort([2, 3], limit=10, sort_type=NBEST)
         dids = []
         try: # pragma: no cover
             for did in result:
@@ -190,16 +190,16 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(dids, [])
 
     def test_sort_force_nbest_w_missing_docids_raise_unsortable_false(self):
+        from hypatia.interfaces import NBEST
         index = self._makeOne()
-        index._use_nbest = True
         index.index_doc(1, 'albatross')
-        result = index.sort([2, 3], raise_unsortable=False)
+        result = index.sort([2, 3], limit=10, sort_type=NBEST,
+                            raise_unsortable=False)
         self.assertEqual(list(result), [])
 
-    def test_sort_force_lazy_w_missing_docids(self):
+    def test_sort_default_w_missing_docids(self):
         from hypatia.exc import Unsortable
         index = self._makeOne()
-        index._use_lazy = True
         index.index_doc(1, 'albatross')
         result = index.sort([2, 3])
         dids = []
@@ -212,31 +212,12 @@ class FieldIndexTests(unittest.TestCase):
             raise AssertionError('Unsortable not raised')
         self.assertEqual(dids, [])
 
-    def test_sort_force_lazy_w_missing_docids_raise_unsortable_false(self):
+    def test_sort_default_w_missing_docids_raise_unsortable_false(self):
         index = self._makeOne()
-        index._use_lazy = True
         index.index_doc(1, 'albatross')
         self.assertEqual(list(index.sort([2, 3], raise_unsortable=False)), [])
 
-    def test_sort_lazy_nolimit(self):
-        from BTrees.IFBTree import IFSet
-        index = self._makeOne()
-        index._use_lazy = True
-        self._populateIndex(index)
-        c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1)
-        self.assertEqual(list(result), [5, 2, 1, 3, 4])
-
-    def test_sort_lazy_withlimit(self):
-        from BTrees.IFBTree import IFSet
-        index = self._makeOne()
-        index._use_lazy = True
-        self._populateIndex(index)
-        c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, limit=3)
-        self.assertEqual(list(result), [5, 2, 1])
-
-    def test_sort_nonlazy_nolimit(self):
+    def test_sort_default_nolimit(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         self._populateIndex(index)
@@ -244,41 +225,7 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1)
         self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
-    def test_sort_nonlazy_missingdocid(self):
-        from hypatia.exc import Unsortable
-        from BTrees.IFBTree import IFSet
-        index = self._makeOne()
-        self._populateIndex(index)
-        c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1)
-        dids = []
-        try:
-            for did in result:
-                dids.append(did)
-        except Unsortable as e:
-            self.assertEqual(list(e.docids), [99])
-        else: # pragma: no cover
-            raise AssertionError('Unsortable not raised')
-        self.assertEqual(dids, [5, 2, 1, 3, 4]) # 99 not present
-
-    def test_sort_nonlazy_missingdocid_with_limit(self):
-        from BTrees.IFBTree import IFSet
-        index = self._makeOne()
-        self._populateIndex(index)
-        c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1, limit=1)
-        result = index.sort(c1, limit=1)
-        self.assertEqual(list(result), [5]) # raise Unsortable not hit
-
-    def test_sort_nonlazy_missingdocid_raise_unsortable_False(self):
-        from BTrees.IFBTree import IFSet
-        index = self._makeOne()
-        self._populateIndex(index)
-        c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1, raise_unsortable=False)
-        self.assertEqual(list(result), [5, 2, 1, 3, 4]) # 99 not present
-
-    def test_sort_nonlazy_withlimit(self):
+    def test_sort_default_withlimit(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         self._populateIndex(index)
@@ -286,57 +233,59 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1, limit=3)
         self.assertEqual(list(result), [5, 2, 1])
 
-    def test_sort_nonlazy_reverse_nolimit(self):
+    def test_sort_optimal_means_None(self):
+        from hypatia.interfaces import OPTIMAL
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, reverse=True)
-        self.assertEqual(list(result), [4, 3, 1, 2, 5])
+        result = index.sort(c1, sort_type=OPTIMAL)
+        self.assertEqual(list(result), [5, 2, 1, 3, 4])
 
-    def test_sort_nonlazy_reverse_withlimit(self):
+    def test_sort_stable_means_timsort(self):
+        from hypatia.interfaces import STABLE
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, reverse=True, limit=3)
-        self.assertEqual(list(result), [4, 3, 1])
-
+        result = index.sort(c1, sort_type=STABLE)
+        self.assertEqual(list(result), [5, 2, 1, 3, 4])
+        
     def test_sort_nbest(self):
+        from hypatia.interfaces import NBEST
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
-        index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, limit=3)
+        result = index.sort(c1, limit=3, sort_type=NBEST)
         self.assertEqual(list(result), [5, 2, 1])
 
     def test_sort_nbest_reverse(self):
+        from hypatia.interfaces import NBEST
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
-        index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1, reverse=True, limit=3)
+        result = index.sort(c1, reverse=True, limit=3, sort_type=NBEST)
         self.assertEqual(list(result), [4, 3, 1])
 
     def test_sort_nbest_missing_limited(self):
+        from hypatia.interfaces import NBEST
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
-        index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1, limit=3)
+        result = index.sort(c1, limit=3, sort_type=NBEST)
         self.assertEqual(list(result), [5, 2, 1])
 
     def test_sort_nbest_missing_unlimited(self):
+        from hypatia.interfaces import NBEST
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
-        index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1, limit=10)
+        result = index.sort(c1, limit=10, sort_type=NBEST)
         dids = []
         try:
             for did in result:
@@ -348,12 +297,12 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(dids, [5, 2, 1, 3, 4])
 
     def test_sort_nbest_missing_reverse_withlimit(self):
+        from hypatia.interfaces import NBEST
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
-        index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1, reverse=True, limit=3)
+        result = index.sort(c1, reverse=True, limit=3, sort_type=NBEST)
         dids = []
         for did in result:
             dids.append(did)
@@ -361,13 +310,13 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(dids, [4, 3, 1])
 
     def test_sort_nbest_missing_reverse_unlimited(self):
+        from hypatia.interfaces import NBEST
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
-        index._use_nbest = True
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
-        result = index.sort(c1, reverse=True)
+        result = index.sort(c1, reverse=True, limit=10, sort_type=NBEST)
         dids = []
         try:
             for did in result:
@@ -499,7 +448,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_bad_sort_type_reverse_fwscan(self):
         from BTrees.IFBTree import IFSet
-        from ..field import FWSCAN
+        from ..interfaces import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -584,7 +533,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_fwscan_no_limit(self):
         from BTrees.IFBTree import IFSet
-        from ..field import FWSCAN
+        from ..interfaces import FWSCAN
         index = self._makeOne()
         index.force_scan = True
         self._populateIndex(index)
@@ -595,7 +544,7 @@ class FieldIndexTests(unittest.TestCase):
     def test_sort_force_fwscan_missing_docid(self):
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
-        from ..field import FWSCAN
+        from ..interfaces import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -612,7 +561,7 @@ class FieldIndexTests(unittest.TestCase):
         
     def test_sort_force_fwscan_missing_docid_raise_unsortable_false(self):
         from BTrees.IFBTree import IFSet
-        from ..field import FWSCAN
+        from ..interfaces import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -622,7 +571,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_fwscan_w_limit(self):
         from BTrees.IFBTree import IFSet
-        from ..field import FWSCAN
+        from ..interfaces import FWSCAN
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -631,7 +580,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_timsort_no_limit(self):
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -641,7 +590,7 @@ class FieldIndexTests(unittest.TestCase):
     def test_sort_force_timsort_missing_docid(self):
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -658,7 +607,7 @@ class FieldIndexTests(unittest.TestCase):
         
     def test_sort_force_timsort_missing_docid_raise_unsortable_false(self):
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -668,7 +617,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_timsort_w_limit(self):
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -677,7 +626,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_timsort_reverse_nolimit(self):
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -687,7 +636,7 @@ class FieldIndexTests(unittest.TestCase):
     def test_sort_force_timsort_reverse_missing_docid(self):
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -704,7 +653,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_timsort_reverse_missing_docid_raise_unsortable_f(self):
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -716,7 +665,7 @@ class FieldIndexTests(unittest.TestCase):
         
     def test_sort_force_timsort_reverse_withlimit(self):
         from BTrees.IFBTree import IFSet
-        from ..field import TIMSORT
+        from ..interfaces import TIMSORT
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -725,7 +674,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_nbest_no_limit_raises(self):
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -733,7 +682,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_nbest(self):
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -743,7 +692,7 @@ class FieldIndexTests(unittest.TestCase):
     def test_sort_force_nbest_largelimit(self):
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -758,7 +707,7 @@ class FieldIndexTests(unittest.TestCase):
         
     def test_sort_force_nbest_reverse_no_limit_raises(self):
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -767,7 +716,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_nbest_reverse(self):
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5])
@@ -777,7 +726,7 @@ class FieldIndexTests(unittest.TestCase):
     def test_sort_force_nbest_reverse_largelimit(self):
         from hypatia.exc import Unsortable
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -792,7 +741,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_nbest_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
@@ -801,7 +750,7 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_force_nbest_reverse_missing_docid(self):
         from BTrees.IFBTree import IFSet
-        from ..field import NBEST
+        from ..interfaces import NBEST
         index = self._makeOne()
         self._populateIndex(index)
         c1 = IFSet([1, 2, 3, 4, 5, 99])
