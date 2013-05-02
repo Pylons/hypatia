@@ -97,6 +97,45 @@ class TestQueryExecution(unittest.TestCase, _CatalogMaker):
         self.assertEqual(len(resultset), 2)
         self.assertEqual(list(resultset.ids), [4, 5])
 
+class TestFieldIndexResultSetSortStabilityGuarantee(unittest.TestCase):
+    def _makeCatalog(self):
+        from ..catalog import Catalog
+        from ..field import FieldIndex
+
+        catalog = Catalog()
+
+        name = FieldIndex('name')
+        title = FieldIndex('title')
+
+        catalog['name'] = name
+        catalog['title'] = title
+
+        catalog.index_doc(1, Content('name1', 'title1', None, None))
+        catalog.index_doc(2, Content('name2', 'title1', None, None))
+        catalog.index_doc(3, Content('name3', 'title2', None, None))
+        catalog.index_doc(4, Content('name4', 'title2', None, None))
+        catalog.index_doc(5, Content('name5', 'title2', None, None))
+        catalog.index_doc(6, Content('name6', 'title3', None, None))
+
+        return catalog
+
+    def test_it(self):
+        catalog = self._makeCatalog()
+        name_index = catalog['name']
+        title_index = catalog['title']
+        query = name_index.any(
+            ['name6', 'name5', 'name4', 'name3', 'name2', 'name1']
+            )
+        # first we sort by name, which will give us 1,2,3,4,5,6
+        resultset = query.execute().sort(name_index)
+        # then we sort the resulting result set by title; the ordering should
+        # not change (even though some of the titles are identical, and might
+        # be considered interchangeable) because the 2nd and subsequent sorts
+        # of a result set are implicitly marked as stable.
+        resultset = resultset.sort(title_index)
+        self.assertEqual(len(resultset), 6)
+        self.assertEqual(list(resultset.ids), [1, 2, 3, 4, 5, 6])
+
 class Content(object):
     def __init__(self, name, title, text, allowed):
         self.name = name
