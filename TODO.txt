@@ -3,9 +3,6 @@
 - Add data structures to return docids_count(), indexed_count() and
   not_indexed_count() more efficiently if these methods get used frequently.
 
-- Ensure we can do resultset.sort(i1).sort(i2).sort(i3) in order to sort by i1
-  first, then i2, then i3.  Requires sort stability guarantees.
-
 - Do less (ideally no) work during a reindex in the text index when nothing has
   changed.
 
