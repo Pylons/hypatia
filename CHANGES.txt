@@ -1,10 +1,27 @@
-Next release
-------------
+1.0a5 (2013-05-06)
+------------------
 
 - Added support for Python 3.2 / 3.3.
 
 - Fix signature of TextIndex.sort (it would fail when e.g. raise_unsortable was
   passed).
+
+- Add the a ``sort_type`` keyword argument to ``IIndexSort.sort`` and
+  ``IResultSet.sort`` methods.  This value can be passed by calling code to
+  control the type of sorting used.
+
+- Add two constants: ``hypatia.interfaces.STABLE`` and
+  ``hypatia.interfaces.OPTIMAL``.  These can be used as explicit arguments to
+  the ``IIndexSort.sort`` and ``IResultSet.sort`` ``sort_type`` parameter to
+  control the stability of sorting.
+
+- The constructor of ``IResultSet`` now accepts a ``sort_type`` keyword
+  argument.
+
+- The ResultSet constructed by ``IResultSet.sort`` will be passed the value
+  ``hypatia.interfaces.STABLE`` in its constructor to ensure that the second
+  and subsequent sorts of the result set will be done as a stable sort, unless
+  an explicit ``sort_type`` value is passed to that second sort.
 
 0.1a4 (2013-04-28)
 ------------------
