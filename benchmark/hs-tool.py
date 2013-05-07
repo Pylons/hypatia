@@ -12,6 +12,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
+from __future__ import print_function
 """HS-Tool
 """
 import cPickle
@@ -47,7 +48,7 @@ def print_results(results):
             # anything that's actually interesting.
             continue
         filename, line, funcname = place
-        print '%8d %8d' % info, basename(filename), line
+        print('%8d %8d' % info, basename(filename), line)
 
 def annotate_results(results):
     files = {}
@@ -69,24 +70,24 @@ def annotate_results(results):
             annotate(k, v)
 
 def annotate(file, lines):
-    print "-" * 60
-    print file
-    print "-" * 60
+    print("-" * 60)
+    print(file)
+    print("-" * 60)
     f = open(file)
     i = 1
     match = lines[0][0]
     for line in f:
         if match == i:
-            print "%6d %8d " % lines[0][1:], line,
+            print("%6d %8d " % lines[0][1:], line,)
             del lines[0]
             if lines:
                 match = lines[0][0]
             else:
                 match = None
         else:
-            print " " * 16, line,
+            print(" " * 16, line, end=' ')
         i += 1
-    print
+    print()
 
 def get_cache_name(filename):
     d, fn = os.path.split(filename)

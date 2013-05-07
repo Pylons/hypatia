@@ -12,12 +12,15 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
+from __future__ import print_function
 """Dump statistics about each word in the index.
 
 usage: wordstats.py data.fs [index key]
 """
 
-from ZODB.Storage.FileStorage import FileStorage
+import ZODB
+
+from ZODB.FileStorage.FileStorage import FileStorage
 
 def main(fspath, key):
     fs = FileStorage(fspath, read_only=1)
@@ -27,21 +30,21 @@ def main(fspath, key):
 
     lex = index.lexicon
     idx = index.index
-    print "Words", lex.length()
-    print "Documents", idx.length()
+    print("Words", lex.length())
+    print("Documents", idx.length())
 
-    print "Word frequencies: count, word, wid"
+    print("Word frequencies: count, word, wid")
     for word, wid in lex.items():
         docs = idx._wordinfo[wid]
-        print len(docs), word, wid
+        print(len(docs), word, wid)
 
-    print "Per-doc scores: wid, (doc, score,)+"
+    print("Per-doc scores: wid, (doc, score,)+")
     for wid in lex.wids():
-        print wid,
+        print(wid,)
         docs = idx._wordinfo[wid]
         for docid, score in docs.items():
-            print docid, score,
-        print
+            print(docid, score,)
+        print()
 
 if __name__ == "__main__":
     import sys
@@ -53,5 +56,5 @@ if __name__ == "__main__":
     elif len(args) == 2:
         fspath, index_key = args
     else:
-        print "Expected 1 or 2 args, got", len(args)
+        print("Expected 1 or 2 args, got", len(args))
     main(fspath, index_key)

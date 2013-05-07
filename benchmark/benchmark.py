@@ -1,5 +1,6 @@
 # 4933 sec to catalog 511421 documents with 3 field indexes, a facet index
 # and a text index.
+from __future__ import print_function
 
 import os
 import datetime
@@ -38,7 +39,7 @@ class Profiler(object):
         action = TimedAction(name)
         self.action_stack[-1].children.append(action)
         self.action_stack.append(action)
-        print name
+        print(name)
         
     def stop(self, name=None):
         if name is None:
@@ -67,10 +68,10 @@ class TimedAction(object):
     def print_action(self,level=0):
         indent = "  ".join( [ "" for i in xrange(level+1) ] ) # Hacky, sorry
         if self.end_time:
-            print "%s%s: %0.3f" % ( indent, self.name,
-                                    self.end_time - self.start_time )
+            print("%s%s: %0.3f" % ( indent, self.name,
+                                    self.end_time - self.start_time ))
         else:
-            print "%s%s:" % ( indent, self.name )
+            print("%s%s:" % ( indent, self.name ))
 
         for child in self.children:
             child.print_action( level + 1 )
@@ -124,7 +125,7 @@ def prep_catalog():
         manager.close()
         
         profiler.stop( "Index messages" )
-        print "Indexed %d messages" % id
+        print("Indexed %d messages" % id)
     
 def get_mailbox_filenames():
     return [ dir for dir in
@@ -194,7 +195,7 @@ class MailListSucker(HTMLParser):
                 if name == 'href' and href and href[-7:] == '.txt.gz':
                     # Download file
                     href = urljoin( self.url, href )
-                    print "Downloading %s..." % href
+                    print("Downloading %s..." % href)
                     fname = href[href.rindex('/')+1:]
                     down = urlopen(href)
                     out = open( os.path.join( BENCHMARK_DATA_DIR,
@@ -222,7 +223,7 @@ class MessageIterator(object):
             
             # Read whole thing into memory and manipulate it.
             # Not the most efficient but good enough for testing
-            print "load %s" % fname
+            print("load %s" % fname)
             self.messages = gzip.open(
                 os.path.join(BENCHMARK_DATA_DIR,fname)).read().split('\nFrom ')
         
@@ -253,7 +254,7 @@ def run():
 
     profiler.start( "unsorted retrieval" )
     n, results = c.search(date=('0', 'Z'))
-    print '%d results ' % n
+    print('%d results ' % n)
     # Force generator to marshall brains
     for result in results:
         pass
@@ -261,7 +262,7 @@ def run():
 
     profiler.start( "repeat unsorted retrieval" )
     n, results = c.search(date=('0', 'Z'))
-    print '%d results ' % n
+    print('%d results ' % n)
     # Force generator to marshall brains
     for result in results:
         pass
@@ -269,28 +270,28 @@ def run():
 
     profiler.start( "sorted retrieval" )
     n, results = c.search( date=('0', 'Z'), sort_index='subject' )
-    print '%d results ' % n
+    print('%d results ' % n)
     for result in results:
         pass
     profiler.stop( "sorted retrieval" )
 
     profiler.start( "reverse sorted retrieval" )
     n, results = c.search( date=('0', 'Z'), sort_index='subject', reverse=True )
-    print '%d results ' % n
+    print('%d results ' % n)
     for result in results:
         pass
     profiler.stop( "reverse sorted retrieval" )
 
     profiler.start('limit to topic=year:2000')
     n, results = c.search( topics=['year:2000'] )
-    print '%d results' % n
+    print('%d results' % n)
     L = []
     for result in results:
         L.append(result)
     profiler.stop( "limit to topic=year:2000" )
 
     profiler.start('count limited to topic=year:2000')
-    print c['topics'].counts(L, ['year:2000'])
+    print(c['topics'].counts(L, ['year:2000']))
     profiler.stop('count limited to topic=year:2000')
 
     profiler.stop()

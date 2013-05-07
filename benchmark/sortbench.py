@@ -1,3 +1,4 @@
+from __future__ import print_function
 import cPickle
 import math
 import os
@@ -14,7 +15,7 @@ from pychart import legend
 from pychart import text_box
 
 from BTrees.IFBTree import IFSet
-from hypatia.indexes.field import fwscan_wins
+#from hypatia.indexes.field import fwscan_wins
 from hypatia.indexes.field import nbest_ascending_wins
 
 theme.get_options()
@@ -78,7 +79,7 @@ class FieldIndexForwardSort:
         def output(msg):
             tf.write(msg + '\n')
             tf.flush()
-            print msg
+            print(msg)
 
         all_docids = list(self.index._rev_index.keys())
         random.shuffle(all_docids)
@@ -212,15 +213,15 @@ class FieldIndexForwardSort:
                         extra = ''
                         if (t1 /  t2) < .90: # more than 10% difference
                             extra = " * (%0.2f)" % (t1/t2)
-                        print wrongmsg % ('curvelose', rlen, limit, t2, t1,
-                                          extra)
+                        print(wrongmsg
+                                % ('curvelose', rlen, limit, t2, t1, extra))
                         test_wrong +=1
                     elif (not won) and curvewin:
                         extra = ''
                         if (t2 /  t1) < .90: # more than 10% difference
                             extra = " * (%0.2f)" % (t2/t1)
-                        print wrongmsg % ('curvewin', rlen, limit, t1, t2,
-                                          extra)
+                        print(wrongmsg
+                                % ('curvewin', rlen, limit, t1, t2, extra))
                         test_wrong +=1
 
             for limit in wins:
@@ -231,8 +232,8 @@ class FieldIndexForwardSort:
             if test_total:
                 test_right = test_total - test_wrong
                 test_percent = test_right / float(test_total)
-                print "test percentage %0.2f: (%s wrong out of %s)" % (
-                    test_percent, test_wrong, test_total)
+                print("test percentage %0.2f: (%s wrong out of %s)"
+                        % ( test_percent, test_wrong, test_total))
 
         comparename = 'compare-%s-%s-beats-%s' % (self.dbkey,
                                                   sortname1, sortname2)
