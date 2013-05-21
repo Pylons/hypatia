@@ -59,10 +59,18 @@ try:
 except IOError:
     README = CHANGES = ''
 
-install_requires = [
-    'ZODB3>=3.8',
-    'zope.interface',
-    ]
+if sys.version_info < (3,):
+    install_requires = [
+        'ZODB3>=3.8',
+        'zope.interface',
+        ]
+else:
+    install_requires = [
+        'persistent',
+        'BTrees',
+        'ZODB>=4.0.0b2',
+        'zope.interface',
+        ]
 
 testing_extras = ['nose', 'coverage']
 docs_extras = ['Sphinx']
