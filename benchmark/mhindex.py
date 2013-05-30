@@ -12,6 +12,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
+from __future__ import print_function
 """MH mail indexer.
 
 To index messages from a single folder (messages defaults to 'all'):
@@ -76,9 +77,9 @@ MAXLINES = 3
 def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "bd:fhm:n:Op:t:uwW")
-    except getopt.error, msg:
-        print msg
-        print "use -h for help"
+    except getopt.error as msg:
+        print(msg)
+        print("use -h for help")
         return 2
     update = 0
     bulk = 0
@@ -97,7 +98,7 @@ def main():
         if o == "-f":
             dumpfreqs = 1
         if o == "-h":
-            print __doc__
+            print(__doc__)
             return
         if o == "-m":
             maxlines = int(a)
@@ -183,9 +184,9 @@ class Indexer(object):
             self.maxdocid = max(self.docpaths.keys())
         except ValueError:
             self.maxdocid = 0
-        print len(self.docpaths), "Document ids"
-        print len(self.path2docid), "Pathnames"
-        print self.index.lexicon.length(), "Words"
+        print(len(self.docpaths), "Document ids")
+        print(len(self.path2docid), "Pathnames")
+        print(self.index.lexicon.length(), "Words")
 
     def dumpfreqs(self):
         lexicon = self.index.lexicon
@@ -200,7 +201,7 @@ class Indexer(object):
         L.sort()
         L.reverse()
         for freq, wid, word in L:
-            print "%10d %10d %s" % (wid, freq, word)
+            print("%10d %10d %s" % (wid, freq, word))
 
     def dumpwids(self):
         lexicon = self.index.lexicon
@@ -210,7 +211,7 @@ class Indexer(object):
             freq = 0
             for f in index._wordinfo.get(wid, {}).values():
                 freq += f
-            print "%10d %10d %s" % (wid, freq, lexicon.get_word(wid))
+            print("%10d %10d %s" % (wid, freq, lexicon.get_word(wid)))
 
     def dumpwords(self):
         lexicon = self.index.lexicon
@@ -221,7 +222,7 @@ class Indexer(object):
             freq = 0
             for f in index._wordinfo.get(wid, {}).values():
                 freq += f
-            print "%10d %10d %s" % (wid, freq, word)
+            print("%10d %10d %s" % (wid, freq, word))
 
     def close(self):
         self.root = None
@@ -247,7 +248,7 @@ class Indexer(object):
             try:
                 line = raw_input("Query: ")
             except EOFError:
-                print "\nBye."
+                print("\nBye.")
                 break
             line = line.strip()
             if line.startswith("/"):
@@ -269,13 +270,14 @@ class Indexer(object):
                 continue
             if len(results) <= top:
                 if not n:
-                    print "No hits for %r." % text
+                    print("No hits for %r." % text)
                 else:
-                    print "No more hits for %r." % text
+                    print("No more hits for %r." % text)
                 text = ""
                 continue
-            print "[Results %d-%d from %d" % (top+1, min(n, top+nbest), n),
-            print "for query %s]" % repr(text)
+            print("[Results %d-%d from %d" % (top+1, min(n, top+nbest), n),
+                  end=" ")
+            print("for query %s]" % repr(text))
             self.formatresults(text, results, maxlines, top, top+nbest)
             top += nbest
 
@@ -288,10 +290,10 @@ class Indexer(object):
             try:
                 n = int(line) - 1
             except:
-                print "Huh?"
+                print("Huh?")
                 return
         if n < 0 or n >= len(results):
-            print "Out of range"
+            print("Out of range")
             return
         docid, score = results[n]
         path = self.docpaths[docid]
@@ -308,9 +310,9 @@ class Indexer(object):
     def query(self, text, nbest=NBEST, maxlines=MAXLINES):
         results, n = self.timequery(text, nbest)
         if not n:
-            print "No hits for %r." % text
+            print("No hits for %r." % text)
             return
-        print "[Results 1-%d from %d]" % (len(results), n)
+        print("[Results 1-%d from %d]" % (len(results), n))
         self.formatresults(text, results, maxlines)
 
     def timequery(self, text, nbest):
@@ -319,7 +321,7 @@ class Indexer(object):
         results, n = self.index.query(text, 0, nbest)
         t1 = time.time()
         c1 = time.clock()
-        print "[Query time: %.3f real, %.3f user]" % (t1-t0, c1-c0)
+        print("[Query time: %.3f real, %.3f user]" % (t1-t0, c1-c0))
         return results, n
 
     def formatresults(self, text, results, maxlines=MAXLINES,
@@ -329,38 +331,38 @@ class Indexer(object):
         pattern = r"\b(" + "|".join(words) + r")\b"
         pattern = pattern.replace("*", ".*") # glob -> re syntax
         prog = re.compile(pattern, re.IGNORECASE)
-        print '='*70
+        print('='*70)
         rank = lo
         for docid, score in results[lo:hi]:
             rank += 1
             path = self.docpaths[docid]
             score *= 100.0
-            print "Rank:    %d   Score: %d%%   File: %s" % (rank, score, path)
+            print("Rank:    %d   Score: %d%%   File: %s" % (rank, score, path))
             path = os.path.join(self.mh.getpath(), path)
             try:
                 fp = open(path)
-            except (IOError, OSError), msg:
-                print "Can't open:", msg
+            except (IOError, OSError) as msg:
+                print("Can't open:", msg)
                 continue
             msg = mhlib.Message("<folder>", 0, fp)
             for header in "From", "To", "Cc", "Bcc", "Subject", "Date":
                 h = msg.getheader(header)
                 if h:
-                    print "%-8s %s" % (header+":", h)
+                    print("%-8s %s" % (header+":", h))
             text = self.getmessagetext(msg)
             if text:
-                print
+                print()
                 nleft = maxlines
                 for part in text:
                     for line in part.splitlines():
                         if prog.search(line):
-                            print line
+                            print(line)
                             nleft -= 1
                             if nleft <= 0:
                                 break
                     if nleft <= 0:
                         break
-            print '-'*70
+            print('-'*70)
 
     def update(self, args):
         folder = None
@@ -371,7 +373,7 @@ class Indexer(object):
                 if folder is None:
                     folder = arg[1:]
                 else:
-                    print "only one folder at a time"
+                    print("only one folder at a time")
                     return
             else:
                 seqs.append(arg)
@@ -383,16 +385,16 @@ class Indexer(object):
 
         try:
             f = self.mh.openfolder(folder)
-        except mhlib.Error, msg:
-            print msg
+        except mhlib.Error as msg:
+            print(msg)
             return
 
         dict = {}
         for seq in seqs:
             try:
                 nums = f.parsesequence(seq)
-            except mhlib.Error, msg:
-                print msg or "unparsable message sequence: %s" % `seq`
+            except mhlib.Error as msg:
+                print(msg or "unparsable message sequence: %s" % repr(seq))
                 return
             for n in nums:
                 dict[n] = n
@@ -407,24 +409,24 @@ class Indexer(object):
         for folder in args:
             if folder.startswith("+"):
                 folder = folder[1:]
-            print "\nOPTIMIZE FOLDER", folder
+            print("\nOPTIMIZE FOLDER", folder)
             try:
                 f = self.mh.openfolder(folder)
-            except mhlib.Error, msg:
-                print msg
+            except mhlib.Error as msg:
+                print(msg)
                 continue
             self.prescan(f, f.listmessages(), uniqwords)
         L = [(uniqwords[word], word) for word in uniqwords.keys()]
         L.sort()
         L.reverse()
         for i in range(100):
-            print "%3d. %6d %s" % ((i+1,) + L[i])
+            print("%3d. %6d %s" % ((i+1,) + L[i]))
         self.index.lexicon.sourceToWordIds([word for (count, word) in L])
 
     def prescan(self, f, msgs, uniqwords):
         pipeline = [Splitter(), CaseNormalizer(), StopWordRemover()]
         for n in msgs:
-            print "prescanning", n
+            print("prescanning", n)
             m = f.openmessage(n)
             text = self.getmessagetext(m, f.name)
             for p in pipeline:
@@ -434,7 +436,7 @@ class Indexer(object):
 
     def bulkupdate(self, args):
         if not args:
-            print "No folders specified; use ALL to bulk-index all folders"
+            print("No folders specified; use ALL to bulk-index all folders")
             return
         if "ALL" in args:
             i = args.index("ALL")
@@ -442,18 +444,18 @@ class Indexer(object):
         for folder in args:
             if folder.startswith("+"):
                 folder = folder[1:]
-            print "\nFOLDER", folder
+            print("\nFOLDER", folder)
             try:
                 f = self.mh.openfolder(folder)
-            except mhlib.Error, msg:
-                print msg
+            except mhlib.Error as msg:
+                print(msg)
                 continue
             self.updatefolder(f, f.listmessages())
-            print "Total", len(self.docpaths)
+            print("Total", len(self.docpaths))
         self.commit()
-        print "Indexed", self.index.lexicon._nbytes, "bytes and",
-        print self.index.lexicon._nwords, "words;",
-        print len(self.index.lexicon._words), "unique words."
+        print("Indexed", self.index.lexicon._nbytes, "bytes and",)
+        print(self.index.lexicon._nwords, "words;",)
+        print(len(self.index.lexicon._words), "unique words.")
 
     def updatefolder(self, f, msgs):
         self.watchfolders[f.name] = self.getmtime(f.name)
@@ -461,20 +463,20 @@ class Indexer(object):
             path = "%s/%s" % (f.name, n)
             docid = self.path2docid.get(path, 0)
             if docid and self.getmtime(path) == self.doctimes.get(docid, 0):
-                print "unchanged", docid, path
+                print("unchanged", docid, path)
                 continue
             docid = self.newdocid(path)
             try:
                 m = f.openmessage(n)
             except IOError:
-                print "disappeared", docid, path
+                print("disappeared", docid, path)
                 self.unindexpath(path)
                 continue
             text = self.getmessagetext(m, f.name)
             if not text:
                 self.unindexpath(path)
                 continue
-            print "indexing", docid, path
+            print("indexing", docid, path)
             self.index.index_doc(docid, text)
             self.maycommit()
         # Remove messages from the folder that no longer exist
@@ -483,19 +485,19 @@ class Indexer(object):
                 break
             if self.getmtime(path) == 0:
                 self.unindexpath(path)
-        print "done."
+        print("done.")
 
     def unindexpath(self, path):
         if self.path2docid.has_key(path):
             docid = self.path2docid[path]
-            print "unindexing", docid, path
+            print("unindexing", docid, path)
             del self.docpaths[docid]
             del self.doctimes[docid]
             del self.path2docid[path]
             try:
                 self.index.unindex_doc(docid)
-            except KeyError, msg:
-                print "KeyError", msg
+            except KeyError as msg:
+                print("KeyError", msg)
             self.maycommit()
 
     def getmessagetext(self, m, name=None):
@@ -508,14 +510,14 @@ class Indexer(object):
         except KeyboardInterrupt:
             raise
         except:
-            print "(getmsgparts failed:)"
+            print("(getmsgparts failed:)")
             reportexc()
         return L
 
     def getmsgparts(self, m, L, level):
         ctype = m.gettype()
         if level or ctype != "text/plain":
-            print ". "*level + str(ctype)
+            print(". "*level + str(ctype))
         if ctype == "text/plain":
             L.append(m.getbodytext())
         elif ctype in ("multipart/alternative", "multipart/mixed"):
@@ -552,7 +554,7 @@ class Indexer(object):
         path = os.path.join(self.mh.getpath(), path)
         try:
             st = os.stat(path)
-        except os.error, msg:
+        except os.error as msg:
             return 0
         return int(st[ST_MTIME])
 
@@ -563,7 +565,7 @@ class Indexer(object):
 
     def commit(self):
         if self.trans_count > 0:
-            print "committing..."
+            print("committing...")
             transaction.commit()
             self.trans_count = 0
             self.pack_count += 1
@@ -572,7 +574,7 @@ class Indexer(object):
 
     def pack(self):
         if self.pack_count > 0:
-            print "packing..."
+            print("packing...")
             self.database.pack()
             self.pack_count = 0
 
