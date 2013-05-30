@@ -383,6 +383,11 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(result.__class__, query.NotContains)
         self.assertEqual(result._value, 1)
 
+    def test_check_query(self):
+        index = self._makeOne()
+        self.assertTrue(index.check_query('abc'))
+        self.assertFalse(index.check_query(','))
+
 class DummyOkapi:
 
     _cleared = False

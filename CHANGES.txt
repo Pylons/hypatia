@@ -1,3 +1,9 @@
+Next release
+------------
+
+- Add ``check_query`` method to text index to allow for checking if a search
+  term is parseable.
+
 1.0a5 (2013-05-06)
 ------------------
 

@@ -30,6 +30,7 @@ from .lexicon import (
     )
 from .okapiindex import OkapiIndex
 from .queryparser import QueryParser
+from .parsetree import ParseError
 
 from ..util import BaseIndexMixin 
 from .. import query
@@ -110,9 +111,22 @@ class TextIndex(BaseIndexMixin, Persistent):
         """Return the number of words in the index."""
         return self.index.word_count()
 
-    def apply(self, querytext, start=0, count=None):
+    def parse_query(self, querytext):
         parser = QueryParser(self.lexicon)
         tree = parser.parseQuery(querytext)
+        return tree
+
+    def check_query(self, querytext):
+        """ Returns True if the querytext can be turned into a parse tree,
+        returns False if otherwise. """
+        try:
+            self.parse_query(querytext)
+            return True
+        except ParseError:
+            return False
+
+    def apply(self, querytext, start=0, count=None):
+        tree = self.parse_query(querytext)
         results = tree.executeQuery(self.index)
         if results:
             qw = self.index.query_weight(tree.terms())
