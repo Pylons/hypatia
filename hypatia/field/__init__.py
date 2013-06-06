@@ -86,6 +86,11 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         self._num_docs = Length(0)
         self._not_indexed = self.family.IF.TreeSet()
 
+    def unique_values(self):
+        """ Return the unique values in the index for all docids as an iterable
+        """
+        return self._fwd_index.keys()
+
     def not_indexed(self):
         return self._not_indexed
 
