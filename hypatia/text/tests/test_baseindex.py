@@ -87,10 +87,10 @@ class BaseIndexTestBase:
         self.assertTrue(index.family is BTrees.family64)
 
     def test_word_count_method_raises_NotImplementedError(self):
-        class DerviedDoesntSet_word_count(self._getTargetClass()):
+        class DerivedDoesntSet_word_count(self._getTargetClass()):
             def __init__(self):
                 pass
-        index = DerviedDoesntSet_word_count()
+        index = DerivedDoesntSet_word_count()
         self.assertRaises(NotImplementedError, index.word_count)
 
     def test_indexed_count_method_raises_NotImplementedError(self):
