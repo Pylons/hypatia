@@ -15,6 +15,8 @@
 """
 import unittest
 
+from hypatia._compat import u
+
 class BaseIndexTestBase:
     # Subclasses must define '_getBTreesFamily'
     def _getTargetClass(self):
@@ -85,10 +87,10 @@ class BaseIndexTestBase:
         self.assertTrue(index.family is BTrees.family64)
 
     def test_word_count_method_raises_NotImplementedError(self):
-        class DerviedDoesntSet_word_count(self._getTargetClass()):
+        class DerivedDoesntSet_word_count(self._getTargetClass()):
             def __init__(self):
                 pass
-        index = DerviedDoesntSet_word_count()
+        index = DerivedDoesntSet_word_count()
         self.assertRaises(NotImplementedError, index.word_count)
 
     def test_indexed_count_method_raises_NotImplementedError(self):
@@ -105,9 +107,9 @@ class BaseIndexTestBase:
             return dict([(y, x) for x, y in enumerate(wids)]), 1
         index._get_frequencies = _faux_get_frequencies
 
-        index.index_doc(1, 'one two three')
+        index.index_doc(1, u('one two \u00dcnic\u00f6de'))
 
-        self.assertEqual(index.document_repr(1), 'one two three')
+        self.assertEqual(index.document_repr(1), u('one two \u00dcnic\u00f6de'))
         self.assertEqual(index.document_repr(50, True), True)
 
     def test_index_doc_simple(self):
