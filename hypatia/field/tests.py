@@ -73,11 +73,13 @@ class FieldIndexTests(unittest.TestCase):
         self.assertTrue(index.family is BTrees.family64)
         self.assertEqual(index.indexed_count(), 0)
         self.assertEqual(index.word_count(), 0)
+        self.assertEqual(len(index.unique_values()), 0)
 
     def test_ctor_explicit_family(self):
         import BTrees
         index = self._makeOne(family=BTrees.family32)
         self.assertTrue(index.family is BTrees.family32)
+
 
     def test_index_doc_new(self):
         index = self._makeOne()
@@ -86,6 +88,7 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(index.word_count(), 1)
         self.assertTrue(1 in index._rev_index)
         self.assertTrue('value' in index._fwd_index)
+        self.assertEqual(list(index.unique_values()), ['value'])
 
     def test_index_doc_existing_same_value(self):
         index = self._makeOne()
@@ -96,6 +99,7 @@ class FieldIndexTests(unittest.TestCase):
         self.assertTrue(1 in index._rev_index)
         self.assertTrue('value' in index._fwd_index)
         self.assertEqual(list(index._fwd_index['value']), [1])
+        self.assertEqual(list(index.unique_values()), ['value'])
 
     def test_index_doc_existing_new_value(self):
         index = self._makeOne()
@@ -107,6 +111,7 @@ class FieldIndexTests(unittest.TestCase):
         self.assertFalse('value' in index._fwd_index)
         self.assertTrue('new_value' in index._fwd_index)
         self.assertEqual(list(index._fwd_index['new_value']), [1])
+        self.assertEqual(list(index.unique_values()), ['new_value'])
 
     def test_unindex_doc_no_residual_fwd_values(self):
         index = self._makeOne()
@@ -116,6 +121,7 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(index.word_count(), 0)
         self.assertFalse(1 in index._rev_index)
         self.assertFalse('value' in index._fwd_index)
+        self.assertEqual(len(index.unique_values()), 0)
 
     def test_unindex_doc_w_residual_fwd_values(self):
         index = self._makeOne()
@@ -128,6 +134,7 @@ class FieldIndexTests(unittest.TestCase):
         self.assertTrue(2 in index._rev_index)
         self.assertTrue('value' in index._fwd_index)
         self.assertEqual(list(index._fwd_index['value']), [2])
+        self.assertEqual(list(index.unique_values()), ['value'])
 
     def test_apply_two_tuple_miss(self):
         index = self._makeOne()
