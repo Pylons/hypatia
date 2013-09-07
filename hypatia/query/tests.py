@@ -740,6 +740,60 @@ class TestAnd(BoolOpTestBase):
         self.assertTrue(right.negated)
 
 
+class testExecute(unittest.TestCase):
+
+    def _makeDummyQuery(self):
+        class DummyQuery(object):
+            index = DummyIndex()
+
+            def _optimize(self):
+                return self
+
+            def flush(self, value):
+                self.flushed = value
+
+        return DummyQuery()
+
+    def test_execute_first(self):
+        from . import Or
+        from . import And
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        o = Or(left, right)
+        third = self._makeDummyQuery()
+        a = And(o, third)
+        a.execute()
+
+    def test_execute_second(self):
+        from . import Or
+        from . import And
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        o = Or(left, right)
+        third = self._makeDummyQuery()
+        a = And(third, o)
+        a.execute()
+
+    def test_execute_both(self):
+        from . import And
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        a = And(left, right)
+        a.execute()
+
+    def test_execute_none(self):
+        from . import Or
+        from . import And
+        left = self._makeDummyQuery()
+        right = self._makeDummyQuery()
+        o = Or(left, right)
+        third = self._makeDummyQuery()
+        fourth = self._makeDummyQuery()
+        o2 = Or(third, fourth)
+        a = And(o, o2)
+        a.execute()
+
+
 class TestNot(BoolOpTestBase):
 
     def _makeOne(self, query):
