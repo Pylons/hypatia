@@ -406,8 +406,6 @@ class BoolOp(Query):
         if not self.queries:
             raise ValueError('No subqueries')
 
-        index = None
-
         queries = [self]
         index = None
 
