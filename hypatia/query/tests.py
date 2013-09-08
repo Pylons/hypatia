@@ -780,6 +780,14 @@ class TestBoolOpExecute(unittest.TestCase):
         self.assertRaises(ValueError, inst.execute,
                           optimize=False, names={'a': 1}, resolver=True)
         
+    def test_execute_no_query_has_an_index(self):
+        from . import Or
+        class Dummy(object):
+            def iter_children(self):
+                return ()
+        inst = Or(Dummy())
+        self.assertRaises(ValueError, inst.execute,
+                          optimize=False, names={'a': 1}, resolver=True)
 
 class TestNot(BoolOpTestBase):
 
