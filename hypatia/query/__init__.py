@@ -4,7 +4,10 @@ import sys
 
 import BTrees
 
-from ..util import RichComparisonMixin
+from ..util import (
+    RichComparisonMixin,
+    BaseIndexMixin,
+    )
 from .._compat import xrange
 
 
@@ -406,14 +409,12 @@ class BoolOp(Query):
         if not self.queries:
             raise ValueError('No subqueries')
 
-        index = self.queries[0].index
-
         if optimize:
             query = self._optimize()
         else:
             query = self
 
-        return index.resultset_from_query(
+        return BaseIndexMixin.resultset_from_query(
             query,
             names=names,
             resolver=resolver

@@ -1,5 +1,7 @@
 import unittest
 
+from BTrees.tests.test__base import _Mapping
+
 def _skip_on_Python_3_2(func):
     import sys
     if sys.version_info[:2] == (3, 2): #pragma NO COVER
@@ -583,7 +585,15 @@ class TestBoolOp(BoolOpTestBase):
 
     def _getTargetClass(self):
         from . import BoolOp as cls
-        return cls
+
+        # BoolOp is an abstract class and has no _apply,
+        # so let's mock it.
+
+        class BoolOpImpl(cls):
+            def _apply(self, names):
+                return names
+
+        return BoolOpImpl
 
     def test_iter_children(self):
 
@@ -594,46 +604,40 @@ class TestBoolOp(BoolOpTestBase):
         o = self._makeOne(left, right)
         self.assertEqual(list(o.iter_children()), [left, right])
 
-    def _makeDummyQuery(self):
-        class DummyQuery(object):
-            index = DummyIndex()
-            def _optimize(self):
-                return self
-            def flush(self, value):
-                self.flushed = value
-        return DummyQuery()
+    def _makeDummyQuery(self, values):
+        return DummyQuery(_Mapping(values), index=DummyIndex())
 
     def test_execute(self):
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         inst = self._makeOne(left, right)
-        rs = inst.execute()
-        self.assertEqual(rs['query'], inst)
-        self.assertEqual(rs['names'], None)
-        self.assertEqual(rs['resolver'], None)
+        rs = inst.execute(names={'a': 1})
+        self.assertEqual(rs.numids, 1)
+        self.assertEqual(rs.ids, {'a': 1})
+        self.assertEqual(rs.resolver, None)
 
     def test_flush(self):
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         inst = self._makeOne(left, right)
         inst.flush(True)
         self.assertEqual(left.flushed, True)
         self.assertEqual(right.flushed, True)
 
     def test_execute_withargs(self):
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         inst = self._makeOne(left, right)
-        rs = inst.execute(optimize=False, names={'a':1}, resolver=True)
-        self.assertEqual(rs['query'], inst)
-        self.assertEqual(rs['names'], {'a':1})
-        self.assertEqual(rs['resolver'], True)
+        rs = inst.execute(optimize=False, names={'a': 1}, resolver=True)
+        self.assertEqual(rs.numids, 1)
+        self.assertEqual(rs.ids, {'a': 1})
+        self.assertEqual(rs.resolver, True)
 
     def test_execute_no_queries(self):
         from . import BoolOp
         inst = BoolOp()
         self.assertRaises(ValueError, inst.execute,
-                          optimize=False, names={'a':1}, resolver=True)
+                          optimize=False, names={'a': 1}, resolver=True)
 
 
 class TestOr(BoolOpTestBase):
@@ -740,55 +744,46 @@ class TestAnd(BoolOpTestBase):
         self.assertTrue(right.negated)
 
 
-class testExecute(unittest.TestCase):
+class TestExecute(unittest.TestCase):
 
-    def _makeDummyQuery(self):
-        class DummyQuery(object):
-            index = DummyIndex()
-
-            def _optimize(self):
-                return self
-
-            def flush(self, value):
-                self.flushed = value
-
-        return DummyQuery()
+    def _makeDummyQuery(self, values):
+        return DummyQuery(_Mapping(values), index=DummyIndex())
 
     def test_execute_first(self):
         from . import Or
         from . import And
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         o = Or(left, right)
-        third = self._makeDummyQuery()
+        third = self._makeDummyQuery({'boo': 21})
         a = And(o, third)
         a.execute()
 
     def test_execute_second(self):
         from . import Or
         from . import And
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         o = Or(left, right)
-        third = self._makeDummyQuery()
+        third = self._makeDummyQuery({'soap': 22})
         a = And(third, o)
         a.execute()
 
     def test_execute_both(self):
         from . import And
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         a = And(left, right)
         a.execute()
 
     def test_execute_none(self):
         from . import Or
         from . import And
-        left = self._makeDummyQuery()
-        right = self._makeDummyQuery()
+        left = self._makeDummyQuery({'foo': 11})
+        right = self._makeDummyQuery({'bar': 12})
         o = Or(left, right)
-        third = self._makeDummyQuery()
-        fourth = self._makeDummyQuery()
+        third = self._makeDummyQuery({'boo': 21})
+        fourth = self._makeDummyQuery({'soap': 22})
         o2 = Or(third, fourth)
         a = And(o, o2)
         a.execute()
