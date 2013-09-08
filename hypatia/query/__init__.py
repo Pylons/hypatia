@@ -406,7 +406,21 @@ class BoolOp(Query):
         if not self.queries:
             raise ValueError('No subqueries')
 
-        index = self.queries[0].index
+        index = None
+
+        queries = [self]
+        index = None
+
+        while queries:
+            # drill down until we find some query with an index attached
+            subq = queries.pop(0)
+            index = getattr(subq, 'index', None)
+            if index is not None:
+                break
+            queries.extend(list(subq.iter_children()))
+        
+        if index is None:
+            raise ValueError('No query has a reference to an index')
 
         if optimize:
             query = self._optimize()

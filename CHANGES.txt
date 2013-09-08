@@ -3,6 +3,10 @@ Next release
 
 - Add a ``unique_values`` API to field index.
 
+- Sometimes an ``index`` attribute could not be found to resolve a result 
+  set when deeply nesting boolean operations (like And and Or).  See 
+  https://github.com/Pylons/hypatia/pull/5
+
 1.0a6 (2013-05-30)
 ------------------
 

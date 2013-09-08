@@ -163,8 +163,11 @@ class BaseIndexMixin(object):
             )
         
     def resultset_from_query(self, query, names=None, resolver=None):
-        # default resultset factory; meant to be overridden by systems
-        # that have a default resolver
+        # default resultset factory; meant to be overridden by systems that
+        # have a default resolver.  NB: although the default implementation
+        # below does not access "self", so it would appear that this could be
+        # turned into a classmeth or staticmethod, subclasses that override may
+        # expect self, so this is a plain method.
         docids = query._apply(names)
         numdocs = len(docids)
         return ResultSet(docids, numdocs, resolver)
