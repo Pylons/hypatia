@@ -162,7 +162,8 @@ class BaseIndexMixin(object):
             str(self),
             )
         
-    def resultset_from_query(self, query, names=None, resolver=None):
+    @classmethod
+    def resultset_from_query(cls, query, names=None, resolver=None):
         # default resultset factory; meant to be overridden by systems
         # that have a default resolver
         docids = query._apply(names)
