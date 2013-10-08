@@ -152,7 +152,8 @@ class FieldIndexTests(unittest.TestCase):
 
     def test_sort_w_empty_index(self):
         index = self._makeOne()
-        self.assertEqual(list(index.sort([1, 2, 3])), [])
+        self.assertEqual(
+            list(index.sort([1, 2, 3], raise_unsortable=False)), [])
 
     def test_sort_w_empty_docids(self):
         index = self._makeOne()
@@ -334,13 +335,6 @@ class FieldIndexTests(unittest.TestCase):
             raise AssertionError('Unsortable not raised')
         self.assertEqual(dids, [4, 3, 1, 2, 5])
         
-    def test_sort_nodocs(self):
-        from BTrees.IFBTree import IFSet
-        index = self._makeOne()
-        c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1)
-        self.assertEqual(list(result), [])
-
     def test_sort_nodocids(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()
@@ -432,13 +426,20 @@ class FieldIndexTests(unittest.TestCase):
         result = index.sort(c1)
         self.assertEqual(list(result), [])
 
-    def test_sort_no_docs(self):
+    def test_sort_no_docs_raise_unsortable_False(self):
         index = self._makeOne()
         from BTrees.IFBTree import IFSet
         c1 = IFSet([1, 2, 3, 4, 5])
-        result = index.sort(c1)
+        result = index.sort(c1, raise_unsortable=False)
         self.assertEqual(list(result), [])
 
+    def test_sort_no_docs_raise_unsortable_True(self):
+        from hypatia.exc import Unsortable
+        index = self._makeOne()
+        from BTrees.IFBTree import IFSet
+        c1 = IFSet([1, 2, 3, 4, 5])
+        self.assertRaises(Unsortable, index.sort, c1, raise_unsortable=True)
+        
     def test_sort_bad_limit(self):
         from BTrees.IFBTree import IFSet
         index = self._makeOne()

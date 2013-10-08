@@ -7,6 +7,9 @@ Next release
   set when deeply nesting boolean operations (like And and Or).  See 
   https://github.com/Pylons/hypatia/pull/5
 
+- Throw an Unsortable properly when a field index without any docids is used as
+  a sort index and ``raise_unsortable`` is ``True``.
+
 1.0a6 (2013-05-30)
 ------------------
 

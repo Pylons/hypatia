@@ -202,6 +202,8 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
         numdocs = self._num_docs.value
         if not numdocs:
+            if raise_unsortable:
+                raise Unsortable(docids)
             return []
 
         if sort_type == interfaces.STABLE:
