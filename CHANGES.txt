@@ -1,5 +1,5 @@
-Next release
-------------
+0.1a7 (2013-10-08)
+------------------
 
 - Add a ``unique_values`` API to field index.
 
@@ -10,13 +10,13 @@ Next release
 - Throw an Unsortable properly when a field index without any docids is used as
   a sort index and ``raise_unsortable`` is ``True``.
 
-1.0a6 (2013-05-30)
+0.1a6 (2013-05-30)
 ------------------
 
 - Add ``check_query`` method to text index to allow for checking if a search
   term is parseable.
 
-1.0a5 (2013-05-06)
+0.1a5 (2013-05-06)
 ------------------
 
 - Added support for Python 3.2 / 3.3.
