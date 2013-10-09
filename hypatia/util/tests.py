@@ -149,6 +149,19 @@ class TestResultSet(unittest.TestCase):
         inst = self._makeOne([2, 1], 2, resolver)
         self.assertEqual(list(iter(inst)), ['a', 'a'])
 
+    def test_intersect_docids(self):
+        inst = self._makeOne([3, 2, 1], 3, None)
+        result = inst.intersect([1])
+        self.assertEqual(result.__class__, inst.__class__)
+        self.assertEqual(result.ids, [1])
+
+    def test_intersect_rs(self):
+        inst = self._makeOne([3, 2, 1], 3, None)
+        inst2 = self._makeOne([3, 2], 2, None)
+        result = inst.intersect(inst2)
+        self.assertEqual(result.__class__, inst.__class__)
+        self.assertEqual(result.ids, [3, 2])
+        
 class TestBaseIndexMixin(unittest.TestCase):
     def _getTargetClass(self):
         from . import BaseIndexMixin

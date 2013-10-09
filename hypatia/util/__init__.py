@@ -85,6 +85,16 @@ class ResultSet(object):
     def __iter__(self):
         return iter(self.all())
 
+    def intersect(self, docids):
+        """ Intersect this resultset with a sequence of docids or
+        another resultset.  Returns a new ResultSet. """
+        # NB: we can't use an intersection function here because
+        # self.ids may be a generator
+        if isinstance(docids, ResultSet):
+            docids = docids.ids
+        filtered_ids = [ x for x in self.ids if x in docids ]
+        return self.__class__(filtered_ids, len(filtered_ids), self.resolver)
+
 class BaseIndexMixin(object):
     """ Mixin class for indexes that implements common behavior """
 
