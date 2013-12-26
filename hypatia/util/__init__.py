@@ -14,6 +14,7 @@ from ..interfaces import (
 
 @implementer(IResultSet)
 class ResultSet(object):
+    """Implements :class:`hypatia.interfaces.IResultSet`"""
 
     family = BTrees.family64
 
