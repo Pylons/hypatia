@@ -166,7 +166,7 @@ class IResultSet(Interface):
         """ Return the element in the resultset, asserting that there is only
         one result.  If the resultset has more than one element, raise an
         :exc:`hypatia.exc.MultipleResults` exception.  If the resultset has no
-        elements, raise an :ex:`hypatia.exc.NoResults` exception. `If
+        elements, raise an :exc:`hypatia.exc.NoResults` exception. `If
         ``resolve`` is True, and the result set has a valid resolver, return
         the resolved document, otherwise return the document id of the
         document."""
