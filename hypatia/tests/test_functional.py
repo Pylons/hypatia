@@ -72,6 +72,72 @@ class TestCatalogQueryWithPythonQueryObjects(
             query.Contains(self.text, 'body')
             )
 
+class TestCatalogQueryWithPythonQueryObjectsUnionAndIntersection(
+    unittest.TestCase,
+    _CatalogMaker,
+    ):
+    def _get_result(self, q):
+        from ..catalog import CatalogQuery
+
+        cq = CatalogQuery(self.catalog)
+
+        numdocs, result = cq.query(
+            q,
+            sort_index='name',
+            limit=5,
+            names=dict(body='body')
+            )
+        return numdocs, result
+    
+    def test_union_both_left_and_right_nonempty(self):
+        self.catalog = self._makeCatalog()
+        q = (
+            query.All(self.allowed, ['a', 'b']) &
+            query.Any(self.name,
+                      ['name1', 'name2', 'name3', 'name4', 'name5']) &
+            query.Not(query.Eq(self.title, 'title3')) |
+            query.Contains(self.text, 'body')
+            )
+        numdocs, result = self._get_result(q)
+        self.assertEqual(numdocs, 5)
+        self.assertEqual(list(result), [1, 2, 3, 4, 5])
+
+    def test_union_left_nonempty_right_empty(self):
+        self.catalog = self._makeCatalog()
+        q = (
+            query.All(self.allowed, ['a', 'b']) &
+            query.Any(self.name,
+                      ['name1', 'name2', 'name3', 'name4', 'name5']) &
+            query.Not(query.Eq(self.title, 'title3')) |
+            query.Contains(self.text, 'nope')
+            )
+        numdocs, result = self._get_result(q)
+        self.assertEqual(numdocs, 2)
+        self.assertEqual(list(result), [4, 5])
+
+    def test_union_left_empty_right_nonempty(self):
+        self.catalog = self._makeCatalog()
+        q = (
+            query.Contains(self.text, 'nope') |
+            query.All(self.allowed, ['a', 'b']) &
+            query.Any(self.name,
+                      ['name1', 'name2', 'name3', 'name4', 'name5']) &
+            query.Not(query.Eq(self.title, 'title3'))
+            )
+        numdocs, result = self._get_result(q)
+        self.assertEqual(numdocs, 2)
+        self.assertEqual(list(result), [4, 5])
+
+    def test_intersection_left_nonempty_right_empty(self):
+        self.catalog = self._makeCatalog()
+        q = (
+            query.Contains(self.text, 'body') &
+            query.All(self.allowed, ['c', 'd'])
+            )
+        numdocs, result = self._get_result(q)
+        self.assertEqual(numdocs, 0)
+        self.assertEqual(list(result), [])
+        
 class TestCatalogQueryWithIndexHelpers(
     unittest.TestCase,
     TestCatalogQueryBase

@@ -16,6 +16,8 @@ class Query(object):
     """
     __parent__ = None
     __name__ = None
+    family = BTrees.family64
+
 
     def __and__(self, right):
         self._check_type("and", right)
@@ -46,6 +48,23 @@ class Query(object):
         """
         return self
 
+    def intersect(self, left, names):
+        right = self._apply(names)
+        if not len(left) or not len(right):
+            return self.family.IF.Set()
+        _, result = self.family.IF.weightedIntersection(left, right)
+        return result
+
+    def union(self, left, names):
+        right = self._apply(names)
+        leftlen = len(left)
+        rightlen = len(right)
+        if leftlen and not rightlen:
+            return left
+        if rightlen and not leftlen:
+            return right
+        _, result = self.family.IF.weightedUnion(left, right)
+        return result
 
 class Comparator(Query):
     """
@@ -382,8 +401,6 @@ class BoolOp(Query):
     """
     Base class for Or and And operators.
     """
-    family = BTrees.family64
-
     def __init__(self, *queries):
         arguments = []
         for query in queries:
@@ -490,16 +507,10 @@ class Or(BoolOp):
     """Boolean Or of multiple queries."""
 
     def _apply(self, names):
-        # XXX Try to figure out when we need weightedOr and when we can
-        # just use union or multiunion.
         queries = self.queries
         result = queries[0]._apply(names)
         for query in queries[1:]:
-            next_result = query._apply(names)
-            if len(result) == 0:
-                result = next_result
-            elif len(next_result) > 0:
-                _, result = self.family.IF.weightedUnion(result, next_result)
+            result = query.union(result, names)
         return result
 
     def negate(self):
@@ -552,18 +563,13 @@ class And(BoolOp):
     """Boolean And of multiple queries."""
 
     def _apply(self, names):
-        # XXX Try to figure out when we need weightedIntersection and when we
-        # can just use intersection.
         IF = self.family.IF
         queries = self.queries
         result = queries[0]._apply(names)
         for query in queries[1:]:
             if len(result) == 0:
                 return IF.Set()
-            next_result = query._apply(names)
-            if len(next_result) == 0:
-                return IF.Set()
-            _, result = IF.weightedIntersection(result, next_result)
+            result = query.intersect(result, names)
         return result
 
     def negate(self):

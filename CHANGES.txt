@@ -1,3 +1,11 @@
+Next release
+------------
+
+- Query objects are now consulted for intersect and union operations via
+  methods, instead of the intersection/union logic being embedded in And and Or
+  query objects.  This makes it possible to create query object types which
+  intersect and/or union differently when combined with other query results.
+
 0.1 (2014-02-09)
 ----------------
 

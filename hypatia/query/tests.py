@@ -623,7 +623,8 @@ class TestOr(BoolOpTestBase):
         self.assertEqual(o._apply(None), set([1, 2, 3, 4]))
         self.assertTrue(left.applied)
         self.assertTrue(right.applied)
-        self.assertEqual(o.family.union, (left.results, right.results))
+        self.assertEqual(left.unioned, None)
+        self.assertEqual(right.unioned, (left.results, right.results))
 
     def test_apply_left_empty(self):
         left = DummyQuery(set())
@@ -633,7 +634,8 @@ class TestOr(BoolOpTestBase):
         self.assertEqual(o._apply(None), set([3, 4]))
         self.assertTrue(left.applied)
         self.assertTrue(right.applied)
-        self.assertEqual(o.family.union, None)
+        self.assertEqual(left.unioned, None)
+        self.assertEqual(right.unioned, (left.results, right.results))
 
     def test_apply_right_empty(self):
         left = DummyQuery(set([1, 2]))
@@ -643,7 +645,8 @@ class TestOr(BoolOpTestBase):
         self.assertEqual(o._apply(None), set([1, 2]))
         self.assertTrue(left.applied)
         self.assertTrue(right.applied)
-        self.assertEqual(o.family.union, None)
+        self.assertEqual(left.unioned, None)
+        self.assertEqual(right.unioned, (left.results, right.results))
 
     def test_negate(self):
         from . import And
@@ -674,7 +677,8 @@ class TestAnd(BoolOpTestBase):
         self.assertEqual(o._apply(None), set([3]))
         self.assertTrue(left.applied)
         self.assertTrue(right.applied)
-        self.assertEqual(o.family.intersection, (left.results, right.results))
+        self.assertEqual(left.intersected, None)
+        self.assertEqual(right.intersected, (left.results, right.results))
 
     def test_apply_left_empty(self):
         left = DummyQuery(set([]))
@@ -684,7 +688,8 @@ class TestAnd(BoolOpTestBase):
         self.assertEqual(o._apply(None), set())
         self.assertTrue(left.applied)
         self.assertFalse(right.applied)
-        self.assertEqual(o.family.intersection, None)
+        self.assertEqual(left.intersected, None)
+        self.assertEqual(right.intersected, None)
 
     def test_apply_right_empty(self):
         left = DummyQuery(set([1, 2, 3]))
@@ -694,7 +699,8 @@ class TestAnd(BoolOpTestBase):
         self.assertEqual(o._apply(None), set())
         self.assertTrue(left.applied)
         self.assertTrue(right.applied)
-        self.assertEqual(o.family.intersection, None)
+        self.assertEqual(left.intersected, None)
+        self.assertEqual(right.intersected, None)
 
     def test_negate(self):
         from . import Or
@@ -1347,21 +1353,9 @@ class DummyIndex(object):
         return {'query':query, 'names':names, 'resolver':resolver}
 
 class DummyFamily(object):
-    union = None
-    intersection = None
-    diff = None
-
     @property
     def IF(self):
         return self
-
-    def weightedUnion(self, left, right):
-        self.union = (left, right)
-        return None, left | right
-
-    def weightedIntersection(self, left, right):
-        self.intersection = (left, right)
-        return None, left & right
 
     def Set(self):
         return set()
@@ -1371,6 +1365,8 @@ class DummyQuery(object):
     applied = False
     negated = False
     flushed = False
+    intersected = None
+    unioned = None
 
     def __init__(self, results, index=None):
         self.results = results
@@ -1390,3 +1386,14 @@ class DummyQuery(object):
     def flush(self, value):
         self.flushed = value
     
+    def intersect(self, theset, names):
+        result = self._apply(names)
+        if (not theset) or (not result):
+            return result
+        self.intersected = (theset, result)
+        return theset & result
+
+    def union(self, theset, names):
+        result = self._apply(names)
+        self.unioned = (theset, result)
+        return theset | result
