@@ -11,6 +11,7 @@
 # serve to show the default value.
 
 import sys, os
+import pkg_resources
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -60,7 +61,7 @@ copyright = '2008-2013, Zope Foundation and Contributors'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.1a7'
+version = pkg_resources.get_distribution('hypatia').version
 # The full version, including alpha/beta/rc tags.
 release = version
 

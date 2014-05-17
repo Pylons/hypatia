@@ -1,5 +1,5 @@
-Next release
-------------
+0.2 (2014-05-16)
+----------------
 
 - Query objects are now consulted for intersect and union operations via
   methods, instead of the intersection/union logic being embedded in And and Or
