@@ -1,3 +1,14 @@
+Next release
+------------
+
+- Depend on the "ZODB" package rather than the "ZODB3" package.  The former is
+  a newer ZODB packaging, implying ZODB4.  If you actually require ZODB v3, you
+  will need to pin ``hypatia`` to an older release.  You should know that the
+  most recent release of ZODB3 at this time (3.11) actually implies ZODB v4 (I
+  know it's not exactly obvious, but Jim ensures me it is), so if you really
+  require ZODB v3, you'll need to pin ZODB to below 3.11 and ``hypatia`` to
+  below this release.
+
 0.2 (2014-05-16)
 ----------------
 
