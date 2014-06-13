@@ -1,5 +1,5 @@
-Next release
-------------
+0.3 (2014-06-12)
+----------------
 
 - Depend on the ``ZODB`` package rather than the ``ZODB3`` package.  The former
   is a newer ZODB packaging, implying ZODB4.  If you actually require ZODB v3,
