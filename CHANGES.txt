@@ -11,6 +11,11 @@ Next release
 
 - Keyword indices now have a ``unique_values`` method like Field indexes.
 
+- Calling ``hypatia.util.ResultSet.first()`` and
+  ``hypatia.util.ResultSet.one()`` is now idempotent.  Calling it a second time
+  will return the same value, and calling it will not effect the result set's
+  iterability (it will start from zero).
+
 0.2 (2014-05-16)
 ----------------
 

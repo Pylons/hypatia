@@ -1,3 +1,4 @@
+import itertools
 import BTrees
 
 from persistent import Persistent
@@ -59,9 +60,19 @@ class ResultSet(object):
         resolver = self.resolver
         if resolver is None or not resolve:
             for id_ in self.ids:
+                # if self.ids is not a list or a tuple, allow this result set
+                # to be iterated after first() is called and allow first() to
+                # be idempotent
+                if not hasattr(self.ids, '__len__'):
+                    self.ids = itertools.chain([id_], self.ids)
                 return id_
         else:
             for id_ in self.ids:
+                # if self.ids is not a list or a tuple, allow this result set
+                # to be iterated after first() is called and allow first() to
+                # be idempotent
+                if not hasattr(self.ids, '__len__'):
+                    self.ids = itertools.chain([id_], self.ids)
                 return resolver(id_)
 
     def one(self, resolve=True):

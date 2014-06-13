@@ -86,11 +86,74 @@ class TestResultSet(unittest.TestCase):
         self.assertEqual(index.sort_type, OPTIMAL)
 
     def test_first_no_docids(self):
-        inst = self._makeOne([], 0, None)
+        ids = []
+        inst = self._makeOne(ids, 0, None)
         self.assertEqual(inst.first(), None)
+        self.assertEqual(inst.ids, ids)
 
+    def test_first_idempotent_with_list_noresolve(self):
+        ids = [2, 1]
+        inst = self._makeOne(ids, 2, None)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.ids, ids)
+
+    def test_first_idempotent_with_tuple_noresolve(self):
+        ids = (2, 1)
+        inst = self._makeOne(ids, 2, None)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.ids, ids)
+        
+    def test_first_idempotent_with_generator_noresolve(self):
+        def gen():
+            for x in (2, 1):
+                yield x
+        ids = gen()
+        inst = self._makeOne(ids, 2, None)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.first(), 2)
+        self.assertNotEqual(inst.ids, ids)
+
+    def test_first_idempotent_with_list(self):
+        def resolver(val):
+            return val
+        ids = [2, 1]
+        inst = self._makeOne(ids, 2, resolver)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.ids, ids)
+
+    def test_first_idempotent_with_tuple(self):
+        def resolver(val):
+            return val
+        ids = (2, 1)
+        inst = self._makeOne(ids, 2, resolver)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.ids, ids)
+        
+    def test_first_idempotent_with_generator(self):
+        def resolver(val):
+            return val
+        def gen():
+            for x in (2, 1):
+                yield x
+        ids = gen()
+        inst = self._makeOne(ids, 2, resolver)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(inst.first(), 2)
+        self.assertNotEqual(inst.ids, ids)
+        
+    def test_first_doesnt_affect_iterability(self):
+        ids = [2, 1]
+        inst = self._makeOne(ids, 2, None)
+        self.assertEqual(inst.first(), 2)
+        self.assertEqual(list(inst), [2,1])
+        
     def test_first_resolve_true_no_resolver(self):
-        inst = self._makeOne([2, 1], 2, None)
+        ids = [2, 1]
+        inst = self._makeOne(ids, 2, None)
         self.assertEqual(inst.first(), 2)
 
     def test_first_resolve_true_with_resolver(self):
