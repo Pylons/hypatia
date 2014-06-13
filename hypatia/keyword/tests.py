@@ -555,6 +555,15 @@ class _TestCaseBase:
         self.assertEqual(index.has_doc(5), 1)
         self.assertEqual(index.has_doc(6), 0)
 
+    def test_unique_values(self):
+        index = self._makeOne()
+        self._populate(index)
+        self.assertEqual(
+            list(index.unique_values()),
+            ['CMF', 'FOX', 'Zope', 'Zope3', 'brown', 'cmf', 'quick', 'the',
+             'zope']
+            )
+
     def test_search_bad_operator(self):
         index = self._makeOne()
         self.assertRaises(TypeError, index.search, 'whatever', 'maybe')

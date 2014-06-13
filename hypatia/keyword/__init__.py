@@ -72,6 +72,11 @@ class KeywordIndex(BaseIndexMixin, Persistent):
         self._num_docs = Length(0)
         self._not_indexed = self.family.IF.TreeSet()
 
+    def unique_values(self):
+        """ Return the unique values in the index for all docids as an iterable
+        """
+        return self._fwd_index.keys()
+    
     def reindex_doc(self, docid, value):
         # the base index' index_doc method special-cases a reindex
         return self.index_doc(docid, value)
