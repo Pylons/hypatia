@@ -1,6 +1,10 @@
 0.4 (unreleased)
 ----------------
 
+- Don't modify queries attribute when optimizing And or Or, return a new
+  instance instead. This change is needed to open new optimization
+  possibilities, like factorization.
+
 - Fix Comparator __eq__ method to include type in comparison,
   previously NotAny('index', [1]) was equal to Any('index', [1]) for example.
 
