@@ -155,6 +155,11 @@ class TestContains(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotContains('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import NotContains
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, NotContains('index', 'val'))
+
 
 class TestNotContains(ComparatorTestBase):
 
@@ -202,6 +207,11 @@ class TestEq(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotEq('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import NotEq
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, NotEq('index', 'val'))
+
 
 class TestNotEq(ComparatorTestBase):
 
@@ -225,6 +235,11 @@ class TestNotEq(ComparatorTestBase):
         from . import Eq
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Eq('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Eq
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Eq('index', 'val'))
 
 
 class TestGt(ComparatorTestBase):
@@ -250,6 +265,11 @@ class TestGt(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Le('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Ge
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Ge('index', 'val'))
+
 
 class TestLt(ComparatorTestBase):
 
@@ -273,6 +293,11 @@ class TestLt(ComparatorTestBase):
         from . import Ge
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Ge('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Ge
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Ge('index', 'val'))
 
 
 class TestGe(ComparatorTestBase):
@@ -298,6 +323,11 @@ class TestGe(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Lt('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Lt
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Lt('index', 'val'))
+
 
 class TestLe(ComparatorTestBase):
 
@@ -322,6 +352,11 @@ class TestLe(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Gt('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Lt
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Lt('index', 'val'))
+
 
 class TestAll(ComparatorTestBase):
 
@@ -345,6 +380,11 @@ class TestAll(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotAll('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Any
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Any('index', 'val'))
+
 
 class TestNotAll(ComparatorTestBase):
 
@@ -367,6 +407,11 @@ class TestNotAll(ComparatorTestBase):
         from . import All
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), All('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Any
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Any('index', 'val'))
 
 
 class TestAny(ComparatorTestBase):
@@ -421,6 +466,11 @@ class TestAny(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotAny('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import NotAny
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, NotAny('index', 'val'))
+
 
 class TestNotAny(ComparatorTestBase):
 
@@ -443,6 +493,11 @@ class TestNotAny(ComparatorTestBase):
         from . import Any
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Any('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Any
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Any('index', 'val'))
 
 
 class TestInRange(ComparatorTestBase):

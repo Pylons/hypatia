@@ -93,7 +93,8 @@ class Comparator(Query):
         return ' '.join((self.index.qname(), self.operator, repr(self._value)))
 
     def __eq__(self, other):
-        return self.index == other.index and self._value == other._value
+        return (type(self) == type(other) and
+                self.index == other.index and self._value == other._value)
 
     def flush(self, *arg, **kw):
         self.index.flush(*arg, **kw)

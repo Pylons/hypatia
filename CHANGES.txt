@@ -1,3 +1,10 @@
+0.4 (unreleased)
+----------------
+
+- Fix Comparator __eq__ method to include type in comparison,
+  previously NotAny('index', [1]) was equal to Any('index', [1]) for example.
+
+
 0.3 (2014-06-12)
 ----------------
 
