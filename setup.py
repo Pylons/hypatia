@@ -66,21 +66,19 @@ install_requires = [
     'zope.interface',
     ]
 
-testing_extras = ['nose', 'coverage']
+testing_extras = ['nose', 'coverage', 'nosexcover']
 docs_extras = ['Sphinx']
 
 setup(name='hypatia',
-      version='0.3',
+      version='0.4.dev0',
       description='Python package for searching and indexing',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: Implementation :: CPython",
@@ -99,7 +97,7 @@ setup(name='hypatia',
       extras_require = {
         'benchmark': ['PyChart'],
         'testing': testing_extras,
-        'docs':docs_extras,
+        'docs': docs_extras,
         },
       ext_modules=[
           Extension('hypatia.text.okascore',

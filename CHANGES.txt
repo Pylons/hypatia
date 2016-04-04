@@ -1,6 +1,8 @@
 0.4 (unreleased)
 ----------------
 
+- Drop support for Python 2.6 and 3.2.
+
 - Don't modify queries attribute when optimizing And or Or, return a new
   instance instead. This change is needed to open new optimization
   possibilities, like factorization.
