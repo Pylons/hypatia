@@ -93,7 +93,8 @@ class Comparator(Query):
         return ' '.join((self.index.qname(), self.operator, repr(self._value)))
 
     def __eq__(self, other):
-        return self.index == other.index and self._value == other._value
+        return (type(self) == type(other) and
+                self.index == other.index and self._value == other._value)
 
     def flush(self, *arg, **kw):
         self.index.flush(*arg, **kw)
@@ -415,6 +416,9 @@ class BoolOp(Query):
     def __str__(self):
         return type(self).__name__
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.queries == other.queries
+
     def flush(self, *arg, **kw):
         for query in self.queries:
             query.flush(*arg, **kw)
@@ -433,7 +437,7 @@ class BoolOp(Query):
             if index is not None:
                 break
             queries.extend(list(subq.iter_children()))
-        
+
         if index is None:
             raise ValueError('No query has a reference to an index')
 
@@ -451,16 +455,6 @@ class BoolOp(Query):
     def iter_children(self):
         for query in self.queries:
             yield query
-
-    def _optimize(self):
-        self.queries = [query._optimize() for query in self.queries]
-        new_me = self._optimize_eq()
-        if new_me is not None:
-            return new_me
-        new_me = self._optimize_not_eq()
-        if new_me is not None:
-            return new_me
-        return self
 
     def _optimize_eq(self):
         # If all queries are Eq operators for the same index, we can replace
@@ -518,15 +512,19 @@ class Or(BoolOp):
         return And(*neg_queries)
 
     def _optimize(self):
-        new_self = BoolOp._optimize(self)
-        if self is not new_self:
-            return new_self
+        new_me = self._optimize_eq()
+        if new_me is not None:
+            return new_me
 
+        new_me = self._optimize_not_eq()
+        if new_me is not None:
+            return new_me
+
+        queries = [query._optimize() for query in self.queries]
         # There might be a combination of Gt/Ge and Lt/Le operators for the
         # same index that could be used to compose a NotInRange.
         uppers = {}
         lowers = {}
-        queries = list(self.queries)
 
         def process_range(i_lower, query_lower, i_upper, query_upper):
             queries[i_lower] = NotInRange.fromGTLT(
@@ -555,8 +553,7 @@ class Or(BoolOp):
         if len(queries) == 1:
             return queries[0]
 
-        self.queries = queries
-        return self
+        return self.__class__(*queries)
 
 
 class And(BoolOp):
@@ -577,15 +574,19 @@ class And(BoolOp):
         return Or(*neg_queries)
 
     def _optimize(self):
-        new_self = BoolOp._optimize(self)
-        if self is not new_self:
-            return new_self
+        new_me = self._optimize_eq()
+        if new_me is not None:
+            return new_me
 
+        new_me = self._optimize_not_eq()
+        if new_me is not None:
+            return new_me
+
+        queries = [query._optimize() for query in self.queries]
         # There might be a combination of Gt/Ge and Lt/Le operators for the
         # same index that could be used to compose an InRange.
         uppers = {}
         lowers = {}
-        queries = list(self.queries)
 
         def process_range(i_lower, query_lower, i_upper, query_upper):
             queries[i_lower] = InRange.fromGTLT(query_lower, query_upper)
@@ -613,8 +614,7 @@ class And(BoolOp):
         if len(queries) == 1:
             return queries[0]
 
-        self.queries = queries
-        return self
+        return self.__class__(*queries)
 
 
 class Not(Query):

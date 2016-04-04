@@ -30,6 +30,45 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(result.queries[0], a)
         self.assertEqual(result.queries[1], b)
 
+    def test_and_query_should_not_change_after_optimize(self):
+        from . import And, Or, Eq, Any
+        states_query = Or(Eq('states', 'published'), Eq('states', 'archived'))
+        query = And(states_query, Eq('content_types', 'event'))
+        op = query._optimize()
+        self.assertTrue(isinstance(op, And))
+        self.assertTrue(isinstance(op.queries[0], Any))
+        self.assertTrue(isinstance(op.queries[1], Eq))
+        self.assertEqual(op.queries[0].index, 'states')
+        self.assertEqual(op.queries[0]._value, ['published', 'archived'])
+        self.assertEqual(op.queries[1].index, 'content_types')
+        self.assertEqual(op.queries[1]._value, 'event')
+        # and_query should not have been modified
+        # this is needed because query optimization can be more aggressive than
+        # just replace Or(Eq, Eq) by Any. Here is an example:
+        # reusable_query = And(Any1, Any3, Any4)
+        # query = Or(And(Any1, Any2), reusable_query)
+        # An optimization can be a factorization like this:
+        # And(Any1, Or(Any2, And(Any3, Any4)))
+        # We don't want reusable_query to be equal to And(Any3, Any4) now,
+        # because it can be used in another query later...
+        self.assertTrue(isinstance(query.queries[0], Or))
+        self.assertTrue(isinstance(query.queries[1], Eq))
+
+    def test_or_query_should_not_change_after_optimize(self):
+        from . import And, Or, Eq, All
+        states_query = And(Eq('states', 'published'), Eq('states', 'archived'))
+        query = Or(states_query, Eq('content_types', 'event'))
+        op = query._optimize()
+        self.assertTrue(isinstance(op, Or))
+        self.assertTrue(isinstance(op.queries[0], All))
+        self.assertTrue(isinstance(op.queries[1], Eq))
+        self.assertEqual(op.queries[0].index, 'states')
+        self.assertEqual(op.queries[0]._value, ['published', 'archived'])
+        self.assertEqual(op.queries[1].index, 'content_types')
+        self.assertEqual(op.queries[1]._value, 'event')
+        self.assertTrue(isinstance(query.queries[0], And))
+        self.assertTrue(isinstance(query.queries[1], Eq))
+
     def test_and_type_error(self):
         a = self._makeOne()
         self.assertRaises(TypeError, a.__and__, 2)
@@ -155,6 +194,11 @@ class TestContains(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotContains('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import NotContains
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, NotContains('index', 'val'))
+
 
 class TestNotContains(ComparatorTestBase):
 
@@ -202,6 +246,11 @@ class TestEq(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotEq('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import NotEq
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, NotEq('index', 'val'))
+
 
 class TestNotEq(ComparatorTestBase):
 
@@ -225,6 +274,11 @@ class TestNotEq(ComparatorTestBase):
         from . import Eq
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Eq('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Eq
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Eq('index', 'val'))
 
 
 class TestGt(ComparatorTestBase):
@@ -250,6 +304,11 @@ class TestGt(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Le('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Ge
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Ge('index', 'val'))
+
 
 class TestLt(ComparatorTestBase):
 
@@ -273,6 +332,11 @@ class TestLt(ComparatorTestBase):
         from . import Ge
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Ge('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Ge
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Ge('index', 'val'))
 
 
 class TestGe(ComparatorTestBase):
@@ -298,6 +362,11 @@ class TestGe(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Lt('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Lt
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Lt('index', 'val'))
+
 
 class TestLe(ComparatorTestBase):
 
@@ -322,6 +391,11 @@ class TestLe(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Gt('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Lt
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Lt('index', 'val'))
+
 
 class TestAll(ComparatorTestBase):
 
@@ -345,6 +419,11 @@ class TestAll(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotAll('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import Any
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Any('index', 'val'))
+
 
 class TestNotAll(ComparatorTestBase):
 
@@ -367,6 +446,11 @@ class TestNotAll(ComparatorTestBase):
         from . import All
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), All('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Any
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Any('index', 'val'))
 
 
 class TestAny(ComparatorTestBase):
@@ -421,6 +505,11 @@ class TestAny(ComparatorTestBase):
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), NotAny('index', 'val'))
 
+    def test_not_equal_to_another_type(self):
+        from . import NotAny
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, NotAny('index', 'val'))
+
 
 class TestNotAny(ComparatorTestBase):
 
@@ -443,6 +532,11 @@ class TestNotAny(ComparatorTestBase):
         from . import Any
         inst = self._makeOne('index', 'val')
         self.assertEqual(inst.negate(), Any('index', 'val'))
+
+    def test_not_equal_to_another_type(self):
+        from . import Any
+        inst = self._makeOne('index', 'val')
+        self.assertNotEqual(inst, Any('index', 'val'))
 
 
 class TestInRange(ComparatorTestBase):
