@@ -5,7 +5,7 @@ Hypatia
 =======
 
 :mod:`hypatia` is a Python indexing and searching framework.  It works on
-Python 2.6+ and Python 3.2+.
+Python 2.7+ and Python 3.3+.
 
 Narrative documentation
 -----------------------
