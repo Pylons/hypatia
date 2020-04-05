@@ -158,7 +158,7 @@ class Eq(Comparator):
 class NotEq(Comparator):
     """Not equal query.
 
-    CQE eqivalent: index != 'foo'
+    CQE equivalent: index != 'foo'
     """
     operator = '!='
 
@@ -364,7 +364,7 @@ class _Range(Comparator, RichComparisonMixin):
 class InRange(_Range):
     """ Index value falls within a range.
 
-    CQE eqivalent: lower < index < upper
+    CQE equivalent: lower < index < upper
                    lower <= index <= upper
     """
 
@@ -381,7 +381,7 @@ class InRange(_Range):
 class NotInRange(_Range):
     """ Index value falls outside a range.
 
-    CQE eqivalent: not(lower < index < upper)
+    CQE equivalent: not(lower < index < upper)
                    not(lower <= index <= upper)
     """
 
