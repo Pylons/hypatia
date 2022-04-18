@@ -35,28 +35,15 @@
 
 #include "Python.h"
 
+#if PY_MAJOR_VERSION >= 3
+#define PY3K
+#endif
+
 #define K1 1.2
 #define B  0.75
 
 #ifndef PyTuple_CheckExact
 #define PyTuple_CheckExact PyTuple_Check
-#endif
-
-#if PY_MAJOR_VERSION >= 3
-#define PyInt_AsLong PyLong_AsLong
-  #define MOD_ERROR_VAL NULL
-  #define MOD_SUCCESS_VAL(val) val
-  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          static struct PyModuleDef moduledef = { \
-            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
-          ob = PyModule_Create(&moduledef);
-#else
-  #define MOD_ERROR_VAL
-  #define MOD_SUCCESS_VAL(val)
-  #define MOD_INIT(name) void init##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          ob = Py_InitModule3(name, methods, doc);
 #endif
 
 static PyObject *
@@ -102,14 +89,22 @@ score(PyObject *self, PyObject *args)
 			return NULL;
 		}
 		d = PyTuple_GET_ITEM(d_and_f, 0);
+#ifdef PY3K
+		f = (double)PyLong_AsLong(PyTuple_GET_ITEM(d_and_f, 1));
+#else
 		f = (double)PyInt_AsLong(PyTuple_GET_ITEM(d_and_f, 1));
+#endif
 
 		doclen = PyObject_GetItem(d2len, d);
 		if (doclen == NULL) {
 			Py_DECREF(d_and_f);
 			return NULL;
 		}
+#ifdef PY3K
+		lenweight = B_FROM1 + B * PyFloat_AsDouble(doclen) / meandoclen;
+#else
 		lenweight = B_FROM1 + B * PyInt_AsLong(doclen) / meandoclen;
+#endif
 
 		tf = f * K1_PLUS1 / (f + K1 * lenweight);
 		doc_score = PyFloat_FromDouble(tf * idf);
@@ -137,15 +132,32 @@ static PyMethodDef okascore_functions[] = {
 	{NULL}
 };
 
-MOD_INIT(okascore)
+#ifdef PY3K
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "okascore",                           /* m_name */
+        "inner scoring loop for Okapi rank",  /* m_doc */
+        -1,                                   /* m_size */
+        okascore_functions,                   /* m_methods */
+        NULL,                                 /* m_reload */
+        NULL,                                 /* m_traverse */
+        NULL,                                 /* m_clear */
+        NULL,                                 /* m_free */
+    };
+
+PyMODINIT_FUNC
+PyInit_okascore(void)
 {
 	PyObject *m;
-
-    MOD_DEF(m, "okascore", "inner scoring loop for Okapi rank",
-	        okascore_functions);
-
-    if (m == NULL)
-        return MOD_ERROR_VAL;
-
-    return MOD_SUCCESS_VAL(m);
+    m = PyModule_Create(&moduledef);
+    return m;
 }
+#else
+PyMODINIT_FUNC
+initokascore(void)
+{
+	/* XXX: Error checking */
+	Py_InitModule3("okascore", okascore_functions,
+				   "inner scoring loop for Okapi rank");
+}
+#endif
