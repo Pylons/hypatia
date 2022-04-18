@@ -785,6 +785,9 @@ class _AstParser(object):
     def process_Str(self, node, children):
         return node.s
 
+    def process_Constant(self, node, children):
+        return node.s
+
     def process_Num(self, node, children):
         return node.n
 
