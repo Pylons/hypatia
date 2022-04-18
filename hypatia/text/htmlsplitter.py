@@ -14,14 +14,21 @@
 """HTML Splitter
 """
 import re
+import sys
 
 from zope.interface import implementer
 
 from .interfaces import ISplitter
 
 MARKUP = re.compile(r"(<[^<>]*>|&[A-Za-z]+;)")
-WORDS = re.compile(r"(?L)\w+")
-GLOBS = re.compile(r"(?L)\w+[\w*?]*")
+
+PY3 = sys.version_info[0] >= 3
+if PY3:
+    WORDS = re.compile(r"\w+")
+    GLOBS = re.compile(r"\w+[\w*?]*")
+else:
+    WORDS = re.compile(r"(?L)\w+")
+    GLOBS = re.compile(r"(?L)\w+[\w*?]*")
 
 @implementer(ISplitter)
 class HTMLWordSplitter(object):
