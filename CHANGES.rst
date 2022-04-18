@@ -1,9 +1,25 @@
 0.4 (unreleased)
 ----------------
 
-- Add support for Python 3.5.
+- Drop (unreleased) support for Python 3.3 and Python 3.4 (the ``persistent``
+  package no longer supports these versions).
 
-- Drop support for Python 2.6 and 3.2.
+- Drop (unreleased) support for Python 3.5 (too difficult to build correctly --
+  even with pyenv -- to bother).
+
+- Drop (released) support for Python 2.6 and 3.2.
+
+- Add support for Python 3.6, 3.7, 3.8, 3.9, 3.10 (thanks to Thierry Florac).
+
+- Use pytest instead of python setup.py test -q in tox.ini.
+
+- Change how cross-version coverage is computed in tests.
+
+- Remove unused hypatia/text/ricecode.py file.
+
+- Change building of docs slightly to cope with modified github protocols.
+  Some warnings are unearthed with newer Sphinx, which I've not
+  caught by turning warnings into errors yet, because I don't understand them.
 
 - Don't modify queries attribute when optimizing And or Or, return a new
   instance instead. This change is needed to open new optimization

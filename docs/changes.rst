@@ -1,4 +1,4 @@
 :mod:`hypatia` Change History
 =============================
 
-.. literalinclude:: ../CHANGES.txt
+.. include:: ../CHANGES.rst

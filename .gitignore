@@ -6,9 +6,9 @@
 dist/
 *~
 .tox/
-nosetests.xml
 hypatia/coverage.xml
-distribute-*.gz
+coverage-py*.xml
+coverage.xml
 env*/
 .build/
 bin/
