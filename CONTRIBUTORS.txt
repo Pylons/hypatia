@@ -111,3 +111,5 @@ Contributors
 - Balazs Ree 2013/09/08
 
 - Vincent Fretin, 2016/04/03
+
+- Thierry Florac, 2022/04/18
