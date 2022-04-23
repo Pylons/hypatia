@@ -1,4 +1,4 @@
-0.4 (unreleased)
+0.4 (2022-04-23)
 ----------------
 
 - Drop (unreleased) support for Python 3.3 and Python 3.4 (the ``persistent``
