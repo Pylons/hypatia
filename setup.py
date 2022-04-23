@@ -78,7 +78,7 @@ docs_extras = [
 
 
 setup(name='hypatia',
-      version='0.4.dev0',
+      version='0.4',
       description='Python package for searching and indexing',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
