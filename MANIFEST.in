@@ -1,0 +1,13 @@
+prune docs/_build
+prune docs/_themes
+include *.rst
+include *.txt
+include pytest.ini
+include tox.ini
+recursive-include benchmark *.txt
+recursive-include docs *.css
+recursive-include docs *.gif
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs Makefile
+recursive-include hypatia *.txt
