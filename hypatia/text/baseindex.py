@@ -241,7 +241,7 @@ class BaseIndex(Persistent):
     # Subclass must override.
     # It's not clear what it should do.  It must return an upper bound on
     # document scores for the query.  It would be nice if a document score
-    # divided by the query's query_weight gave the proabability that a
+    # divided by the query's query_weight gave the probability that a
     # document was relevant, but nobody knows how to do that.  For
     # CosineIndex, the ratio is the cosine of the angle between the document
     # and query vectors.  For OkapiIndex, the ratio is a (probably
