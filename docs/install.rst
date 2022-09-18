@@ -9,7 +9,7 @@ You will need `Python <http://python.org>`_ version 2.6 or better to run
 primarily under Python 2.7, so that version is recommended.  It does *not*
 run under Python 3.X.
 
-.. warning:: To succesfully install :mod:`hypatia`, you will need an
+.. warning:: To successfully install :mod:`hypatia`, you will need an
    environment capable of compiling Python C code.  See the
    documentation about installing, e.g. ``gcc`` and ``python-devel``
    for your system.  You will also need :term:`setuptools` installed
