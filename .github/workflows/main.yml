@@ -1,0 +1,77 @@
+name: Build and test
+
+on:
+    push:
+        branches:
+            - master
+        tags:
+    pull_request:
+
+jobs:
+    test:
+        strategy:
+            matrix:
+                py:
+                    - "3.7"
+                    - "3.8"
+                    - "3.9"
+                    - "3.10"
+                    - "3.11"
+                    - "3.12-dev"
+                    - "pypy-3.9"
+                os:
+                    - "ubuntu-20.04"
+                    - "macos-latest"
+                architecture:
+                    - x64
+
+                exclude:
+                  # persistent fails to build on 3.12-dev on MacOS in GitHub
+                  - os: macos-latest
+                    py: "3.12-dev"
+
+                include:
+                    # Only run coverage on ubuntu-20.04, except on pypy3
+                    - os: "ubuntu-20.04"
+                      pytest-args: "--cov"
+                    - os: "ubuntu-20.04"
+                      py: "pypy-3.9"
+                      pytest-args: ""
+
+
+        name: "Python: ${{ matrix.py }}-${{ matrix.architecture }} on ${{ matrix.os }}"
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: ${{ matrix.py }}
+                  architecture: ${{ matrix.architecture }}
+            - run: pip install tox
+            - name: Running tox
+              run: tox -e py -- ${{ matrix.pytest-args }}
+    coverage:
+        runs-on: ubuntu-20.04
+        name: Validate coverage
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.7
+                  architecture: x64
+            - run: pip install tox
+            - run: tox -e coverage
+    docs:
+        runs-on: ubuntu-20.04
+        name: Build the documentation
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.7
+                  architecture: x64
+            - run: pip install tox
+            - run: tox -e docs

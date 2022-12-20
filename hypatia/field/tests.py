@@ -1366,7 +1366,7 @@ class Test_MissingValue(unittest.TestCase):
         self.assertFalse(inst > 1)
         
 def test_suite():
-    return unittest.TestSuite((
+    assert unittest.TestSuite((
         doctest.DocFileSuite('README.txt', optionflags=doctest.ELLIPSIS),
         unittest.makeSuite(FieldIndexTests),
         unittest.makeSuite(Test_fwscan_wins),

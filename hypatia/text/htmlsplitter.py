@@ -22,13 +22,8 @@ from .interfaces import ISplitter
 
 MARKUP = re.compile(r"(<[^<>]*>|&[A-Za-z]+;)")
 
-PY3 = sys.version_info[0] >= 3
-if PY3:
-    WORDS = re.compile(r"\w+")
-    GLOBS = re.compile(r"\w+[\w*?]*")
-else:
-    WORDS = re.compile(r"(?L)\w+")
-    GLOBS = re.compile(r"(?L)\w+[\w*?]*")
+WORDS = re.compile(r"\w+")
+GLOBS = re.compile(r"\w+[\w*?]*")
 
 @implementer(ISplitter)
 class HTMLWordSplitter(object):

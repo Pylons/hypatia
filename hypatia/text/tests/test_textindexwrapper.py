@@ -16,4 +16,4 @@
 import doctest
 
 def test_suite():
-    return doctest.DocFileSuite("../textindex.txt")
+    assert doctest.DocFileSuite("../textindex.txt")

@@ -5,8 +5,9 @@ Hypatia
         :target: https://pypi.python.org/pypi/hypatia/
         :alt: Latest Version
 
-.. image:: https://travis-ci.org/Pylons/hypatia.png?branch=master
-        :target: https://travis-ci.org/Pylons/hypatia
+.. image:: https://github.com/Pylons/hypatia/workflows/Build%20and%20test/badge.svg?branch=master
+        :target: https://github.com/Pylons/hypatia/actions/workflows/main.yml
+        :alt: CI Status
 
 .. image:: https://readthedocs.org/projects/hypatia/badge/?version=latest
         :target: http://hypatia.readthedocs.org/en/latest/
