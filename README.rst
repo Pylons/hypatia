@@ -9,7 +9,7 @@ Hypatia
         :target: https://travis-ci.org/Pylons/hypatia
 
 .. image:: https://readthedocs.org/projects/hypatia/badge/?version=latest
-        :target: http://hypatia.readthedocs.org/en/latest/
+        :target: https://hypatia.readthedocs.io/en/latest/
         :alt: Documentation Status
 
 A Python indexing and searching system.
