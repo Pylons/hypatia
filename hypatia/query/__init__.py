@@ -783,10 +783,10 @@ class _AstParser(object):
         return dotted_name
 
     def process_Str(self, node, children):
-        return node.s
+        return node.value
 
     def process_Constant(self, node, children):
-        return node.s
+        return node.value
 
     def process_Num(self, node, children):
         return node.n
