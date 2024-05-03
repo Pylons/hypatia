@@ -15,7 +15,6 @@
 """
 import math
 
-from hypatia._compat import u
 from persistent import Persistent
 from zope.interface import implementer
 
@@ -109,7 +108,7 @@ class BaseIndex(Persistent):
             wids = self.get_words(docid)
             for wid in wids:
                 words.append(self._lexicon.get_word(wid))
-            return u(' ').join(words)
+            return ' '.join(words)
         except KeyError:
             return default
 

@@ -55,20 +55,21 @@ Summarizing the default operator rules:
 """
 
 import re
+import sys
+
 from zope.interface import implementer
 
 from .interfaces import IQueryParser
 from . import parsetree
-from .._compat import intern
 
 # Create unique symbols for token types.
-_AND    = intern("AND")
-_OR     = intern("OR")
-_NOT    = intern("NOT")
-_LPAREN = intern("(")
-_RPAREN = intern(")")
-_ATOM   = intern("ATOM")
-_EOF    = intern("EOF")
+_AND    = sys.intern("AND")
+_OR     = sys.intern("OR")
+_NOT    = sys.intern("NOT")
+_LPAREN = sys.intern("(")
+_RPAREN = sys.intern(")")
+_ATOM   = sys.intern("ATOM")
+_EOF    = sys.intern("EOF")
 
 # Map keyword string to token type.
 _keywords = {

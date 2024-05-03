@@ -13,6 +13,8 @@
 ##############################################################################
 """Text index.
 """
+import sys
+
 from persistent import Persistent
 from zope.interface import implementer
 
@@ -34,9 +36,6 @@ from .parsetree import ParseError
 
 from ..util import BaseIndexMixin 
 from .. import query
-from .._compat import string_types
-from .._compat import _iteritems
-from .._compat import _maxint
 
 _marker = object()
 
@@ -51,7 +50,7 @@ class TextIndex(BaseIndexMixin, Persistent):
         if family is not None:
             self.family = family
         if not callable(discriminator):
-            if not isinstance(discriminator, string_types):
+            if not isinstance(discriminator, str):
                 raise ValueError('discriminator value must be callable or a '
                                  'string')
         self.discriminator = discriminator
@@ -137,13 +136,13 @@ class TextIndex(BaseIndexMixin, Persistent):
 
             qw *= 1.0
 
-            for docid, score in _iteritems(results):
+            for docid, score in results.items():
                 try:
                     results[docid] = score/qw
                 except TypeError:
                     # We overflowed the score, perhaps wildly unlikely.
                     # Who knows.
-                    results[docid] = _maxint() / 10.0
+                    results[docid] = sys.maxsize / 10.0
 
         return results
  
