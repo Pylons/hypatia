@@ -1364,12 +1364,3 @@ class Test_MissingValue(unittest.TestCase):
     def test___gt__val_False(self):
         inst = self._makeOne(False)
         self.assertFalse(inst > 1)
-        
-def test_suite():
-    return unittest.TestSuite((
-        doctest.DocFileSuite('README.txt', optionflags=doctest.ELLIPSIS),
-        unittest.makeSuite(FieldIndexTests),
-        unittest.makeSuite(Test_fwscan_wins),
-        unittest.makeSuite(Test_nbest_ascending_wins),
-        unittest.makeSuite(Test_MissingValue),
-        ))

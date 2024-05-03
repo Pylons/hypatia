@@ -6,7 +6,7 @@ indexing and searching.  A text index can be created without passing
 any arguments:
 
     >>> from hypatia.text import TextIndex
-    >>> index = TextIndex()
+    >>> index = TextIndex(discriminator=lambda obj, _marker: obj)
 
 By default, it uses an "Okapi" inverted index and a lexicon with a
 pipeline consistening is a simple word splitter, a case normalizer,
@@ -111,7 +111,7 @@ Text indexes support basic statistics:
 If we index the same document twice, once with a zero value, and then
 with a normal value, it should still work:
 
-    >>> index2 = TextIndex()
+    >>> index2 = TextIndex(discriminator=lambda obj, _marker: obj)
     >>> index2.index_doc(1, [])
     >>> index2.index_doc(1, ["Zorro"])
     >>> [(k, "%.4f" % v) for (k, v) in index2.apply("Zorro").items()]
@@ -124,7 +124,7 @@ Tracking Changes
 If we index a document the first time it updates the _totaldoclen of
 the underlying object.
 
-    >>> index = TextIndex()
+    >>> index = TextIndex(discriminator=lambda obj, _marker: obj)
     >>> index.index._totaldoclen()
     0
     >>> index.index_doc(100, u"a new funky value")
