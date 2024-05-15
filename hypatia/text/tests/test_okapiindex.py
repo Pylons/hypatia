@@ -14,6 +14,8 @@
 """Okapi text index tests
 """
 import unittest
+from unittest import mock
+
 
 class OkapiIndexTestBase:
     # Subclasses must define '_getBTreesFamily'
@@ -106,6 +108,31 @@ class OkapiIndexTestBase:
             self.assertTrue(isinstance(relevance[0][1], float))
             self.assertTrue(isinstance(relevance[1], int))
 
+    def test__search_wids_non_empty_wids_multiple_docs(self):
+
+        NUM_DOCS = 23   # get past the DICT_CUTOFF size
+        TEXT = 'one two three'
+        family = self._getBTreesFamily()
+        index = self._makeOne()
+
+        for i in range(NUM_DOCS):
+            texts = [TEXT] * ((i % 5) + 1)
+            index.index_doc(i, " ".join(texts) )
+
+        d2f = index._wordinfo[1]
+        assert isinstance(d2f, family.IF.BTree)
+
+        wids = [index._lexicon._wids[x] for x in TEXT.split()]
+
+        relevances = index._search_wids(wids)
+
+        self.assertEqual(len(relevances), len(wids))
+        for relevance in relevances:
+            self.assertTrue(isinstance(relevance[0], index.family.IF.Bucket))
+            self.assertEqual(len(relevance[0]), NUM_DOCS)
+            self.assertTrue(isinstance(relevance[0][1], float))
+            self.assertTrue(isinstance(relevance[1], int))
+
     def test__search_wids_old_totaldoclen_no_write_on_read(self):
         index = self._makeOne()
         index.index_doc(1, 'one two three')
@@ -144,9 +171,9 @@ class OkapiIndexTest32(OkapiIndexTestBase, unittest.TestCase):
         import BTrees
         return BTrees.family32
 
+
 class OkapiIndexTest64(OkapiIndexTestBase, unittest.TestCase):
 
     def _getBTreesFamily(self):
         import BTrees
         return BTrees.family64
-
