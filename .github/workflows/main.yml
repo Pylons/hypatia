@@ -12,7 +12,6 @@ jobs:
         strategy:
             matrix:
                 py:
-                    - "3.7"
                     - "3.8"
                     - "3.9"
                     - "3.10"
@@ -27,8 +26,6 @@ jobs:
 
                 exclude:
                   # See: https://github.com/actions/setup-python/issues/850
-                  - os: macos-latest
-                    py: "3.7"
                   - os: macos-latest
                     py: "3.8"
                   - os: macos-latest
@@ -66,7 +63,7 @@ jobs:
             - name: Setup python
               uses: actions/setup-python@v5
               with:
-                  python-version: 3.7
+                  python-version: 3.12
                   architecture: x64
             - run: pip install tox
             - run: tox -e coverage
@@ -78,7 +75,7 @@ jobs:
             - name: Setup python
               uses: actions/setup-python@v5
               with:
-                  python-version: 3.7
+                  python-version: 3.12
                   architecture: x64
             - run: pip install tox
             - run: tox -e docs
