@@ -33,6 +33,9 @@ jobs:
                     py: "3.8"
                   - os: macos-latest
                     py: "3.9"
+                  # See: https://github.com/actions/setup-python/issues/860
+                  - os: macos-latest
+                    py: "3.10"
 
                 include:
                     # Only run coverage on ubuntu-20.04, except on pypy3
