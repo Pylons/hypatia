@@ -3,6 +3,7 @@
 *.pyc
 *$py.class
 .coverage
+.coverage.py3
 dist/
 *~
 .tox/

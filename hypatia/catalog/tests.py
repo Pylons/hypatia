@@ -236,55 +236,69 @@ class TestCatalogQuery(unittest.TestCase):
         
 
     def _test_functional_merge(self, **extra):
-        catalog = self._makeCatalog()
         from ..field import FieldIndex
         from ..keyword import KeywordIndex
         from ..text import TextIndex
+
         class Content(object):
             def __init__(self, field, keyword, text):
                 self.field = field
                 self.keyword = keyword
                 self.text = text
-        field = FieldIndex('field')
-        keyword = KeywordIndex('keyword')
-        text = TextIndex('text')
-        catalog['field'] = field
-        catalog['keyword'] = keyword
-        catalog['text'] = text
-        map = {
-            1:Content('field1', ['keyword1', 'same'], 'text one'),
-            2:Content('field2', ['keyword2', 'same'], 'text two'),
-            3:Content('field3', ['keyword3', 'same'], 'text three'),
-            }
-        for num, doc in map.items():
+
+        field_index = FieldIndex('field')
+        keyword_index = KeywordIndex('keyword')
+        text_index = TextIndex('text')
+
+        catalog = self._makeCatalog()
+        catalog['field'] = field_index
+        catalog['keyword'] = keyword_index
+        catalog['text'] = text_index
+
+        for num, doc in [
+            (1, Content('field1', ['keyword1', 'same'], 'text one')),
+            (2, Content('field2', ['keyword2', 'same'], 'text two')),
+            (3, Content('field3', ['keyword3', 'same'], 'text three')),
+        ]:
             catalog.index_doc(num, doc)
 
         q = self._makeOne(catalog)
         
-        num, result = q.search(field=('field1', 'field1'), **extra)
+        num, result = q.search(
+            field=('field1', 'field1'), **extra
+        )
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [1])
-        num, result = q.search(field=('field2', 'field2'), **extra)
+
+        num, result = q.search(
+            field=('field2', 'field2'), **extra
+        )
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = q.search(field=('field2', 'field2'),
-                               keyword='keyword2', **extra)
+
+        num, result = q.search(
+            field=('field2', 'field2'), keyword='keyword2', **extra
+        )
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
-        num, result = q.search(field=('field2', 'field2'), text='two',
-                               **extra)
+
+        num, result = q.search(
+            field=('field2', 'field2'), text='two', **extra
+        )
         self.assertEqual(num, 1)
         self.assertEqual(list(result), [2])
+
         num, result = q.search(text='text', keyword='same', **extra)
         self.assertEqual(num, 3)
-        self.assertEqual(list(result), [1,2,3])
+        self.assertEqual(list(result), [1, 2, 3])
 
     def test_functional_index_merge_unordered(self):
         return self._test_functional_merge()
 
     def test_functional_index_merge_ordered(self):
         return self._test_functional_merge(
-            index_query_order=['field', 'keyword', 'text'])
+            index_query_order=['field', 'keyword', 'text']
+        )
 
 from ..interfaces import IIndex
 from zope.interface import implementer

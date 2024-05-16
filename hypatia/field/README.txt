@@ -6,9 +6,9 @@ orderability. That is, all of the values added to the index must be
 orderable together. It is up to applications to provide only mutually
 orderable values.
 
-    >>> from hypatia.indexes.field import FieldIndex
+    >>> from hypatia.field import FieldIndex
 
-    >>> index = FieldIndex()
+    >>> index = FieldIndex(discriminator=lambda x, _marker: x)
     >>> index.index_doc(0, 6)
     >>> index.index_doc(1, 26)
     >>> index.index_doc(2, 94)
@@ -24,7 +24,7 @@ Field indexes are searched with apply.  The argument is a tuple
 with a minimum and maximum value:
 
     >>> index.apply((30, 70))
-    IFSet([3, 4, 5, 7, 8])
+    LFSet([3, 4, 5, 7, 8])
 
 A common mistake is to pass a single value.  If anything other than a 
 two-tuple is passed, a type error is raised:
@@ -32,27 +32,27 @@ two-tuple is passed, a type error is raised:
     >>> index.apply('hi')
     Traceback (most recent call last):
     ...
-    TypeError: ('two-length tuple expected', 'hi')
+    TypeError: ...
 
 
 Open-ended ranges can be provided by provinding None as an end point:
 
     >>> index.apply((30, None))
-    IFSet([2, 3, 4, 5, 6, 7, 8])
+    LFSet([2, 3, 4, 5, 6, 7, 8])
 
     >>> index.apply((None, 70))
-    IFSet([0, 1, 3, 4, 5, 7, 8, 9])
+    LFSet([0, 1, 3, 4, 5, 7, 8, 9])
 
     >>> index.apply((None, None))
-    IFSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    LFSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 To do an exact value search, supply equal minimum and maximum values:
 
     >>> index.apply((30, 30))
-    IFSet([4, 7])
+    LFSet([4, 7])
 
     >>> index.apply((70, 70))
-    IFSet([])
+    LFSet([])
 
 Field indexes support basic statistics:
 
@@ -64,13 +64,13 @@ Field indexes support basic statistics:
 Documents can be reindexed:
 
     >>> index.apply((15, 15))
-    IFSet([9])
+    LFSet([9])
     >>> index.index_doc(9, 14)
 
     >>> index.apply((15, 15))
-    IFSet([])
+    LFSet([])
     >>> index.apply((14, 14))
-    IFSet([9])
+    LFSet([9])
     
 Documents can be unindexed:
 
@@ -86,7 +86,7 @@ Documents can be unindexed:
     7
 
     >>> index.apply((30, 70))
-    IFSet([3, 4, 5])
+    LFSet([3, 4, 5])
 
 Unindexing a document id that isn't present is ignored:
 
@@ -99,14 +99,14 @@ Unindexing a document id that isn't present is ignored:
 
 We can also clear the index entirely:
 
-    >>> index.clear()
+    >>> index.reset()
     >>> index.indexed_count()
     0
     >>> index.word_count()
     0
 
     >>> index.apply((30, 70))
-    IFSet([])
+    LFSet([])
 
 Sorting
 -------
@@ -139,13 +139,21 @@ argument:
     >>> list(index.sort([4, 2, 9, 7, 3, 1, 5], limit=3)) 
     [9, 7, 5]
 
-If we pass an id that is not indexed by this index, it won't be included
-in the result.
+If we pass an id that is not indexed by this index, it raises and
+exeption by default:
 
     >>> list(index.sort([2, 10]))
+    Traceback (most recent call last):
+    ...
+    hypatia.exc.Unsortable: [10]
+
+We can suppress the exception by passing ``raise_unsortable=False``,
+in which case it won't be included in the result:
+
+    >>> list(index.sort([2, 10], raise_unsortable=False))
     [2]
 
-    >>> index.clear()
+    >>> index.reset()
 
 Bugfix testing:
 ---------------
@@ -164,7 +172,7 @@ but the index still contains the object, the unindex broke
     >>> index.index_doc(9, 15)
     
     >>> index.apply((None, None))
-    IFSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    LFSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 Here is the damage:
 
@@ -176,7 +184,7 @@ Unindex should succeed:
     >>> index.unindex_doc(3)
     
     >>> index.apply((None, None))
-    IFSet([0, 1, 2, 4, 6, 7, 8, 9])
+    LFSet([0, 1, 2, 4, 6, 7, 8, 9])
 
 
 Optimizations
@@ -203,5 +211,5 @@ Leaving the value unchange doesn't call unindex_doc.
 
     >>> index.index_doc(9, 15)
     >>> index.apply((15, 15))
-    IFSet([9])
+    LFSet([9])
 

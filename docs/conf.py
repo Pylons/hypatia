@@ -12,30 +12,12 @@
 
 import sys, os
 import pkg_resources
+import pylons_sphinx_themes
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 
-# Add and use Pylons theme
-if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
-    from subprocess import call, Popen, PIPE
-
-    p = Popen('which git', shell=True, stdout=PIPE)
-    git = p.stdout.read().strip()
-    cwd = os.getcwd()
-    _themes = os.path.join(cwd, '_themes')
-
-    if not os.path.isdir(_themes):
-        call([git, 'clone', 'https://github.com/Pylons/pylons_sphinx_theme.git',
-                '_themes'])
-    else:
-        os.chdir(_themes)
-        call([git, 'checkout', 'master'])
-        call([git, 'pull'])
-        os.chdir(cwd)
-
-    sys.path.append(os.path.abspath('_themes'))
 
 # General configuration
 # ---------------------
@@ -102,11 +84,15 @@ pygments_style = 'sphinx'
 # -----------------------
 
 # Add and use Pylons theme
-html_theme_path = ['_themes']
+html_theme_path = pylons_sphinx_themes.get_html_themes_path()
 html_theme = 'pylons'
 html_theme_options = dict(
     github_url='https://github.com/Pylons/hypatia',
-#    in_progress='true'
+    # On main branch and new branch still in
+    # pre-release status: true; else: false.
+#   in_progress='true',
+    # On branches previous to "latest": true; else: false.
+#   outdated='false',
     )
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name

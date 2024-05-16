@@ -155,9 +155,8 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._indexed[0], (1, 'cats and dogs'))
 
     def test_index_doc_then_missing_value(self):
-        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(3, u('Am I rich yet?'))
+        index.index_doc(3, 'Am I rich yet?')
         self.assertEqual(set([3]), set(index.applyContains('rich')))
         self.assertTrue(3 in index.docids())
         index.index_doc(3, _marker)
@@ -165,12 +164,11 @@ class TextIndexTests(unittest.TestCase):
         self.assertTrue(3 in index.docids())
 
     def test_index_doc_missing_value_then_with_value(self):
-        from hypatia._compat import u
         index = self._makeOne()
         index.index_doc(20, _marker)
         self.assertEqual(set(), set(index.applyContains('rich')))
         self.assertTrue(20 in index.docids())
-        index.index_doc(20, u('Am I rich yet?'))
+        index.index_doc(20, 'Am I rich yet?')
         self.assertEqual(set([20]), set(index.applyContains('rich')))
         self.assertTrue(20 in index.docids())
 
@@ -254,8 +252,9 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._searched, ['anything'])
 
     def test_apply_w_results_bogus_query_weight(self):
-        from hypatia._compat import _maxint
-        DIVISOR = _maxint() / 10.0
+        import sys
+
+        DIVISOR = sys.maxsize / 10.0
         lexicon = DummyLexicon()
         # cause TypeError in division
         okapi = DummyOkapi(lexicon, {1: '14.0', 2: '7.4', 3: '3.2'})
@@ -268,34 +267,30 @@ class TextIndexTests(unittest.TestCase):
         self.assertEqual(okapi._searched, ['anything'])
 
     def test_applyNotContains(self):
-        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(1, u('now is the time'))
-        index.index_doc(2, u("l'ora \xe9 ora"))
+        index.index_doc(1, 'now is the time')
+        index.index_doc(2, "l'ora \xe9 ora")
         result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [2])
 
     def test_applyNotContains_with_unindexed_doc(self):
-        from hypatia._compat import u
-        from hypatia._compat import string_types
         def discriminator(obj, default):
-            if isinstance(obj, string_types):
+            if isinstance(obj, str):
                 return obj
             return default
         index = self._makeOne(discriminator)
-        index.index_doc(1, u('now is the time'))
-        index.index_doc(2, u("l'ora \xe9 ora"))
+        index.index_doc(1, 'now is the time')
+        index.index_doc(2, "l'ora \xe9 ora")
         index.index_doc(3, 3)
         result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [2, 3])
 
     def test_applyNotContains_nothing_indexed(self):
-        from hypatia._compat import u
         def discriminator(obj, default):
             return default
         index = self._makeOne(discriminator)
-        index.index_doc(1, u('now is the time'))
-        index.index_doc(2, u("l'ora \xe9 ora"))
+        index.index_doc(1, 'now is the time')
+        index.index_doc(2, "l'ora \xe9 ora")
         index.index_doc(3, 3)
         result = sorted(index.applyNotContains('time'))
         self.assertEqual(result, [1, 2, 3])
@@ -341,17 +336,15 @@ class TextIndexTests(unittest.TestCase):
             )
 
     def test_docids(self):
-        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(1, u('now is the time'))
-        index.index_doc(2, u("l'ora \xe9 ora"))
-        index.index_doc(3, u("you have nice hair."))
+        index.index_doc(1, 'now is the time')
+        index.index_doc(2, "l'ora \xe9 ora")
+        index.index_doc(3, "you have nice hair.")
         self.assertEqual(set(index.docids()), set((1, 2, 3)))
 
     def test_docids_with_indexed_and_not_indexed(self):
-        from hypatia._compat import u
         index = self._makeOne()
-        index.index_doc(1, u('Am I rich yet?'))
+        index.index_doc(1, 'Am I rich yet?')
         index.index_doc(2, _marker)
         self.assertEqual(set([1, 2]), set(index.docids()))
 

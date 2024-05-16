@@ -19,12 +19,16 @@
         Retrieve an index or return failobj.
 
      .. automethod:: reset
+        :no-index:
 
      .. automethod:: index_doc
+        :no-index:
 
      .. automethod:: unindex_doc
+        :no-index:
 
      .. automethod:: reindex_doc
+        :no-index:
 
   .. autoclass:: CatalogQuery
      :members:
@@ -32,6 +36,7 @@
      .. automethod:: __call__
 
      .. automethod:: sort
+        :no-index:
 
 :mod:`hypatia.query`
 --------------------
@@ -42,6 +47,7 @@ Comparators
 ~~~~~~~~~~~
 
    .. autoclass:: Contains
+      :no-index:
 
    .. autoclass:: Eq
 
