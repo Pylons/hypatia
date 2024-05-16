@@ -89,22 +89,26 @@ score(PyObject *self, PyObject *args)
 			return NULL;
 		}
 		d = PyTuple_GET_ITEM(d_and_f, 0);
-#ifdef PY3K
-		f = (double)PyLong_AsLong(PyTuple_GET_ITEM(d_and_f, 1));
-#else
-		f = (double)PyInt_AsLong(PyTuple_GET_ITEM(d_and_f, 1));
-#endif
+		f = PyFloat_AsDouble(PyTuple_GET_ITEM(d_and_f, 1));
+
+        if (PyErr_Occurred()) {
+			PyErr_SetString(PyExc_TypeError,
+				"d2fitem[1] should be a a float");
+			return NULL;
+        }
 
 		doclen = PyObject_GetItem(d2len, d);
 		if (doclen == NULL) {
 			Py_DECREF(d_and_f);
 			return NULL;
 		}
-#ifdef PY3K
+
 		lenweight = B_FROM1 + B * PyFloat_AsDouble(doclen) / meandoclen;
-#else
-		lenweight = B_FROM1 + B * PyInt_AsLong(doclen) / meandoclen;
-#endif
+        if (PyErr_Occurred()) {
+			PyErr_SetString(PyExc_TypeError,
+				"doclen be a a float");
+			return NULL;
+        }
 
 		tf = f * K1_PLUS1 / (f + K1 * lenweight);
 		doc_score = PyFloat_FromDouble(tf * idf);

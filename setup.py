@@ -26,6 +26,9 @@ class optional_build_ext(build_ext):
        the building of C extensions to fail.
     """
     def run(self):
+        if os.environ.get("PURE_PYTHON"):
+            self._unavailable("Environment defines 'PURE_PYTHON'")
+            return
         try:
             build_ext.run(self)
         
@@ -33,10 +36,13 @@ class optional_build_ext(build_ext):
             self._unavailable(e)
 
     def build_extension(self, ext):
-       try:
+        if os.environ.get("PURE_PYTHON"):
+            self._unavailable("Environment defines 'PURE_PYTHON'")
+            return
+        try:
            build_ext.build_extension(self, ext)
         
-       except (CCompilerError, DistutilsExecError) as e:
+        except (CCompilerError, DistutilsExecError) as e:
            self._unavailable(e)
 
     def _unavailable(self, e):

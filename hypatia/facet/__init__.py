@@ -130,14 +130,14 @@ class FacetIndex(KeywordIndex):
         return counts
 
 
-def make_binary(x):
-    if isinstance(x, bytes):
-        return x
-    return x.encode('ascii')
+def make_binary(value):
+    if isinstance(value, bytes):
+        return value
+    return value.encode('ascii')
 
-def cachekey(set):
+def cachekey(facets):
     h = md5()
-    for item in sorted(list(set)):
+    for item in sorted(list(facets)):
         h.update(make_binary(item))
     return h.hexdigest()
 

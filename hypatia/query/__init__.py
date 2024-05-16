@@ -691,6 +691,9 @@ class Name(object):
         return False
 
 
+# This module's "visitors" are subject to change under different Python
+# versions.  We test the cases we care about via 'parse_query', but
+# don't really care if a given node vistior is covered.
 class _AstParser(object):
     """
     Uses Python's ast module to parse an expression into an abstract syntax
@@ -781,13 +784,13 @@ class _AstParser(object):
         dotted_name.id = '.'.join((name.id, node.attr))
         return dotted_name
 
-    def process_Str(self, node, children):
+    def process_Str(self, node, children):  # pragma NO COVER
         return node.value
 
     def process_Constant(self, node, children):
         return node.value
 
-    def process_Num(self, node, children):
+    def process_Num(self, node, children):  # pragma NO COVER
         return node.n
 
     def process_List(self, node, children):
@@ -992,7 +995,7 @@ def _print_ast(expr):  # pragma NO COVERAGE
     tree = ast.parse(expr)
 
     def visit(node, level):
-        sys.stdout.write('%s%s\n' % ('  ' * level + str(node)))
+        sys.stdout.write('%s%s\n' % ('  ' * level, str(node)))
         for child in ast.iter_child_nodes(node):
             visit(child, level + 1)
     visit(tree, 0)
