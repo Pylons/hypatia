@@ -26,9 +26,13 @@ jobs:
                     - x64
 
                 exclude:
-                  # persistent fails to build on 3.12-dev on MacOS in GitHub
+                  # See: https://github.com/actions/setup-python/issues/850
                   - os: macos-latest
-                    py: "3.12"
+                    py: "3.7"
+                  - os: macos-latest
+                    py: "3.8"
+                  - os: macos-latest
+                    py: "3.9"
 
                 include:
                     # Only run coverage on ubuntu-20.04, except on pypy3
