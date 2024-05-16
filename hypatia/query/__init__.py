@@ -786,7 +786,11 @@ class _AstParser(object):
         return node.s
 
     def process_Constant(self, node, children):
-        return node.s
+        """
+        Changed in Python version 3.8: Class ast.Constant is now used for all constants.
+        Default coverage is run under 3.7 so don't count this line.
+        """
+        return node.s   # pragma NO COVER
 
     def process_Num(self, node, children):
         return node.n
@@ -993,7 +997,7 @@ def _print_ast(expr):  # pragma NO COVERAGE
     tree = ast.parse(expr)
 
     def visit(node, level):
-        sys.stdout.write('%s%s\n' % ('  ' * level + str(node)))
+        sys.stdout.write('%s%s\n' % ('  ' * level, str(node)))
         for child in ast.iter_child_nodes(node):
             visit(child, level + 1)
     visit(tree, 0)

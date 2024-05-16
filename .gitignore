@@ -10,9 +10,12 @@ hypatia/coverage.xml
 coverage-py*.xml
 coverage.xml
 env*/
+.venv
 .build/
 bin/
 include/
 lib/
 build/
 *.so
+.idea
+.envrc
