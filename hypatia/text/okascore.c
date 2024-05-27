@@ -127,27 +127,33 @@ static char score__doc__[] =
 "\n"
 "Do the inner scoring loop for an Okapi index.\n";
 
-static PyMethodDef okascore_functions[] = {
+static PyMethodDef module_functions[] = {
 	{"score",	   score,	  METH_VARARGS, score__doc__},
 	{NULL}
 };
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "okascore",                           /* m_name */
-        "inner scoring loop for Okapi rank",  /* m_doc */
-        -1,                                   /* m_size */
-        okascore_functions,                   /* m_methods */
-        NULL,                                 /* m_reload */
-        NULL,                                 /* m_traverse */
-        NULL,                                 /* m_clear */
-        NULL,                                 /* m_free */
-    };
+static char module__name__[] = "okascore";
+static char module__doc__[] = "inner scoring loop for Okapi rank";
+
+/*
+ *  No slot definitions needed multi-phase initialization:
+ *
+ *  we have no state, and initialize / register no types.
+ */
+static PyModuleDef_Slot module_slots[] = {
+    {0,                 NULL}
+};
+
+static struct PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    .m_name     = module__name__,
+    .m_doc      = module__doc__,
+    .m_methods  = module_functions,
+    .m_slots    = module_slots,
+};
 
 PyMODINIT_FUNC
 PyInit_okascore(void)
 {
-	PyObject *m;
-    m = PyModule_Create(&moduledef);
-    return m;
+    return PyModuleDef_Init(&module_def);
 }
