@@ -1,7 +1,7 @@
 0.6 (unreleased)
 ----------------
 
-- TBD
+- Migrate C extension to support PEP 489 multi-phase module initialization.
 
 0.5 (2024-11-27)
 ----------------
