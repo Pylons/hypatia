@@ -1,9 +1,9 @@
 0.5 (unreleased)
 ----------------
 
-- Add support for Python 3.11 and 3.12.
+- Add support for Python 3.11, 3.12, and 3.13.
 
-- Drop support for Python < 3.8, includin all the compatibility shims.
+- Drop support for Python < 3.8, including all the compatibility shims.
 
 - Repair bitrot in doctests:  ensure that they run under ``py.test``.
   
