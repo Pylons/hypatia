@@ -1,4 +1,4 @@
-0.5 (unreleased)
+0.5 (2024-11-27)
 ----------------
 
 - Add support for Python 3.11, 3.12, and 3.13.
