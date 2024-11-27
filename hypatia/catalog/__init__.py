@@ -7,7 +7,6 @@ from zope.interface import implementer
 from ..interfaces import ICatalog
 from ..interfaces import ICatalogQuery
 from ..query import parse_query
-from .._compat import string_types
 
 @implementer(ICatalog)
 class Catalog(PersistentMapping):
@@ -24,28 +23,37 @@ class Catalog(PersistentMapping):
         return PersistentMapping.__setitem__(self, name, index)
 
     def reset(self):
-        """ Clear all indexes in this catalog. """
+        """Clear all indexes in this catalog.
+        """
         for index in self.values():
             index.reset()
 
     def index_doc(self, docid, obj):
-        """Register the document represented by ``obj`` in indexes of
-        this catalog using docid ``docid``."""
+        """Register a document  in indexes of this catalog.
+
+        The document is represented by ``obj``, and is stored
+        using the document id ``docid``.
+        """
         assertint(docid)
         for index in self.values():
             index.index_doc(docid, obj)
 
     def unindex_doc(self, docid):
-        """Unregister the document id from indexes of this catalog."""
+        """Unregister the document id from indexes of this catalog.
+        """
         assertint(docid)
         for index in self.values():
             index.unindex_doc(docid)
 
     def reindex_doc(self, docid, obj):
-        """ Reindex the document referenced by docid using the object
-        passed in as ``obj`` (typically just does the equivalent of
+        """ Reindex the document referenced by docid.
+
+        Use the object passed in as ``obj``
+
+        This method typically just does the equivalent of
         ``unindex_doc``, then ``index_doc``, but specialized indexes
-        can override the method that this API calls to do less work. """
+        can override the method that this API calls to do less work.
+        """
         assertint(docid)
         for index in self.values():
             index.reindex_doc(docid, obj)
@@ -58,9 +66,11 @@ def assertint(docid):
 
 @implementer(ICatalogQuery)
 class CatalogQuery(object):
-    """ Legacy query API for non-index-based queries; might be useful if/when
-    an index-based query doesn't work properly, or a particular contstraint
-    can't be spelled with one."""
+    """ Legacy query API for non-index-based queries
+
+    This API might be useful if/when an index-based query doesn't work
+    properly, or a particular contstraint can't be spelled with one.
+    """
 
     family = BTrees.family64
     
@@ -71,8 +81,8 @@ class CatalogQuery(object):
 
     def sort(self, docidset, sort_index, limit=None, sort_type=None,
              reverse=False):
-        """ Return ``(num, sorted-resultseq)`` for the concrete docidset. """
-
+        """Return ``(num, sorted-resultseq)`` for the concrete docidset.
+        """
         result = docidset
         numdocs = len(docidset)
 
@@ -88,16 +98,15 @@ class CatalogQuery(object):
             return numdocs, result
 
     def search(self, **query):
-        """ Use the query terms to perform a query.  Return a tuple of
-        (num, resultseq) based on the merging of results from
-        individual indexes.
+        """ Use the query terms to perform a query.
+
+        Return a tuple of ``(num, resultseq)`` based on the merging of
+        results from individual indexes.
 
         .. note::
 
            This method is deprecated. Use
            :func:`hypatia.catalog.CatalogQuery.__call__` instead.
-
-
         """
         sort_index = None
         reverse = False
@@ -163,9 +172,11 @@ class CatalogQuery(object):
 
     def query(self, queryobject, sort_index=None, limit=None, sort_type=None,
               reverse=False, names=None):
-        """ Use the arguments to perform a query.  Return a tuple of
-        (num, resultseq)."""
-        if isinstance(queryobject, string_types):
+        """Use the arguments to perform a query.
+
+        Return a tuple of ``(num, resultseq)``.
+        """
+        if isinstance(queryobject, str):
             queryobject = parse_query(queryobject, self.catalog)
         results = queryobject._apply(names)
         return self.sort(results, sort_index, limit, sort_type, reverse)

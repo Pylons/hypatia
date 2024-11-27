@@ -12,13 +12,12 @@ jobs:
         strategy:
             matrix:
                 py:
-                    - "3.7"
                     - "3.8"
                     - "3.9"
                     - "3.10"
                     - "3.11"
                     - "3.12"
-                    - "pypy-3.9"
+                    - "3.13"
                 os:
                     - "ubuntu-20.04"
                     - "macos-latest"
@@ -28,8 +27,6 @@ jobs:
                 exclude:
                   # See: https://github.com/actions/setup-python/issues/850
                   - os: macos-latest
-                    py: "3.7"
-                  - os: macos-latest
                     py: "3.8"
                   - os: macos-latest
                     py: "3.9"
@@ -38,12 +35,9 @@ jobs:
                     py: "3.10"
 
                 include:
-                    # Only run coverage on ubuntu-20.04, except on pypy3
+                    # Only run coverage on ubuntu-20.04
                     - os: "ubuntu-20.04"
                       pytest-args: "--cov"
-                    - os: "ubuntu-20.04"
-                      py: "pypy-3.9"
-                      pytest-args: ""
 
 
         name: "Python: ${{ matrix.py }}-${{ matrix.architecture }} on ${{ matrix.os }}"
@@ -66,7 +60,7 @@ jobs:
             - name: Setup python
               uses: actions/setup-python@v5
               with:
-                  python-version: 3.7
+                  python-version: 3.12
                   architecture: x64
             - run: pip install tox
             - run: tox -e coverage
@@ -78,7 +72,7 @@ jobs:
             - name: Setup python
               uses: actions/setup-python@v5
               with:
-                  python-version: 3.7
+                  python-version: 3.12
                   architecture: x64
             - run: pip install tox
             - run: tox -e docs

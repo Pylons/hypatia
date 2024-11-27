@@ -5,7 +5,6 @@ import sys
 import BTrees
 
 from ..util import RichComparisonMixin
-from .._compat import xrange
 
 
 _marker = object()
@@ -531,7 +530,7 @@ class Or(BoolOp):
                 query_lower.negate(), query_upper.negate())
             queries[i_upper] = None
 
-        for i in xrange(len(queries)):
+        for i in range(len(queries)):
             query = queries[i]
             if type(query) in (Lt, Le):
                 match = uppers.get(query.index)
@@ -592,7 +591,7 @@ class And(BoolOp):
             queries[i_lower] = InRange.fromGTLT(query_lower, query_upper)
             queries[i_upper] = None
 
-        for i in xrange(len(queries)):
+        for i in range(len(queries)):
             query = queries[i]
             if type(query) in (Gt, Ge):
                 match = uppers.get(query.index)
@@ -692,6 +691,9 @@ class Name(object):
         return False
 
 
+# This module's "visitors" are subject to change under different Python
+# versions.  We test the cases we care about via 'parse_query', but
+# don't really care if a given node vistior is covered.
 class _AstParser(object):
     """
     Uses Python's ast module to parse an expression into an abstract syntax
@@ -782,22 +784,18 @@ class _AstParser(object):
         dotted_name.id = '.'.join((name.id, node.attr))
         return dotted_name
 
-    def process_Str(self, node, children):
-        return node.s
+    def process_Str(self, node, children):  # pragma NO COVER
+        return node.value
 
     def process_Constant(self, node, children):
-        """
-        Changed in Python version 3.8: Class ast.Constant is now used for all constants.
-        Default coverage is run under 3.7 so don't count this line.
-        """
-        return node.s   # pragma NO COVER
+        return node.value
 
-    def process_Num(self, node, children):
+    def process_Num(self, node, children):  # pragma NO COVER
         return node.n
 
     def process_List(self, node, children):
         l = list(children[:-1])
-        for i in xrange(len(l)):
+        for i in range(len(l)):
             if isinstance(l[i], ast.Name):
                 l[i] = self._value(l[i])
         return l

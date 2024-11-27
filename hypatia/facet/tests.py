@@ -1,4 +1,7 @@
 import unittest
+from unittest import mock
+
+import pytest
 
 FACETS = [
     'price',
@@ -247,3 +250,39 @@ class TestCatalogFacetIndex(unittest.TestCase):
         self.assertEqual(index.index_doc(20, 'foo'), 'foo')
         self.assertFalse(20 in index._not_indexed)
 
+
+@pytest.mark.parametrize(
+    "value, expected", [
+    (b"DEADBEEF", b"DEADBEEF"),
+    ("DEADBEEF", b"DEADBEEF"),
+])
+def test_make_binary(value, expected):
+    from hypatia.facet import make_binary
+
+    found = make_binary(value)
+
+    assert found == expected
+
+
+@pytest.mark.parametrize(
+    "facets", [
+    (),
+    (b"DEADBEEF",),
+    ("DEADBEEF",),
+    ("AAA", "BBB"),
+])
+def test_cachekey(facets):
+    from hypatia.facet import cachekey
+
+    with mock.patch("hypatia.facet.md5") as md5_factory:
+        found = cachekey(facets)
+
+    md5 = md5_factory.return_value
+    assert found is md5.hexdigest.return_value
+
+    assert len(facets) == len(md5.update.mock_calls)
+    for facet, mock_call in zip(facets, md5.update.mock_calls):
+        if isinstance(facet, str):
+            assert mock_call == mock.call(facet.encode("ascii"))
+        else:
+            assert mock_call == mock.call(facet)

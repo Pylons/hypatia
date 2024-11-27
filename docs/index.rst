@@ -22,7 +22,6 @@ Narrative documentation explaining how to use :mod:`hypatia`.
    genealogy
    install
    glossary
-   changes
 
 API documentation
 -----------------
@@ -33,6 +32,14 @@ API documentation for :mod:`hypatia`.
    :maxdepth: 2
 
    api
+
+Changelog
+---------
+
+.. toctree::
+   :maxdepth: 2
+
+   changes
 
 Source Code and Issue Tracking
 ------------------------------
