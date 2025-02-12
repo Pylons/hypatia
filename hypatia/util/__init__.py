@@ -1,5 +1,8 @@
 import itertools
 import BTrees
+import BTrees.Length
+
+import collections.abc
 
 from persistent import Persistent
 from ZODB.broken import Broken
@@ -219,3 +222,54 @@ class RichComparisonMixin(object):
     def __ge__(self, other):
         return self.__eq__(other) or self.__gt__(other)
 
+class PersistentHashTable(Persistent, collections.abc.MutableMapping):
+    """ A persistent hash table implementation
+
+    Useful instead of an OxBTree for collections that have keys which
+    cannot support total ordering. Really bad at collections where hash
+    collisions are common, however.
+    """
+    family = BTrees.family64
+
+    def __init__(self):
+        self.data = self.family.IO.BTree()
+        self.length = BTrees.Length.Length()
+        
+    def __len__(self):
+        return self.length()
+
+    def __iter__(self):
+        for hk, bucket in self.data.items():
+            for name in bucket:
+                yield name
+
+    def __contains__(self, name):
+        try:
+            self[name]
+            return True
+        except KeyError:
+            return False
+
+    def __setitem__(self, name, value):
+        hk = hash(name)
+        bucket = self.data.setdefault(hk, {})
+        oldsize = len(bucket)
+        bucket[name] = value
+        newsize = len(bucket)
+        changed = newsize - oldsize
+        if changed:
+            self.length.change(changed)
+        self.data[hk] = bucket
+
+    def __getitem__(self, name):
+        hk = hash(name)
+        bucket = self.data[hk]
+        return bucket[name]
+
+    def __delitem__(self, name):
+        hk = hash(name)
+        bucket = self.data[hk]
+        del bucket[name]
+        if not len(bucket):
+            del self.data[hk]
+        self.length.change(-1)

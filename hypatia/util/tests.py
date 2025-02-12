@@ -440,8 +440,42 @@ class RichComparisonMixinTest(unittest.TestCase):
 
         self.assertFalse(self.comp >= 7)
         self.assertFalse(self.comp >= RichComparer(7))
-        
 
+
+class TestPersistentHashTable(unittest.TestCase):
+    def _makeOne(self):
+        from . import PersistentHashTable
+        return PersistentHashTable()
+
+    def test___setitem__and__getitem__and__delitem__and___contains___and__len(
+        self):
+        hashtable = self._makeOne()
+        import string
+        words = string.ascii_letters
+        for x in range(0, 4):
+            for word in words:
+                hashtable[word] = x
+        self.assertEqual(len(hashtable), len(words))
+        self.assertEqual(len(hashtable.data), len(words))
+        for v in hashtable.data.values():
+            self.assertEqual(len(v), 1)
+        for word in words:
+            assert(word in hashtable)
+        self.assertFalse('wontbethere' in hashtable)
+        dwords = dict([(x,None) for x in words])
+        for word in hashtable:
+            assert(word in dwords)
+        for word in words:
+            del hashtable[word]
+        self.assertEqual(len(hashtable), 0)
+        self.assertEqual(len(hashtable.data), 0)
+
+    def test_get(self):
+        hashtable = self._makeOne()
+        self.assertEqual(hashtable.get('a'), None)
+        hashtable['a'] = 1
+        self.assertEqual(hashtable.get('a'), 1)
+            
 class RichComparer(RichComparisonMixin):
 
     def __init__(self, value):
