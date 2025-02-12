@@ -444,7 +444,11 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
         return result
 
+    def get_apply_value(self, value):
+        return value
+
     def applyEq(self, value):
+        value = self.get_apply_value(value)
         return self.apply(value)
 
     def eq(self, value):
@@ -457,30 +461,35 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         return query.NotEq(self, value)
 
     def applyGe(self, min_value):
+        min_value = self.get_apply_value(min_value)
         return self.applyInRange(min_value, None)
 
     def ge(self, value):
         return query.Ge(self, value)
 
     def applyLe(self, max_value):
+        max_value = self.get_apply_value(max_value)
         return self.applyInRange(None, max_value)
 
     def le(self, value):
         return query.Le(self, value)
 
     def applyGt(self, min_value):
+        min_value = self.get_apply_value(min_value)
         return self.applyInRange(min_value, None, excludemin=True)
 
     def gt(self, value):
         return query.Gt(self, value)
 
     def applyLt(self, max_value):
+        max_value = self.get_apply_value(max_value)
         return self.applyInRange(None, max_value, excludemax=True)
 
     def lt(self, value):
         return query.Lt(self, value)
 
     def applyAny(self, values):
+        values = map(self.get_apply_value, values)
         queries = list(values)
         return self.search(queries, operator='or')
 
@@ -494,11 +503,12 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
         return query.NotAny(self, value)
 
     def applyInRange(self, start, end, excludemin=False, excludemax=False):
+        start = self.get_apply_value(start)
+        end = self.get_apply_value(end)
         return self.family.IF.multiunion(
             self._fwd_index.values(
                 start, end, excludemin=excludemin, excludemax=excludemax)
         )
-
 
     def inrange(self, start, end, excludemin=False, excludemax=False):
         return query.InRange(self, start, end, excludemin, excludemax)
@@ -508,6 +518,66 @@ class FieldIndex(BaseIndexMixin, persistent.Persistent):
 
     def notinrange(self, start, end, excludemin=False, excludemax=False):
         return query.NotInRange(self, start, end, excludemin, excludemax)
+
+class GlobalObjectFieldIndex(FieldIndex):
+    """Indexes / searches global objects (importable objects).
+
+    Operates just like a normal FieldIndex, except
+    when CQE queries are performed, string operands are treated as dotted
+    names and converted into global objects for comparison.  For example, if
+    the CQE expression ``val='ValueError'`` is used, if ``val`` is a
+    ``GlobalObjectFieldIndex``, ``'ValueError'`` will be coverted to the
+    globally importable :exc:`ValueError` object.  Likewise if the CQE
+    expression is ``val='os.pipe'``, ``'os.pipe'`` will be coverted to the
+    globally importable :func:`os.pipe` object.
+
+    The index also acts differently at object indexing time.  It will convert
+    strings retrieved by the index's discriminator into object references by
+    attempting to import them.  The object indexed will thus be an importable
+    Python object rather than the string that was supplied.
+    """
+
+    def get_apply_value(self, val):
+        if isinstance(val, str):
+            if ':' in val:
+                val = self._pkg_resources_style(val)
+            else:
+                val = self._zope_dottedname_style(val)
+        return val
+
+    def _pkg_resources_style(self, value):
+        """ package.module:attr style """
+        import pkg_resources
+        if value.startswith('.') or value.startswith(':'):
+            raise ValueError('Relative dotted names unsupported')
+        return pkg_resources.EntryPoint.parse(
+            'x=%s' % value).load(False)
+
+    def _zope_dottedname_style(self, value):
+        """ package.module.attr style """
+        if value == '.':
+            raise ValueError('Relative dotted names unsupported')
+        else:
+            name = value.split('.')
+            if not name[0]:
+                raise ValueError('Relative dotted names unsupported')
+
+        used = name.pop(0)
+        found = __import__(used)
+        for n in name:
+            used += '.' + n
+            try:
+                found = getattr(found, n)
+            except AttributeError: # pragma: no cover
+                __import__(used)
+                found = getattr(found, n)
+
+        return found
+
+    def discriminate(self, value, default):
+        value = FieldIndex.discriminate(self, value, default)
+        value = self.get_apply_value(value)
+        return value
 
 def nsort(docids, rev_index, missing):
     for docid in docids:

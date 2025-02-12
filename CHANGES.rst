@@ -1,6 +1,9 @@
 0.6 (unreleased)
 ----------------
 
+- Add ``hypatia.field.GlobalObjectFieldIndex`` index type, for indexing and
+  searching for values that are global (importable) objects.
+
 - Migrate C extension to support PEP 489 multi-phase module initialization.
 
 0.5 (2024-11-27)
