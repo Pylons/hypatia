@@ -1050,6 +1050,22 @@ class FieldIndexTests(unittest.TestCase):
         result = sorted(list(result))
         self.assertEqual(result, [2, 5, 6, 7, 10, 11])
 
+    def test_inrange(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.inrange(1, 2)
+        self.assertEqual(result.__class__, query.InRange)
+        self.assertEqual(result._start, 1)
+        self.assertEqual(result._end, 2)
+
+    def test_notinrange(self):
+        from .. import query
+        index = self._makeOne()
+        result = index.notinrange(1, 2)
+        self.assertEqual(result.__class__, query.NotInRange)
+        self.assertEqual(result._start, 1)
+        self.assertEqual(result._end, 2)
+
     def test_docids(self):
         index = self._makeOne()
         self._populateIndex(index)
@@ -1169,21 +1185,80 @@ class FieldIndexTests(unittest.TestCase):
         self.assertEqual(result.__class__, query.NotAny)
         self.assertEqual(result._value, 1)
 
-    def test_inrange(self):
-        from .. import query
-        index = self._makeOne()
-        result = index.inrange(1, 2)
-        self.assertEqual(result.__class__, query.InRange)
-        self.assertEqual(result._start, 1)
-        self.assertEqual(result._end, 2)
+class TestGlobalObjectFieldIndex(unittest.TestCase):
+    def _getTargetClass(self):
+        from . import GlobalObjectFieldIndex
+        return GlobalObjectFieldIndex
 
-    def test_notinrange(self):
-        from .. import query
-        index = self._makeOne()
-        result = index.notinrange(1, 2)
-        self.assertEqual(result.__class__, query.NotInRange)
-        self.assertEqual(result._start, 1)
-        self.assertEqual(result._end, 2)
+    def _makeOne(self, discriminator=None, family=None):
+        def _discriminator(obj, default):
+            return obj
+        if discriminator is None:
+            discriminator = _discriminator
+        return self._getTargetClass()(discriminator=discriminator,
+                                      family=family)
+    
+    def test__zope_dottedname_style_resolve_absolute(self):
+        idx = self._makeOne()
+        result = idx._zope_dottedname_style(
+            'hypatia.field.tests.TestGlobalObjectFieldIndex')
+        self.assertEqual(result, self.__class__)
+
+    def test__zope_dottedname_style_irrresolveable_absolute(self):
+        idx = self._makeOne()
+        self.assertRaises(ImportError, idx._zope_dottedname_style,
+            'hypatia.field.tests.nonexisting')
+
+    def test__zope_dottedname_style_irresolveable_relative_is_dot(self):
+        idx = self._makeOne()
+        self.assertRaises(ValueError, idx._zope_dottedname_style, '.')
+
+    def test_zope_dottedname_style_resolve_relative_startswith_dot(self):
+        idx = self._makeOne()
+        self.assertRaises(ValueError, idx._zope_dottedname_style, '.tests')
+
+    def test__pkg_resources_style_resolve_absolute(self):
+        idx = self._makeOne()
+        result = idx._pkg_resources_style(
+            'hypatia.field.tests:TestGlobalObjectFieldIndex')
+        self.assertEqual(result, self.__class__)
+
+    def test__pkg_resources_style_irrresolveable_absolute(self):
+        idx = self._makeOne()
+        self.assertRaises(ImportError, idx._pkg_resources_style, 
+            'hypatia.field.tests:nonexisting')
+
+    def test__pkg_resources_style_irrresolvable_relative_startswith_colon(self):
+        idx = self._makeOne()
+        self.assertRaises(ValueError, idx._pkg_resources_style, ':fixture')
+
+    def test__pkg_resources_style_irrresolvable_relative_startswith_dot(self):
+        idx = self._makeOne()
+        self.assertRaises(ValueError, idx._pkg_resources_style, '.fixture')
+
+    def test_get_apply_value_str_no_colon(self):
+        idx = self._makeOne()
+        result = idx.get_apply_value(
+            'hypatia.field.tests.TestGlobalObjectFieldIndex')
+        self.assertEqual(result, self.__class__)
+    
+    def test_get_apply_value_str_with_colon(self):
+        idx = self._makeOne()
+        result = idx.get_apply_value(
+            'hypatia.field.tests:TestGlobalObjectFieldIndex')
+        self.assertEqual(result, self.__class__)
+
+    def test_get_apply_value_not_str(self):
+        idx = self._makeOne()
+        ob = object()
+        result = idx.get_apply_value(ob)
+        self.assertEqual(result, ob)
+
+    def test_discriminate(self):
+        idx = self._makeOne()
+        result = idx.discriminate(
+            'hypatia.field.tests.TestGlobalObjectFieldIndex', None)
+        self.assertEqual(result, self.__class__)
 
 class Test_fwscan_wins(unittest.TestCase):
 
